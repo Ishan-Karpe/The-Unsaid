@@ -25,7 +25,9 @@
 		...restProps
 	}: Props = $props();
 
-	const inputId = id || `input-${Math.random().toString(36).slice(2, 9)}`;
+	// Generate stable ID - use provided id or generate one
+	const generatedId = `input-${Math.random().toString(36).slice(2, 9)}`;
+	const inputId = $derived(id || generatedId);
 
 	const variantClasses: Record<InputVariant, string> = {
 		bordered: 'input-bordered',

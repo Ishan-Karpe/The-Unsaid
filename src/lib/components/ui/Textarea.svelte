@@ -24,7 +24,9 @@
 		...restProps
 	}: Props = $props();
 
-	const textareaId = id || `textarea-${Math.random().toString(36).slice(2, 9)}`;
+	// Generate stable ID - use provided id or generate one
+	const generatedId = `textarea-${Math.random().toString(36).slice(2, 9)}`;
+	const textareaId = $derived(id || generatedId);
 
 	const wordCount = $derived(value.trim() ? value.trim().split(/\s+/).length : 0);
 	const charCount = $derived(value.length);
