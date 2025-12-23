@@ -4,7 +4,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
+from pathlib import Path
 import os
+
+# Load environment from root .env (one level up from backend/)
+from dotenv import load_dotenv
+load_dotenv(Path(__file__).parent.parent.parent / ".env")
 
 from app.routers import ai
 from app.middleware.rate_limit import RateLimitMiddleware

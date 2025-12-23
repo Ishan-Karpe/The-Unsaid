@@ -40,14 +40,14 @@ uvicorn app.main:app --reload --port 8000
 
 ## API Endpoints
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/health` | GET | Health check |
-| `/api/ai/clarify` | POST | Get clarity suggestions |
-| `/api/ai/alternatives` | POST | Get alternative phrasings |
-| `/api/ai/tone` | POST | Get tone-adjusted versions |
-| `/api/ai/expand` | POST | Get expansion questions |
-| `/api/ai/opening` | POST | Get opening suggestions |
+| Endpoint               | Method | Description                |
+| ---------------------- | ------ | -------------------------- |
+| `/health`              | GET    | Health check               |
+| `/api/ai/clarify`      | POST   | Get clarity suggestions    |
+| `/api/ai/alternatives` | POST   | Get alternative phrasings  |
+| `/api/ai/tone`         | POST   | Get tone-adjusted versions |
+| `/api/ai/expand`       | POST   | Get expansion questions    |
+| `/api/ai/opening`      | POST   | Get opening suggestions    |
 
 ## Environment Variables
 
