@@ -8,11 +8,12 @@
 	type InputVariant = 'bordered' | 'ghost';
 	type InputSize = 'xs' | 'sm' | 'md' | 'lg';
 
-	interface Props extends HTMLInputAttributes {
+	interface Props extends Omit<HTMLInputAttributes, 'value'> {
 		label?: string;
 		error?: string;
 		variant?: InputVariant;
 		inputSize?: InputSize;
+		value?: string;
 	}
 
 	let {
@@ -22,6 +23,7 @@
 		inputSize = 'md',
 		class: className = '',
 		id,
+		value = $bindable(''),
 		...restProps
 	}: Props = $props();
 
@@ -51,7 +53,10 @@
 
 	<input
 		id={inputId}
-		class="input {variantClasses[variant]} {sizeClasses[inputSize]} w-full {error ? 'input-error' : ''} {className}"
+		bind:value
+		class="input {variantClasses[variant]} {sizeClasses[inputSize]} w-full {error
+			? 'input-error'
+			: ''} {className}"
 		{...restProps}
 	/>
 

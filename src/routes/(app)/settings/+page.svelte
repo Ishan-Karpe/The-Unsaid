@@ -17,7 +17,7 @@
 		<div class="form-control">
 			<label class="label cursor-pointer justify-start gap-4">
 				<span class="label-text">Theme</span>
-				<select class="select select-bordered select-sm">
+				<select class="select-bordered select select-sm">
 					<option value="system">System</option>
 					<option value="light">Light</option>
 					<option value="dark">Dark</option>
@@ -28,8 +28,9 @@
 
 	<!-- AI Settings -->
 	<Card title="AI Assistance">
-		<p class="text-sm text-base-content/70 mb-4">
-			AI features send your draft text to our servers for processing. Your drafts are never stored on our servers.
+		<p class="mb-4 text-sm text-base-content/70">
+			AI features send your draft text to our servers for processing. Your drafts are never stored
+			on our servers.
 		</p>
 		<div class="form-control">
 			<label class="label cursor-pointer justify-start gap-4">
@@ -41,7 +42,7 @@
 
 	<!-- Export -->
 	<Card title="Export Your Data">
-		<p class="text-sm text-base-content/70 mb-4">
+		<p class="mb-4 text-sm text-base-content/70">
 			Download all your drafts in a format you can keep forever.
 		</p>
 		<div class="flex flex-wrap gap-2">
@@ -53,9 +54,7 @@
 
 	<!-- Danger Zone -->
 	<Card title="Danger Zone" class="border-error">
-		<p class="text-sm text-base-content/70 mb-4">
-			These actions cannot be undone.
-		</p>
+		<p class="mb-4 text-sm text-base-content/70">These actions cannot be undone.</p>
 		<div class="flex flex-wrap gap-2">
 			<Button variant="ghost" size="sm" class="text-error">Delete all drafts</Button>
 			<Button variant="ghost" size="sm" class="text-error">Delete account</Button>

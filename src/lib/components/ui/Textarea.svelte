@@ -47,7 +47,9 @@
 	<textarea
 		id={textareaId}
 		bind:value
-		class="textarea textarea-bordered w-full resize-none {error ? 'textarea-error' : ''} {className}"
+		class="textarea-bordered textarea w-full resize-none {error
+			? 'textarea-error'
+			: ''} {className}"
 		maxlength={maxLength}
 		{...restProps}
 	></textarea>

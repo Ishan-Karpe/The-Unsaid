@@ -1,7 +1,7 @@
 // import { redirect } from '@sveltejs/kit';
 import type { LayoutServerLoad } from './$types';
 
-export const load: LayoutServerLoad = async ({ locals: _locals }) => {
+export const load: LayoutServerLoad = async () => {
 	// TODO: Check if user is authenticated
 	// If not authenticated, redirect to login
 	// const session = await locals.supabase.auth.getSession();

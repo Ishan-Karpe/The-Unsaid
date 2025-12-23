@@ -12,12 +12,12 @@
 	let { children }: Props = $props();
 </script>
 
-<div class="min-h-screen flex items-center justify-center bg-base-200 px-4">
+<div class="flex min-h-screen items-center justify-center bg-base-200 px-4">
 	<div class="w-full max-w-md">
 		<!-- Logo/Brand -->
-		<div class="text-center mb-8">
+		<div class="mb-8 text-center">
 			<h1 class="text-3xl font-bold text-primary">The Unsaid</h1>
-			<p class="text-base-content/70 mt-2">Turn feelings into words</p>
+			<p class="mt-2 text-base-content/70">Turn feelings into words</p>
 		</div>
 
 		<!-- Auth Form Container -->
@@ -28,7 +28,7 @@
 		</div>
 
 		<!-- Footer -->
-		<p class="text-center text-sm text-base-content/50 mt-6">
+		<p class="mt-6 text-center text-sm text-base-content/50">
 			Your words are encrypted. We can't read them.
 		</p>
 	</div>

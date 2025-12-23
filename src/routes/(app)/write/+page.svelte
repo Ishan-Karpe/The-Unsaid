@@ -11,7 +11,7 @@
 
 <div class="space-y-6">
 	<!-- Header -->
-	<div class="flex justify-between items-center">
+	<div class="flex items-center justify-between">
 		<h1 class="text-2xl font-bold">Write</h1>
 		<div class="flex items-center gap-2 text-sm text-base-content/60">
 			<span class="badge badge-ghost">Saved</span>
@@ -20,15 +20,9 @@
 
 	<!-- Metadata Fields -->
 	<Card compact>
-		<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-			<Input
-				label="Who are you writing to?"
-				placeholder="e.g., Mom, Partner, Friend"
-			/>
-			<Input
-				label="What do you want to express?"
-				placeholder="e.g., Gratitude, Apology, Love"
-			/>
+		<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+			<Input label="Who are you writing to?" placeholder="e.g., Mom, Partner, Friend" />
+			<Input label="What do you want to express?" placeholder="e.g., Gratitude, Apology, Love" />
 		</div>
 	</Card>
 
@@ -44,7 +38,7 @@
 
 	<!-- AI Assistant (placeholder) -->
 	<Card title="Need help finding words?" compact>
-		<p class="text-base-content/70 text-sm mb-4">
+		<p class="mb-4 text-sm text-base-content/70">
 			AI can help you clarify, find alternatives, or adjust the tone of your message.
 		</p>
 		<div class="flex flex-wrap gap-2">

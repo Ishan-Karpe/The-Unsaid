@@ -12,13 +12,13 @@
 <div class="space-y-6">
 	<div>
 		<h1 class="text-2xl font-bold">Your Patterns</h1>
-		<p class="text-base-content/70 mt-1">
+		<p class="mt-1 text-base-content/70">
 			Insights from your writing, computed privately on your device.
 		</p>
 	</div>
 
 	<!-- Stats Overview -->
-	<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+	<div class="grid grid-cols-2 gap-4 md:grid-cols-4">
 		<Card compact class="text-center">
 			<p class="text-3xl font-bold text-primary">0</p>
 			<p class="text-sm text-base-content/70">Total Drafts</p>
@@ -38,8 +38,8 @@
 	</div>
 
 	<!-- Empty State -->
-	<Card class="text-center py-12">
-		<p class="text-base-content/60 mb-2">Start writing to see your patterns</p>
+	<Card class="py-12 text-center">
+		<p class="mb-2 text-base-content/60">Start writing to see your patterns</p>
 		<p class="text-sm text-base-content/40">
 			All pattern analysis happens on your device. Your data stays private.
 		</p>

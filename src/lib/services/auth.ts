@@ -18,7 +18,10 @@ export const authService = {
 	/**
 	 * Sign up a new user
 	 */
-	async signUp({ email, password }: SignUpData): Promise<{ user: User | null; error: string | null }> {
+	async signUp({
+		email,
+		password
+	}: SignUpData): Promise<{ user: User | null; error: string | null }> {
 		const { data, error } = await supabase.auth.signUp({
 			email,
 			password
@@ -45,7 +48,10 @@ export const authService = {
 	/**
 	 * Log in an existing user
 	 */
-	async login({ email, password }: LoginData): Promise<{ user: User | null; error: string | null }> {
+	async login({
+		email,
+		password
+	}: LoginData): Promise<{ user: User | null; error: string | null }> {
 		const { data, error } = await supabase.auth.signInWithPassword({
 			email,
 			password

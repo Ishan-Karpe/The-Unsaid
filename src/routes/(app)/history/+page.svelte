@@ -2,6 +2,7 @@
   History Page - View past drafts
 -->
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { Card, Input } from '$lib/components';
 </script>
 
@@ -13,14 +14,11 @@
 	<h1 class="text-2xl font-bold">Your Drafts</h1>
 
 	<!-- Search and Filters -->
-	<div class="flex flex-col md:flex-row gap-4">
+	<div class="flex flex-col gap-4 md:flex-row">
 		<div class="flex-1">
-			<Input
-				type="search"
-				placeholder="Search drafts..."
-			/>
+			<Input type="search" placeholder="Search drafts..." />
 		</div>
-		<select class="select select-bordered w-full md:w-48">
+		<select class="select-bordered select w-full md:w-48">
 			<option value="">All recipients</option>
 			<option>Mom</option>
 			<option>Dad</option>
@@ -31,9 +29,9 @@
 	<!-- Draft List -->
 	<div class="space-y-4">
 		<!-- Empty State -->
-		<Card class="text-center py-12">
-			<p class="text-base-content/60 mb-4">No drafts yet</p>
-			<a href="/write" class="btn btn-primary">Start Writing</a>
+		<Card class="py-12 text-center">
+			<p class="mb-4 text-base-content/60">No drafts yet</p>
+			<a href={resolve('/write')} class="btn btn-primary">Start Writing</a>
 		</Card>
 
 		<!-- Draft cards will be rendered here -->

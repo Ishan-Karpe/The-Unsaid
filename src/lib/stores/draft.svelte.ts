@@ -1,6 +1,7 @@
 // ===========================================
 // THE UNSAID - Draft Store (Svelte 5 Runes)
 // ===========================================
+import { SvelteDate } from 'svelte/reactivity';
 import type { Draft, SyncStatus } from '$lib/types';
 
 // Default empty draft
@@ -17,7 +18,7 @@ const emptyDraft: Draft = {
 // Reactive state
 let currentDraft = $state<Draft>({ ...emptyDraft });
 let isDirty = $state<boolean>(false);
-let syncStatus = $state<SyncStatus>({ state: 'saved', lastSync: new Date() });
+let syncStatus = $state<SyncStatus>({ state: 'saved', lastSync: new SvelteDate() });
 
 export const draftStore = {
 	get draft() {
@@ -53,9 +54,9 @@ export const draftStore = {
 	// Mark as saved
 	markSaved(id?: string) {
 		if (id) currentDraft.id = id;
-		currentDraft.updatedAt = new Date();
+		currentDraft.updatedAt = new SvelteDate();
 		isDirty = false;
-		syncStatus = { state: 'saved', lastSync: new Date() };
+		syncStatus = { state: 'saved', lastSync: new SvelteDate() };
 	},
 
 	// Set sync status
@@ -67,7 +68,7 @@ export const draftStore = {
 	newDraft() {
 		currentDraft = { ...emptyDraft };
 		isDirty = false;
-		syncStatus = { state: 'saved', lastSync: new Date() };
+		syncStatus = { state: 'saved', lastSync: new SvelteDate() };
 	},
 
 	// Get word count

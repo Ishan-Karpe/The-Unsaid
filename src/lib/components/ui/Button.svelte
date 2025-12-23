@@ -48,7 +48,7 @@
 	{...restProps}
 >
 	{#if loading}
-		<span class="loading loading-spinner loading-sm"></span>
+		<span class="loading loading-sm loading-spinner"></span>
 	{/if}
 	{@render children()}
 </button>

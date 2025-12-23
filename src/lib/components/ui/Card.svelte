@@ -33,13 +33,13 @@
 		{/if}
 
 		{#if subtitle}
-			<p class="text-base-content/70 text-sm">{subtitle}</p>
+			<p class="text-sm text-base-content/70">{subtitle}</p>
 		{/if}
 
 		{@render children()}
 
 		{#if actions}
-			<div class="card-actions justify-end mt-4">
+			<div class="mt-4 card-actions justify-end">
 				{@render actions()}
 			</div>
 		{/if}
