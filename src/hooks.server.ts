@@ -1,19 +1,27 @@
 // ===========================================
 // THE UNSAID - Server Hooks
 // ===========================================
-// Handles auth on every request
+// Handles auth on every request, manages Supabase session
 
 import type { Handle } from '@sveltejs/kit';
+import { createSupabaseServerClient } from '$lib/server/supabase';
 
 export const handle: Handle = async ({ event, resolve }) => {
-	// TODO: Initialize Supabase server client
-	// event.locals.supabase = createServerClient(...)
+	// Create Supabase client for this request
+	event.locals.supabase = createSupabaseServerClient(event);
 
-	// TODO: Get session and attach to locals
-	// const session = await event.locals.supabase.auth.getSession();
-	// event.locals.session = session.data.session;
+	// Get session (refreshes token if needed)
+	const {
+		data: { session }
+	} = await event.locals.supabase.auth.getSession();
+	event.locals.session = session;
 
-	const response = await resolve(event);
+	// Resolve the request with filtered headers
+	const response = await resolve(event, {
+		filterSerializedResponseHeaders(name) {
+			return name === 'content-range' || name === 'x-supabase-api-version';
+		}
+	});
 
 	return response;
 };

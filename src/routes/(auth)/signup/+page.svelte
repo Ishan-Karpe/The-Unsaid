@@ -1,9 +1,44 @@
 <!--
-  Sign Up Page
+  Sign Up Page - Full implementation with password strength and validation
 -->
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { Button, Input } from '$lib/components';
+	import { Button, Input, Alert, PasswordStrength } from '$lib/components';
+	import { authService } from '$lib/services';
+	import { validatePassword, isValidEmail } from '$lib/utils/validation';
+
+	let email = $state('');
+	let password = $state('');
+	let confirmPassword = $state('');
+	let loading = $state(false);
+	let error = $state<string | null>(null);
+
+	// Derived password validation
+	let passwordValidation = $derived(validatePassword(password));
+	let passwordsMatch = $derived(password === confirmPassword && password.length > 0);
+	let emailValid = $derived(isValidEmail(email));
+	let canSubmit = $derived(emailValid && passwordValidation.valid && passwordsMatch && !loading);
+
+	async function handleSubmit(e: SubmitEvent) {
+		e.preventDefault();
+		if (!canSubmit) return;
+
+		loading = true;
+		error = null;
+
+		const result = await authService.signUp({ email, password });
+
+		if (result.error) {
+			error = result.error;
+			loading = false;
+			return;
+		}
+
+		// Signup successful - redirect to app (no email confirmation required)
+		loading = false;
+		goto(resolve('/write'));
+	}
 </script>
 
 <svelte:head>
@@ -28,19 +63,68 @@
 
 <h2 class="mb-6 text-xl font-semibold">Create your account</h2>
 
-<form class="space-y-4">
-	<Input type="email" label="Email" placeholder="you@example.com" required />
+{#if error}
+	<Alert type="error" class="mb-4">
+		{error}
+	</Alert>
+{/if}
 
-	<Input type="password" label="Password" placeholder="Create a strong password" required />
+<form class="space-y-4" onsubmit={handleSubmit}>
+	<Input
+		type="email"
+		label="Email"
+		placeholder="you@example.com"
+		required
+		autocomplete="email"
+		bind:value={email}
+		error={email.length > 0 && !emailValid ? 'Please enter a valid email address' : undefined}
+	/>
 
-	<Input type="password" label="Confirm Password" placeholder="Confirm your password" required />
-
-	<!-- Password strength indicator placeholder -->
-	<div class="text-xs text-base-content/60">
-		Password must be at least 8 characters with uppercase, lowercase, and numbers.
+	<div class="space-y-2">
+		<Input
+			type="password"
+			label="Password"
+			placeholder="Create a strong password"
+			required
+			autocomplete="new-password"
+			bind:value={password}
+		/>
+		{#if password.length > 0}
+			<PasswordStrength {password} />
+		{/if}
 	</div>
 
-	<Button type="submit" class="w-full">Create account</Button>
+	<Input
+		type="password"
+		label="Confirm Password"
+		placeholder="Confirm your password"
+		required
+		autocomplete="new-password"
+		bind:value={confirmPassword}
+		error={confirmPassword.length > 0 && !passwordsMatch ? "Passwords don't match" : undefined}
+	/>
+
+	{#if confirmPassword.length > 0 && passwordsMatch}
+		<div class="flex items-center gap-2 text-sm text-success">
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				class="h-4 w-4"
+				viewBox="0 0 20 20"
+				fill="currentColor"
+			>
+				<path
+					fill-rule="evenodd"
+					d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+					clip-rule="evenodd"
+				/>
+			</svg>
+			<span>Passwords match</span>
+		</div>
+	{/if}
+
+	<Button type="submit" class="w-full" disabled={!canSubmit} {loading}>
+		{loading ? 'Creating account...' : 'Create account'}
+	</Button>
 </form>
 
 <div class="divider">or</div>

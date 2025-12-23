@@ -1,8 +1,10 @@
 <!--
   Auth Layout - Shared layout for login/signup/forgot-password
-  Centers content and provides auth-specific styling
+  Centers content and provides auth-specific styling with loading state
 -->
 <script lang="ts">
+	import { navigating } from '$app/stores';
+	import { LoadingSpinner } from '$lib/components';
 	import type { Snippet } from 'svelte';
 
 	interface Props {
@@ -10,6 +12,9 @@
 	}
 
 	let { children }: Props = $props();
+
+	// Check if navigating (shows loading during page transitions)
+	let isNavigating = $derived($navigating !== null);
 </script>
 
 <div class="flex min-h-screen items-center justify-center bg-base-200 px-4">
@@ -23,7 +28,14 @@
 		<!-- Auth Form Container -->
 		<div class="card bg-base-100 shadow-xl">
 			<div class="card-body">
-				{@render children()}
+				{#if isNavigating}
+					<div class="flex flex-col items-center justify-center py-8">
+						<LoadingSpinner size="lg" />
+						<p class="mt-4 text-sm text-base-content/70">Loading...</p>
+					</div>
+				{:else}
+					{@render children()}
+				{/if}
 			</div>
 		</div>
 

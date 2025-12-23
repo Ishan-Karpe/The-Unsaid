@@ -1,9 +1,52 @@
 <!--
-  Login Page
+  Login Page - Full implementation with auth and redirect handling
 -->
 <script lang="ts">
+	import { goto, invalidateAll } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { Button, Input } from '$lib/components';
+	import { page } from '$app/stores';
+	import { Button, Input, Alert } from '$lib/components';
+	import { authService } from '$lib/services';
+	import { authStore } from '$lib/stores/auth.svelte';
+
+	let email = $state('');
+	let password = $state('');
+	let rememberMe = $state(false);
+	let loading = $state(false);
+	let error = $state<string | null>(null);
+
+	// Get redirect destination and check for confirmation message
+	let redirectTo = $derived($page.url.searchParams.get('redirectTo') || '/write');
+	let confirmed = $derived($page.url.searchParams.get('confirmed') === 'true');
+
+	let canSubmit = $derived(email.length > 0 && password.length > 0 && !loading);
+
+	async function handleSubmit(e: SubmitEvent) {
+		e.preventDefault();
+		if (!canSubmit) return;
+
+		loading = true;
+		error = null;
+
+		const result = await authService.login({ email, password });
+
+		if (result.error) {
+			// Friendly error messages
+			if (result.error.includes('Invalid login')) {
+				error = 'Invalid email or password. Please try again.';
+			} else if (result.error.includes('Email not confirmed')) {
+				error = 'Please check your email and confirm your account first.';
+			} else {
+				error = result.error;
+			}
+			loading = false;
+			return;
+		}
+
+		authStore.setUser(result.user);
+		await invalidateAll();
+		goto(redirectTo);
+	}
 </script>
 
 <svelte:head>
@@ -28,20 +71,46 @@
 
 <h2 class="mb-6 text-xl font-semibold">Welcome back</h2>
 
-<form class="space-y-4">
-	<Input type="email" label="Email" placeholder="you@example.com" required />
+{#if confirmed}
+	<Alert type="success" class="mb-4">Your email has been confirmed! You can now log in.</Alert>
+{/if}
 
-	<Input type="password" label="Password" placeholder="Your password" required />
+{#if error}
+	<Alert type="error" class="mb-4">
+		{error}
+	</Alert>
+{/if}
+
+<form class="space-y-4" onsubmit={handleSubmit}>
+	<Input
+		type="email"
+		label="Email"
+		placeholder="you@example.com"
+		required
+		autocomplete="email"
+		bind:value={email}
+	/>
+
+	<Input
+		type="password"
+		label="Password"
+		placeholder="Your password"
+		required
+		autocomplete="current-password"
+		bind:value={password}
+	/>
 
 	<div class="flex items-center justify-between text-sm">
 		<label class="flex cursor-pointer items-center gap-2">
-			<input type="checkbox" class="checkbox checkbox-sm" />
+			<input type="checkbox" class="checkbox checkbox-sm" bind:checked={rememberMe} />
 			<span>Remember me</span>
 		</label>
 		<a href={resolve('/forgot-password')} class="link link-primary">Forgot password?</a>
 	</div>
 
-	<Button type="submit" class="w-full">Log in</Button>
+	<Button type="submit" class="w-full" disabled={!canSubmit} {loading}>
+		{loading ? 'Logging in...' : 'Log in'}
+	</Button>
 </form>
 
 <div class="divider">or</div>

@@ -1,4 +1,7 @@
 {
+	"enableAllProjectMcpServers": true,
 	"enabledMcpjsonServers": ["svelte"],
-	"enableAllProjectMcpServers": true
+	"permissions": {
+		"allow": ["Bash(find:*)"]
+	}
 }
