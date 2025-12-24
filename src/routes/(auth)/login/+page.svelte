@@ -6,7 +6,7 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/stores';
 	import { Button, Input, Alert } from '$lib/components';
-	import { authService } from '$lib/services';
+	import { authService, keyDerivationService } from '$lib/services';
 	import { authStore } from '$lib/stores/auth.svelte';
 
 	let email = $state('');
@@ -43,8 +43,20 @@
 			return;
 		}
 
+		// Derive encryption key from password
+		const keyResult = await keyDerivationService.deriveAndStoreKey(result.user!.id, password);
+
+		if (!keyResult.success) {
+			error = 'Failed to set up encryption. Please try again.';
+			// Log out since we can't encrypt without the key
+			await authService.logout();
+			loading = false;
+			return;
+		}
+
 		authStore.setUser(result.user);
 		await invalidateAll();
+		// eslint-disable-next-line svelte/no-navigation-without-resolve -- redirectTo is a dynamic URL from query params
 		goto(redirectTo);
 	}
 </script>

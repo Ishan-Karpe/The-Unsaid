@@ -5,7 +5,7 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { Button, Input, Alert, PasswordStrength } from '$lib/components';
-	import { authService } from '$lib/services';
+	import { authService, keyDerivationService } from '$lib/services';
 	import { validatePassword, isValidEmail } from '$lib/utils/validation';
 
 	let email = $state('');
@@ -35,7 +35,18 @@
 			return;
 		}
 
-		// Signup successful - redirect to app (no email confirmation required)
+		// Derive encryption key from password for new user
+		const keyResult = await keyDerivationService.deriveAndStoreKey(result.user!.id, password);
+
+		if (!keyResult.success) {
+			error = 'Failed to set up encryption. Please try again.';
+			// Log out since we can't encrypt without the key
+			await authService.logout();
+			loading = false;
+			return;
+		}
+
+		// Signup successful - redirect to app
 		loading = false;
 		goto(resolve('/write'));
 	}

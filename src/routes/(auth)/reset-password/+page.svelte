@@ -39,7 +39,7 @@
 
 		success = true;
 		loading = false;
-		setTimeout(() => goto('/login'), 2000);
+		setTimeout(() => goto(resolve('/login')), 2000);
 	}
 </script>
 

@@ -53,13 +53,17 @@ export async function deriveKey(password: string, salt: Uint8Array): Promise<Cry
 
 /**
  * Encrypt plaintext using AES-256-GCM
+ * @param plaintext - The text to encrypt
+ * @param key - The CryptoKey to use for encryption
+ * @param providedIv - Optional IV to use (generates new one if not provided)
  */
 export async function encrypt(
 	plaintext: string,
-	key: CryptoKey
+	key: CryptoKey,
+	providedIv?: Uint8Array
 ): Promise<{ ciphertext: string; iv: string }> {
 	const encoder = new TextEncoder();
-	const iv = generateIV();
+	const iv = providedIv ?? generateIV();
 
 	const encryptedBuffer = await crypto.subtle.encrypt(
 		{ name: ALGORITHM, iv: iv as BufferSource },

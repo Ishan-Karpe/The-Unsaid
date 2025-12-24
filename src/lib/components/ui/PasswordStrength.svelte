@@ -23,7 +23,7 @@
 <div class="space-y-2">
 	<!-- Strength bar -->
 	<div class="flex gap-1">
-		{#each Array(5) as _, i}
+		{#each [0, 1, 2, 3, 4] as i (i)}
 			<div
 				class="h-1.5 flex-1 rounded-full transition-colors duration-200 {i < validation.score
 					? colorClass

@@ -5,7 +5,7 @@
 	import { goto, invalidateAll } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/stores';
-	import { authService } from '$lib/services';
+	import { authService, keyDerivationService } from '$lib/services';
 	import type { Snippet } from 'svelte';
 
 	interface Props {
@@ -21,9 +21,13 @@
 
 	async function handleLogout() {
 		loggingOut = true;
+
+		// Clear encryption key from memory FIRST (critical for security)
+		keyDerivationService.clearEncryptionKey();
+
 		await authService.logout();
 		await invalidateAll();
-		goto('/login');
+		goto(resolve('/login'));
 	}
 
 	// Navigation items with resolved hrefs

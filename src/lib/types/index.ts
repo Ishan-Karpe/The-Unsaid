@@ -3,6 +3,15 @@
 // ===========================================
 
 // ------------------------------------------
+// Encryption Types
+// ------------------------------------------
+export interface UserSalt {
+	user_id: string;
+	salt: string; // Base64 encoded
+	created_at: string;
+}
+
+// ------------------------------------------
 // Draft Types
 // ------------------------------------------
 export interface Draft {
