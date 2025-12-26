@@ -6,3 +6,4 @@ export { default as Textarea } from './Textarea.svelte';
 export { default as Alert } from './Alert.svelte';
 export { default as LoadingSpinner } from './LoadingSpinner.svelte';
 export { default as PasswordStrength } from './PasswordStrength.svelte';
+export { default as PasswordPrompt } from './PasswordPrompt.svelte';

@@ -84,11 +84,11 @@ export const authService = {
 	},
 
 	/**
-	 * Get current session
+	 * Get current user (securely verified)
 	 */
-	async getSession() {
-		const { data, error } = await supabase.auth.getSession();
-		return { session: data.session, error: error?.message || null };
+	async getUser() {
+		const { data, error } = await supabase.auth.getUser();
+		return { user: data.user, error: error?.message || null };
 	},
 
 	/**

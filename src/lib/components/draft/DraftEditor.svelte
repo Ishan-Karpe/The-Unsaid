@@ -11,9 +11,7 @@
 	interface Props {
 		placeholder?: string;
 		minRows?: number;
-		maxRows?: number;
 		maxLength?: number;
-		autosaveEnabled?: boolean;
 		autosaveDebounceMs?: number;
 		onSave?: () => void;
 		onSaveError?: (error: string) => void;
@@ -22,15 +20,14 @@
 	let {
 		placeholder = "Start writing... Take your time. There's no rush.",
 		minRows = 8,
-		maxRows = 20,
 		maxLength = 10000,
-		autosaveEnabled = true,
 		autosaveDebounceMs = 2000,
 		onSave,
 		onSaveError
 	}: Props = $props();
 
-	// Bind to store content
+	// Bind to store content (two-way binding requires $state, not $derived)
+	// eslint-disable-next-line svelte/prefer-writable-derived
 	let content = $state(draftStore.draft.content);
 
 	// Initialize autosave hook (debounceMs is intentionally captured once at init)
@@ -40,7 +37,7 @@
 		onSaveStart: () => {
 			// Autosave started
 		},
-		onSaveSuccess: (draftId) => {
+		onSaveSuccess: () => {
 			onSave?.();
 		},
 		onSaveError: (error) => {
@@ -49,7 +46,7 @@
 	});
 
 	// Initialize keyboard shortcuts
-	const shortcuts = useKeyboardShortcuts({
+	useKeyboardShortcuts({
 		shortcuts: [
 			createCommonShortcuts.save(() => {
 				// Manual save via Cmd/Ctrl+S

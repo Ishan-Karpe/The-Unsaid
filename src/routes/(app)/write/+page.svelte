@@ -7,8 +7,9 @@
 	import { onMount } from 'svelte';
 	import { conversationPrompts, categoryLabels } from '$lib/data/prompts';
 	import type { PromptCategory, AIMode } from '$lib/types';
-	import { DraftEditor, MetadataFields, SyncIndicator } from '$lib/components';
+	import { DraftEditor, MetadataFields, SyncIndicator, AISuggestions } from '$lib/components';
 	import { draftStore } from '$lib/stores/draft.svelte';
+	import { aiStore } from '$lib/stores/ai.svelte';
 
 	// Animation states
 	let sidebarVisible = $state(false);
@@ -44,6 +45,10 @@
 	let currentEmotion = $derived(draftStore.draft.emotion);
 	let hasContent = $derived(draftStore.draft.content.trim().length > 0);
 
+	// AI state
+	let isAILoading = $derived(aiStore.isLoading);
+	let showAISuggestions = $derived(aiStore.status !== 'idle');
+
 	onMount(() => {
 		setTimeout(() => (sidebarVisible = true), 100);
 		setTimeout(() => (editorVisible = true), 200);
@@ -64,8 +69,25 @@
 	}
 
 	function handleAITool(mode: AIMode) {
-		console.log(`Using AI tool: ${mode}`);
-		// TODO: Implement AI tool integration
+		// Don't trigger if already loading or no content
+		if (isAILoading || !hasContent) return;
+
+		// Get current draft data
+		const draftText = draftStore.draft.content;
+		const recipient = draftStore.draft.recipient || 'someone special';
+		const intent = draftStore.draft.intent || 'express my feelings';
+
+		// Request AI suggestions
+		aiStore.requestSuggestions(mode, draftText, recipient, intent);
+	}
+
+	function handleApplySuggestion(text: string) {
+		// Replace draft content with selected suggestion
+		draftStore.setContent(text);
+	}
+
+	function handleDismissSuggestions() {
+		// Clear AI state (already handled by AISuggestions component)
 	}
 </script>
 
@@ -217,9 +239,12 @@
 					{#each aiTools as tool (tool.mode)}
 						<button
 							type="button"
-							class="btn w-full justify-start gap-2 btn-ghost transition-all duration-200 btn-sm hover:bg-primary/10 hover:text-primary"
+							class="btn w-full justify-start gap-2 btn-ghost transition-all duration-200 btn-sm hover:bg-primary/10 hover:text-primary {isAILoading &&
+							aiStore.activeMode === tool.mode
+								? 'loading'
+								: ''}"
 							onclick={() => handleAITool(tool.mode)}
-							disabled={!hasContent}
+							disabled={!hasContent || isAILoading}
 						>
 							{#if tool.icon === 'tone'}
 								<svg
@@ -338,6 +363,13 @@
 			</div>
 		</div>
 
+		<!-- AI Suggestions Panel -->
+		{#if showAISuggestions}
+			<div class="mt-4">
+				<AISuggestions onApply={handleApplySuggestion} onDismiss={handleDismissSuggestions} />
+			</div>
+		{/if}
+
 		<!-- Bottom Action Bar -->
 		<div
 			class="mt-4 flex items-center justify-between rounded-lg border border-base-content/10 bg-base-100 px-4 py-3 shadow-sm"
@@ -354,9 +386,11 @@
 			<div class="flex items-center gap-2">
 				<button
 					type="button"
-					class="btn gap-2 btn-ghost btn-sm"
+					class="btn gap-2 btn-ghost btn-sm {isAILoading && aiStore.activeMode === 'tone'
+						? 'loading'
+						: ''}"
 					onclick={() => handleAITool('tone')}
-					disabled={!hasContent}
+					disabled={!hasContent || isAILoading}
 				>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"

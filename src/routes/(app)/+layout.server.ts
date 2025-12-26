@@ -7,7 +7,7 @@ import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = async ({ locals, url }) => {
 	// Check if user is authenticated
-	if (!locals.session) {
+	if (!locals.user) {
 		// Redirect to login with the intended destination
 		const redirectTo = encodeURIComponent(url.pathname + url.search);
 		redirect(303, `/login?redirectTo=${redirectTo}`);
@@ -16,9 +16,9 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
 	// Return user info for protected routes
 	return {
 		user: {
-			id: locals.session.user.id,
-			email: locals.session.user.email!,
-			createdAt: locals.session.user.created_at
+			id: locals.user.id,
+			email: locals.user.email!,
+			createdAt: locals.user.created_at
 		}
 	};
 };

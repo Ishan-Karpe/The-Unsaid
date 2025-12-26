@@ -63,14 +63,22 @@
 		return result;
 	});
 
-	onMount(async () => {
+	onMount(() => {
 		// Staggered animations
 		setTimeout(() => (headerVisible = true), 100);
 		setTimeout(() => (filtersVisible = true), 200);
 		setTimeout(() => (listVisible = true), 300);
 
 		// Load drafts
-		await loadDrafts();
+		loadDrafts();
+
+		// Listen for encryption key restoration (when user enters password after session restore)
+		const handleKeyRestored = () => loadDrafts();
+		window.addEventListener('encryption-key-restored', handleKeyRestored);
+
+		return () => {
+			window.removeEventListener('encryption-key-restored', handleKeyRestored);
+		};
 	});
 
 	async function loadDrafts() {
@@ -169,7 +177,7 @@
 				<p class="mt-1 text-sm text-base-content/60">
 					{#if loading}
 						Loading your drafts...
-					{:else if filteredDrafts().length === 0 && drafts.length > 0}
+					{:else if filteredDrafts.length === 0 && drafts.length > 0}
 						No drafts match your filters
 					{:else}
 						{drafts.length} {drafts.length === 1 ? 'draft' : 'drafts'} saved
@@ -298,7 +306,7 @@
 					</button>
 				</div>
 			</div>
-		{:else if filteredDrafts().length === 0}
+		{:else if filteredDrafts.length === 0}
 			<!-- Empty State -->
 			<div
 				class="card border border-base-content/10 bg-base-100 shadow-sm transition-all duration-300 hover:shadow-md"
@@ -358,7 +366,7 @@
 		{:else}
 			<!-- Draft Cards -->
 			<div class="space-y-4">
-				{#each filteredDrafts() as draft, index (draft.id)}
+				{#each filteredDrafts as draft, index (draft.id)}
 					<div
 						class="card-hover card border border-base-content/10 bg-base-100 shadow-sm transition-all duration-300"
 						style="animation-delay: {index * 50}ms"

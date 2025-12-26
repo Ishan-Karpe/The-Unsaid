@@ -10,11 +10,12 @@ export const handle: Handle = async ({ event, resolve }) => {
 	// Create Supabase client for this request
 	event.locals.supabase = createSupabaseServerClient(event);
 
-	// Get session (refreshes token if needed)
+	// Use getUser() for secure server-side verification
+	// This contacts the Supabase Auth server to verify the token
 	const {
-		data: { session }
-	} = await event.locals.supabase.auth.getSession();
-	event.locals.session = session;
+		data: { user }
+	} = await event.locals.supabase.auth.getUser();
+	event.locals.user = user;
 
 	// Resolve the request with filtered headers
 	const response = await resolve(event, {

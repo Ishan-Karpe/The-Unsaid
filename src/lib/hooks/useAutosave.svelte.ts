@@ -37,6 +37,7 @@ export function useAutosave(options: AutosaveOptions = {}) {
 	let lastError = $state<string | null>(null);
 
 	// Derived state for pending status
+	// eslint-disable-next-line prefer-const
 	let isPending = $derived(saveTimer !== null);
 
 	/**

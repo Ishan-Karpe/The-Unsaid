@@ -31,6 +31,14 @@ export const draftService = {
 	 * @returns The saved draft with timestamps or error
 	 */
 	async saveDraft(draft: Omit<Draft, 'createdAt' | 'updatedAt'>): Promise<SaveDraftResult> {
+		// Check if encryption is ready first
+		if (!encryptionService.isReady()) {
+			return {
+				draft: null,
+				error: 'Please log in again to save encrypted drafts'
+			};
+		}
+
 		// Encrypt the draft
 		const { encryptedDraft, error: encryptError } = await encryptionService.encryptDraft({
 			content: draft.content,
@@ -111,6 +119,14 @@ export const draftService = {
 	 * @returns All user's drafts sorted by most recently updated
 	 */
 	async getDrafts(): Promise<GetDraftsResult> {
+		// Check if encryption is ready first
+		if (!encryptionService.isReady()) {
+			return {
+				drafts: [],
+				error: 'Please log in again to access your encrypted drafts'
+			};
+		}
+
 		const { data, error } = await supabase
 			.from('drafts')
 			.select('*')
@@ -156,6 +172,14 @@ export const draftService = {
 	 * @returns The decrypted draft or error
 	 */
 	async getDraft(id: string): Promise<{ draft: Draft | null; error: string | null }> {
+		// Check if encryption is ready first
+		if (!encryptionService.isReady()) {
+			return {
+				draft: null,
+				error: 'Please log in again to access your encrypted drafts'
+			};
+		}
+
 		const { data, error } = await supabase.from('drafts').select('*').eq('id', id).single();
 
 		if (error) {
