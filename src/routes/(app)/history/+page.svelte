@@ -4,8 +4,10 @@
 -->
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { draftService } from '$lib/services';
+	import { draftStore } from '$lib/stores/draft.svelte';
 	import type { Draft } from '$lib/types';
 
 	// Animation states
@@ -32,7 +34,7 @@
 		[...new Set(drafts.map((d) => d.recipient).filter(Boolean))].sort()
 	);
 
-	let filteredDrafts = $derived(() => {
+	let filteredDrafts = $derived.by(() => {
 		let result = [...drafts];
 
 		// Filter by search query
@@ -142,6 +144,16 @@
 		};
 		return labels[intent] || intent;
 	}
+
+	function handleNewDraft() {
+		draftStore.newDraft();
+		goto(resolve('/write'));
+	}
+
+	function handleEditDraft(draft: Draft) {
+		draftStore.loadDraft(draft);
+		goto(resolve('/write'));
+	}
 </script>
 
 <svelte:head>
@@ -164,8 +176,9 @@
 					{/if}
 				</p>
 			</div>
-			<a
-				href={resolve('/write')}
+			<button
+				type="button"
+				onclick={handleNewDraft}
 				class="btn gap-2 shadow-sm transition-all duration-200 btn-primary hover:shadow-md hover:shadow-primary/25"
 			>
 				<svg
@@ -181,7 +194,7 @@
 					/>
 				</svg>
 				New Draft
-			</a>
+			</button>
 		</div>
 	</div>
 
@@ -309,8 +322,9 @@
 						<p class="mb-6 max-w-sm text-base-content/60">
 							Start writing to express what matters most. Your drafts will appear here.
 						</p>
-						<a
-							href={resolve('/write')}
+						<button
+							type="button"
+							onclick={handleNewDraft}
 							class="btn gap-2 shadow-sm transition-all duration-200 btn-primary hover:shadow-md hover:shadow-primary/25"
 						>
 							<svg
@@ -324,7 +338,7 @@
 								/>
 							</svg>
 							Start Writing
-						</a>
+						</button>
 					{:else}
 						<h3 class="mb-2 text-lg font-semibold text-base-content/80">No matching drafts</h3>
 						<p class="mb-4 text-base-content/60">Try adjusting your search or filters.</p>
@@ -392,8 +406,9 @@
 											Confirm
 										</button>
 									{:else}
-										<a
-											href={resolve('/write')}
+										<button
+											type="button"
+											onclick={() => handleEditDraft(draft)}
 											class="btn btn-ghost transition-colors duration-200 btn-sm hover:bg-primary/10 hover:text-primary"
 											title="Edit draft"
 										>
@@ -407,7 +422,7 @@
 													d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"
 												/>
 											</svg>
-										</a>
+										</button>
 										<button
 											type="button"
 											class="btn btn-ghost transition-colors duration-200 btn-sm hover:bg-error/10 hover:text-error"

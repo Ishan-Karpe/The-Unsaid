@@ -1,33 +1,68 @@
 <!--
   DraftEditor.svelte - Main draft editing component
-  Handles content input with character/word counts and auto-resize
+  Handles content input with autosave, keyboard shortcuts, and auto-resize
   Usage: <DraftEditor placeholder="Start writing..." />
 -->
 <script lang="ts">
 	import { Textarea } from '$lib/components';
 	import { draftStore } from '$lib/stores/draft.svelte';
+	import { useAutosave, useKeyboardShortcuts, createCommonShortcuts } from '$lib/hooks';
 
 	interface Props {
 		placeholder?: string;
 		minRows?: number;
 		maxRows?: number;
 		maxLength?: number;
+		autosaveEnabled?: boolean;
+		autosaveDebounceMs?: number;
+		onSave?: () => void;
+		onSaveError?: (error: string) => void;
 	}
 
 	let {
 		placeholder = "Start writing... Take your time. There's no rush.",
 		minRows = 8,
 		maxRows = 20,
-		maxLength = 10000
+		maxLength = 10000,
+		autosaveEnabled = true,
+		autosaveDebounceMs = 2000,
+		onSave,
+		onSaveError
 	}: Props = $props();
 
 	// Bind to store content
 	let content = $state(draftStore.draft.content);
 
+	// Initialize autosave hook (debounceMs is intentionally captured once at init)
+	// svelte-ignore state_referenced_locally
+	const autosave = useAutosave({
+		debounceMs: autosaveDebounceMs,
+		onSaveStart: () => {
+			// Autosave started
+		},
+		onSaveSuccess: (draftId) => {
+			onSave?.();
+		},
+		onSaveError: (error) => {
+			onSaveError?.(error);
+		}
+	});
+
+	// Initialize keyboard shortcuts
+	const shortcuts = useKeyboardShortcuts({
+		shortcuts: [
+			createCommonShortcuts.save(() => {
+				// Manual save via Cmd/Ctrl+S
+				autosave.saveNow();
+			})
+		]
+	});
+
 	// Sync content changes to store
 	function handleInput() {
 		if (content !== draftStore.draft.content) {
 			draftStore.setContent(content);
+			// Autosave will be triggered by the useAutosave hook watching isDirty
 		}
 	}
 
@@ -35,6 +70,15 @@
 	$effect(() => {
 		content = draftStore.draft.content;
 	});
+
+	// Expose autosave methods for parent components
+	export function saveNow() {
+		return autosave.saveNow();
+	}
+
+	export function cancelSave() {
+		autosave.cancelSave();
+	}
 </script>
 
 <div class="draft-editor">

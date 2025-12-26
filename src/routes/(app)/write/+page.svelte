@@ -1,56 +1,34 @@
 <!--
   Write Page - Core drafting experience with sidebar, AI tools, and elegant animations
   Matches the landing page design language with DaisyUI and Tailwind CSS
+  Integrated with draftStore for centralized state management
 -->
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { conversationPrompts, categoryLabels } from '$lib/data/prompts';
 	import type { PromptCategory, AIMode } from '$lib/types';
+	import { DraftEditor, MetadataFields, SyncIndicator } from '$lib/components';
+	import { draftStore } from '$lib/stores/draft.svelte';
 
 	// Animation states
 	let sidebarVisible = $state(false);
 	let editorVisible = $state(false);
 
-	// Draft state
-	let title = $state('');
-	let content = $state('');
-	let recipient = $state('');
-	let intent = $state('');
-	let selectedFeelings = $state<string[]>([]);
+	// Local UI state (not draft data)
 	let privacyMode = $state(true);
-
-	// Save state
-	let saveStatus = $state<'saved' | 'saving' | 'unsaved'>('saved');
-	let lastSaved = $state<Date | null>(null);
-
-	// Undo/Redo history
-	let history = $state<string[]>(['']);
-	let historyIndex = $state(0);
-
-	// Prompt selector state
-	let selectedCategory = $state<PromptCategory>('gratitude');
 	let showPrompts = $state(false);
+	let selectedCategory = $state<PromptCategory>('gratitude');
 
-	// Feelings options
+	// Feelings options for the sidebar
 	const feelings = [
-		'Grateful',
-		'Anxious',
-		'Hopeful',
-		'Hurt',
-		'Confused',
-		'Loving',
-		'Frustrated',
-		'Relieved'
-	];
-
-	// Intent options
-	const intents = [
-		{ value: 'appreciation', label: 'Express Appreciation' },
-		{ value: 'apology', label: 'Apologize' },
-		{ value: 'boundary', label: 'Set a Boundary' },
-		{ value: 'reconnect', label: 'Reconnect' },
-		{ value: 'closure', label: 'Find Closure' },
-		{ value: 'other', label: 'Other' }
+		{ value: 'grateful', label: 'Grateful' },
+		{ value: 'anxious', label: 'Anxious' },
+		{ value: 'hopeful', label: 'Hopeful' },
+		{ value: 'hurt', label: 'Hurt' },
+		{ value: 'confused', label: 'Confused' },
+		{ value: 'loving', label: 'Loving' },
+		{ value: 'frustrated', label: 'Frustrated' },
+		{ value: 'relieved', label: 'Relieved' }
 	];
 
 	// AI tools
@@ -60,9 +38,11 @@
 		{ mode: 'clarify', label: 'Rewrite for Clarity', icon: 'clarify' }
 	];
 
-	// Computed values
-	let wordCount = $derived(content.trim() ? content.trim().split(/\s+/).length : 0);
+	// Computed values from store
+	let wordCount = $derived(draftStore.wordCount);
 	let readTime = $derived(Math.max(1, Math.ceil(wordCount / 200)));
+	let currentEmotion = $derived(draftStore.draft.emotion);
+	let hasContent = $derived(draftStore.draft.content.trim().length > 0);
 
 	onMount(() => {
 		setTimeout(() => (sidebarVisible = true), 100);
@@ -70,67 +50,23 @@
 	});
 
 	function toggleFeeling(feeling: string) {
-		if (selectedFeelings.includes(feeling)) {
-			selectedFeelings = selectedFeelings.filter((f) => f !== feeling);
+		// Toggle emotion - if already selected, clear it
+		if (currentEmotion === feeling) {
+			draftStore.setMetadata({ emotion: undefined });
 		} else {
-			selectedFeelings = [...selectedFeelings, feeling];
+			draftStore.setMetadata({ emotion: feeling });
 		}
-		markUnsaved();
 	}
 
 	function selectPrompt(promptText: string) {
-		content = promptText + ' ';
+		draftStore.setContent(promptText + ' ');
 		showPrompts = false;
-		markUnsaved();
-		// Focus on editor
-	}
-
-	function markUnsaved() {
-		saveStatus = 'unsaved';
-	}
-
-	function handleContentChange() {
-		markUnsaved();
-		// Add to history for undo/redo
-		if (content !== history[historyIndex]) {
-			history = [...history.slice(0, historyIndex + 1), content];
-			historyIndex = history.length - 1;
-		}
-	}
-
-	function undo() {
-		if (historyIndex > 0) {
-			historyIndex--;
-			content = history[historyIndex];
-		}
-	}
-
-	function redo() {
-		if (historyIndex < history.length - 1) {
-			historyIndex++;
-			content = history[historyIndex];
-		}
-	}
-
-	async function saveDraft() {
-		saveStatus = 'saving';
-		// Simulate save - in real app, this would encrypt and save to Supabase
-		await new Promise((resolve) => setTimeout(resolve, 800));
-		saveStatus = 'saved';
-		lastSaved = new Date();
-	}
-
-	function analyzeTone() {
-		// Placeholder for AI tone analysis
-		console.log('Analyzing tone...');
 	}
 
 	function handleAITool(mode: AIMode) {
 		console.log(`Using AI tool: ${mode}`);
+		// TODO: Implement AI tool integration
 	}
-
-	let canUndo = $derived(historyIndex > 0);
-	let canRedo = $derived(historyIndex < history.length - 1);
 </script>
 
 <svelte:head>
@@ -161,38 +97,8 @@
 					Context
 				</h3>
 
-				<!-- Recipient -->
-				<div class="form-control">
-					<label for="recipient" class="label py-1">
-						<span class="label-text text-xs font-medium text-base-content/60">Recipient</span>
-					</label>
-					<input
-						type="text"
-						id="recipient"
-						bind:value={recipient}
-						oninput={markUnsaved}
-						placeholder="Who are you writing to?"
-						class="input-bordered input input-sm w-full bg-base-200/50 transition-all duration-200 focus:bg-base-100"
-					/>
-				</div>
-
-				<!-- Intent -->
-				<div class="form-control">
-					<label for="intent" class="label py-1">
-						<span class="label-text text-xs font-medium text-base-content/60">Intent</span>
-					</label>
-					<select
-						id="intent"
-						bind:value={intent}
-						onchange={markUnsaved}
-						class="select-bordered select w-full bg-base-200/50 select-sm transition-all duration-200 focus:bg-base-100"
-					>
-						<option value="" disabled>What do you want to express?</option>
-						{#each intents as { value, label } (value)}
-							<option {value}>{label}</option>
-						{/each}
-					</select>
-				</div>
+				<!-- Metadata Fields Component -->
+				<MetadataFields />
 
 				<!-- Current Feeling -->
 				<div class="form-control">
@@ -201,17 +107,16 @@
 						<span class="label-text text-xs font-medium text-base-content/60">Current Feeling</span>
 					</label>
 					<div class="flex flex-wrap gap-1.5">
-						{#each feelings as feeling (feeling)}
+						{#each feelings as feeling (feeling.value)}
 							<button
 								type="button"
-								class="badge cursor-pointer transition-all duration-200 {selectedFeelings.includes(
-									feeling
-								)
+								class="badge cursor-pointer transition-all duration-200 {currentEmotion ===
+								feeling.value
 									? 'badge-primary'
 									: 'hover:badge-primary/50 badge-ghost'}"
-								onclick={() => toggleFeeling(feeling)}
+								onclick={() => toggleFeeling(feeling.value)}
 							>
-								{feeling}
+								{feeling.label}
 							</button>
 						{/each}
 					</div>
@@ -314,7 +219,7 @@
 							type="button"
 							class="btn w-full justify-start gap-2 btn-ghost transition-all duration-200 btn-sm hover:bg-primary/10 hover:text-primary"
 							onclick={() => handleAITool(tool.mode)}
-							disabled={!content.trim()}
+							disabled={!hasContent}
 						>
 							{#if tool.icon === 'tone'}
 								<svg
@@ -394,25 +299,8 @@
 			class="mb-4 flex items-center justify-between rounded-lg border border-base-content/10 bg-base-100 px-4 py-2 shadow-sm"
 		>
 			<div class="flex items-center gap-4">
-				<!-- Save Status -->
-				<div class="flex items-center gap-2 text-sm">
-					{#if saveStatus === 'saved'}
-						<span class="h-2 w-2 rounded-full bg-success"></span>
-						<span class="text-base-content/60">Saved</span>
-					{:else if saveStatus === 'saving'}
-						<span class="loading loading-xs loading-spinner text-primary"></span>
-						<span class="text-base-content/60">Saving...</span>
-					{:else}
-						<span class="h-2 w-2 rounded-full bg-warning"></span>
-						<span class="text-base-content/60">Unsaved changes</span>
-					{/if}
-				</div>
-
-				{#if lastSaved}
-					<span class="text-xs text-base-content/40">
-						Last saved {lastSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-					</span>
-				{/if}
+				<!-- Sync Status Component -->
+				<SyncIndicator />
 			</div>
 
 			<div class="flex items-center gap-4 text-sm text-base-content/60">
@@ -425,44 +313,28 @@
 		<!-- Editor Card -->
 		<div class="card flex-1 border border-base-content/10 bg-base-100 shadow-sm">
 			<div class="card-body flex flex-col gap-4 p-6">
-				<!-- Title Input -->
-				<input
-					type="text"
-					bind:value={title}
-					oninput={markUnsaved}
-					placeholder="Give your letter a title..."
-					class="border-0 bg-transparent text-2xl font-bold text-base-content placeholder:text-base-content/30 focus:outline-none"
-				/>
+				<!-- Draft Editor Component -->
+				<DraftEditor />
 
-				<!-- Content Editor -->
-				<div class="relative flex-1">
-					<textarea
-						bind:value={content}
-						oninput={handleContentChange}
-						placeholder="Start writing... Take your time. There's no rush. This is your safe space to express what you've been holding back."
-						class="h-full min-h-[300px] w-full resize-none border-0 bg-transparent text-base leading-relaxed text-base-content placeholder:text-base-content/40 focus:outline-none"
-					></textarea>
-
-					{#if privacyMode}
-						<div
-							class="pointer-events-none absolute right-0 bottom-0 flex items-center gap-1 rounded-tl-lg bg-base-200/80 px-2 py-1 text-xs text-base-content/50"
+				{#if privacyMode}
+					<div
+						class="pointer-events-none flex items-center gap-1 self-end rounded-lg bg-base-200/80 px-2 py-1 text-xs text-base-content/50"
+					>
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							class="h-3 w-3"
+							viewBox="0 0 20 20"
+							fill="currentColor"
 						>
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								class="h-3 w-3"
-								viewBox="0 0 20 20"
-								fill="currentColor"
-							>
-								<path
-									fill-rule="evenodd"
-									d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
-									clip-rule="evenodd"
-								/>
-							</svg>
-							Encrypted
-						</div>
-					{/if}
-				</div>
+							<path
+								fill-rule="evenodd"
+								d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+								clip-rule="evenodd"
+							/>
+						</svg>
+						Encrypted
+					</div>
+				{/if}
 			</div>
 		</div>
 
@@ -470,50 +342,12 @@
 		<div
 			class="mt-4 flex items-center justify-between rounded-lg border border-base-content/10 bg-base-100 px-4 py-3 shadow-sm"
 		>
-			<!-- Undo/Redo -->
-			<div class="flex items-center gap-1">
-				<button
-					type="button"
-					class="btn gap-1 btn-ghost btn-sm"
-					onclick={undo}
-					disabled={!canUndo}
-					title="Undo"
-				>
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						class="h-4 w-4"
-						viewBox="0 0 20 20"
-						fill="currentColor"
-					>
-						<path
-							fill-rule="evenodd"
-							d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"
-							clip-rule="evenodd"
-						/>
-					</svg>
-					Undo
-				</button>
-				<button
-					type="button"
-					class="btn gap-1 btn-ghost btn-sm"
-					onclick={redo}
-					disabled={!canRedo}
-					title="Redo"
-				>
-					Redo
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						class="h-4 w-4"
-						viewBox="0 0 20 20"
-						fill="currentColor"
-					>
-						<path
-							fill-rule="evenodd"
-							d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
-							clip-rule="evenodd"
-						/>
-					</svg>
-				</button>
+			<!-- Keyboard Shortcut Hint -->
+			<div class="hidden text-xs text-base-content/40 md:block">
+				<span class="kbd kbd-xs">Cmd</span>
+				+
+				<span class="kbd kbd-xs">S</span>
+				to save
 			</div>
 
 			<!-- Primary Actions -->
@@ -521,8 +355,8 @@
 				<button
 					type="button"
 					class="btn gap-2 btn-ghost btn-sm"
-					onclick={analyzeTone}
-					disabled={!content.trim()}
+					onclick={() => handleAITool('tone')}
+					disabled={!hasContent}
 				>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
@@ -535,28 +369,6 @@
 						/>
 					</svg>
 					Analyze Tone
-				</button>
-				<button
-					type="button"
-					class="btn gap-2 shadow-sm transition-all duration-200 btn-sm btn-primary hover:shadow-md hover:shadow-primary/25"
-					onclick={saveDraft}
-					disabled={saveStatus === 'saving'}
-				>
-					{#if saveStatus === 'saving'}
-						<span class="loading loading-xs loading-spinner"></span>
-					{:else}
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							class="h-4 w-4"
-							viewBox="0 0 20 20"
-							fill="currentColor"
-						>
-							<path
-								d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293zM9 4a1 1 0 012 0v2H9V4z"
-							/>
-						</svg>
-					{/if}
-					Save Draft
 				</button>
 			</div>
 		</div>
