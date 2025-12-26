@@ -6,6 +6,7 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/stores';
 	import { authService, keyDerivationService } from '$lib/services';
+	import ThemeToggle from '$lib/components/ui/ThemeToggle.svelte';
 	import type { Snippet } from 'svelte';
 
 	interface Props {
@@ -61,8 +62,9 @@
 			</ul>
 		</div>
 
-		<!-- User Menu (Desktop) -->
-		<div class="hidden flex-none md:block">
+		<!-- Theme Toggle & User Menu (Desktop) -->
+		<div class="hidden flex-none items-center gap-1 md:flex">
+			<ThemeToggle />
 			<div class="dropdown dropdown-end">
 				<div tabindex="0" role="button" class="placeholder btn avatar btn-circle btn-ghost">
 					<div class="w-10 rounded-full bg-primary text-primary-content">
@@ -126,7 +128,8 @@
 		</div>
 
 		<!-- Mobile Menu -->
-		<div class="flex-none md:hidden">
+		<div class="flex items-center gap-1 md:hidden">
+			<ThemeToggle class="btn-sm" />
 			<div class="dropdown dropdown-end">
 				<div tabindex="0" role="button" class="btn btn-ghost">
 					<svg
@@ -168,7 +171,7 @@
 	</nav>
 
 	<!-- Main Content -->
-	<main class="container mx-auto max-w-4xl px-4 py-6">
+	<main class="mx-auto w-full max-w-7xl px-4 py-6">
 		{@render children()}
 	</main>
 </div>

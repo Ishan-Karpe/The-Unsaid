@@ -1,15 +1,23 @@
 <!--
   Landing Page - The first impression of The Unsaid
-  Emotionally resonant, clear value proposition, simple CTA
+  Designed for emotional resonance, clear value proposition, and trust
 -->
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { Card } from '$lib/components';
 	import { onMount } from 'svelte';
+	import ThemeToggle from '$lib/components/ui/ThemeToggle.svelte';
 
-	let heroVisible = false;
-	let problemsVisible = false;
-	let stepsVisible = false;
+	let heroVisible = $state(false);
+	let coreValuesVisible = $state(false);
+	let demoVisible = $state(false);
+	let trustVisible = $state(false);
+	let ctaVisible = $state(false);
+
+	// Typing animation state
+	let typedText = $state('');
+	const fullText =
+		"I was hurt when you didn't call. It felt like... you didn't care about my news.";
+	let typingComplete = $state(false);
 
 	onMount(() => {
 		heroVisible = true;
@@ -18,153 +26,195 @@
 			(entries) => {
 				entries.forEach((entry) => {
 					if (entry.isIntersecting) {
-						if (entry.target.id === 'problems-section') {
-							problemsVisible = true;
-						} else if (entry.target.id === 'steps-section') {
-							stepsVisible = true;
+						if (entry.target.id === 'core-values-section') {
+							coreValuesVisible = true;
+						} else if (entry.target.id === 'demo-section') {
+							demoVisible = true;
+							// Start typing animation when demo section is visible
+							startTypingAnimation();
+						} else if (entry.target.id === 'trust-section') {
+							trustVisible = true;
+						} else if (entry.target.id === 'cta-section') {
+							ctaVisible = true;
 						}
 					}
 				});
 			},
-			{ threshold: 0.1 }
+			{ threshold: 0.15 }
 		);
 
-		const problemsSection = document.getElementById('problems-section');
-		const stepsSection = document.getElementById('steps-section');
+		const sections = ['core-values-section', 'demo-section', 'trust-section', 'cta-section'];
 
-		if (problemsSection) observer.observe(problemsSection);
-		if (stepsSection) observer.observe(stepsSection);
+		sections.forEach((id) => {
+			const el = document.getElementById(id);
+			if (el) observer.observe(el);
+		});
 
 		return () => observer.disconnect();
 	});
+
+	function startTypingAnimation() {
+		if (typingComplete) return;
+		let index = 0;
+		const interval = setInterval(() => {
+			if (index < fullText.length) {
+				typedText = fullText.slice(0, index + 1);
+				index++;
+			} else {
+				clearInterval(interval);
+				typingComplete = true;
+			}
+		}, 40);
+	}
 </script>
 
 <svelte:head>
-	<title>The Unsaid - Turn feelings into words</title>
+	<title>The Unsaid - Say What You Need to Say</title>
+	<meta
+		name="description"
+		content="The AI-powered safe space to articulate your deepest thoughts, difficult conversations, and unsaid feelings. End-to-end encrypted and private."
+	/>
 </svelte:head>
 
-<!-- Hero Section -->
-<section class="flex min-h-screen flex-col">
-	<!-- Navigation -->
-	<nav class="navbar sticky top-0 z-50 border-b border-base-200 bg-base-100/80 backdrop-blur-sm">
-		<div class="container mx-auto px-4">
-			<div class="flex w-full items-center justify-between">
-				<span class="text-xl font-bold text-primary">The Unsaid</span>
-				<div class="flex gap-2">
-					<a href={resolve('/login')} class="btn btn-ghost btn-sm">Log in</a>
-					<a href={resolve('/signup')} class="btn btn-sm btn-primary">Get started</a>
-				</div>
+<!-- Navigation -->
+<nav
+	class="navbar fixed top-0 z-50 border-b border-base-content/10 bg-base-300/95 backdrop-blur-md"
+>
+	<div class="container mx-auto px-4">
+		<div class="flex w-full items-center justify-between">
+			<!-- Logo -->
+			<a href={resolve('/')} class="flex items-center gap-2 text-xl font-bold">
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					class="h-6 w-6 text-primary"
+					viewBox="0 0 24 24"
+					fill="currentColor"
+				>
+					<path
+						d="M12 2L9.19 8.63L2 9.24L7.46 13.97L5.82 21L12 17.27L18.18 21L16.54 13.97L22 9.24L14.81 8.63L12 2Z"
+					/>
+				</svg>
+				<span class="text-base-content">The Unsaid</span>
+			</a>
+
+			<!-- Center Navigation -->
+			<div class="hidden gap-8 md:flex">
+				<a
+					href="#core-values-section"
+					class="link text-sm text-base-content/70 link-hover transition-colors hover:text-base-content"
+					>Mission</a
+				>
+				<a
+					href="#trust-section"
+					class="link text-sm text-base-content/70 link-hover transition-colors hover:text-base-content"
+					>Privacy</a
+				>
+				<!-- eslint-disable svelte/no-navigation-without-resolve -- route not yet created -->
+				<a
+					href="/blog"
+					class="link text-sm text-base-content/70 link-hover transition-colors hover:text-base-content"
+					>Blog</a
+				>
+				<!-- eslint-enable svelte/no-navigation-without-resolve -->
+			</div>
+
+			<!-- Auth Buttons & Theme Toggle -->
+			<div class="flex items-center gap-2">
+				<ThemeToggle class="btn-sm" />
+				<a href={resolve('/login')} class="btn hidden btn-ghost btn-sm sm:inline-flex">Log in</a>
+				<a href={resolve('/signup')} class="btn btn-sm btn-primary">Start Writing</a>
 			</div>
 		</div>
-	</nav>
+	</div>
+</nav>
 
-	<!-- Hero Content -->
-	<div class="flex flex-1 items-center">
-		<div class="container mx-auto px-4 py-16 md:py-24">
-			<div class="mx-auto max-w-3xl text-center">
-				<!-- Tagline -->
-				<h1
-					class="fade-in mb-6 text-4xl leading-tight font-bold md:text-6xl {heroVisible
-						? 'visible'
-						: ''}"
-				>
-					<span class="text-base-content">Turn feelings into</span>
-					<span class="text-primary"> words</span>
-				</h1>
+<!-- Hero Section -->
+<section
+	class="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-gradient-to-b from-base-300 via-base-300 to-base-200 pt-16"
+>
+	<!-- Animated background gradient orbs -->
+	<div class="pointer-events-none absolute inset-0 overflow-hidden">
+		<div
+			class="animate-float-slow absolute top-1/4 -left-32 h-96 w-96 rounded-full bg-primary/5 blur-3xl"
+		></div>
+		<div
+			class="animate-float-slower absolute top-1/2 -right-32 h-80 w-80 rounded-full bg-secondary/5 blur-3xl"
+		></div>
+	</div>
 
-				<!-- Subheadline -->
-				<p
-					class="fade-in stagger-1 mx-auto mb-8 max-w-2xl text-xl leading-relaxed text-base-content/70 md:text-2xl {heroVisible
-						? 'visible'
-						: ''}"
-				>
-					Some things are hard to say. This will help you find the words for the things that matter
-					most to the people who matter most.
-				</p>
+	<div class="relative z-10 container mx-auto px-4 py-20 text-center">
+		<!-- Trust Badge -->
+		<div
+			class="fade-in mb-8 inline-flex items-center gap-2 rounded-full border border-base-content/20 bg-base-content/5 px-4 py-2 {heroVisible
+				? 'visible'
+				: ''}"
+		>
+			<span class="h-2 w-2 animate-pulse rounded-full bg-success"></span>
+			<span class="text-sm font-medium tracking-wider text-base-content/80"
+				>PRIVATE. SECURE. JUDGMENT-FREE.</span
+			>
+		</div>
 
-				<!-- CTA -->
-				<div
-					class="fade-in stagger-2 mb-12 flex flex-col justify-center gap-4 sm:flex-row {heroVisible
-						? 'visible'
-						: ''}"
-				>
-					<a href={resolve('/signup')} class="btn btn-lg btn-primary">
-						Start writing
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							class="ml-1 h-5 w-5"
-							viewBox="0 0 20 20"
-							fill="currentColor"
-						>
-							<path
-								fill-rule="evenodd"
-								d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
-								clip-rule="evenodd"
-							/>
-						</svg>
-					</a>
-					<a href="#problems-section" class="btn btn-ghost btn-lg"> Learn more </a>
-				</div>
+		<!-- Main Heading -->
+		<h1
+			class="fade-in stagger-1 mb-6 text-4xl leading-tight font-bold tracking-tight md:text-6xl lg:text-7xl {heroVisible
+				? 'visible'
+				: ''}"
+		>
+			<span class="text-base-content">Say What You</span>
+			<br />
+			<span class="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent"
+				>Need to Say</span
+			>
+		</h1>
 
-				<!-- Trust signals -->
-				<div
-					class="fade-in stagger-3 flex flex-wrap justify-center gap-6 text-sm text-base-content/50 {heroVisible
-						? 'visible'
-						: ''}"
-				>
-					<div class="flex items-center gap-2">
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							class="h-5 w-5 text-info"
-							viewBox="0 0 20 20"
-							fill="currentColor"
-						>
-							<path
-								fill-rule="evenodd"
-								d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
-								clip-rule="evenodd"
-							/>
-						</svg>
-						<span>End-to-end encrypted</span>
-					</div>
-					<div class="flex items-center gap-2">
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							class="h-5 w-5 text-info"
-							viewBox="0 0 20 20"
-							fill="currentColor"
-						>
-							<path
-								fill-rule="evenodd"
-								d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-								clip-rule="evenodd"
-							/>
-						</svg>
-						<span>No ads, ever</span>
-					</div>
-					<div class="flex items-center gap-2">
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							class="h-5 w-5 text-info"
-							viewBox="0 0 20 20"
-							fill="currentColor"
-						>
-							<path
-								d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"
-							/>
-						</svg>
-						<span>Your voice, not AI's</span>
-					</div>
-				</div>
-			</div>
+		<!-- Subheadline -->
+		<p
+			class="fade-in stagger-2 mx-auto mb-10 max-w-xl text-lg text-base-content/60 md:text-xl {heroVisible
+				? 'visible'
+				: ''}"
+		>
+			The AI-powered safe space to articulate your deepest thoughts, difficult conversations, and
+			unsaid feelings.
+		</p>
+
+		<!-- CTA Button -->
+		<div class="fade-in stagger-3 mb-6 {heroVisible ? 'visible' : ''}">
+			<a
+				href={resolve('/signup')}
+				class="btn gap-2 shadow-lg shadow-primary/25 transition-all duration-300 btn-lg btn-primary hover:scale-105 hover:shadow-xl hover:shadow-primary/30"
+			>
+				Draft Your Message
+			</a>
+		</div>
+
+		<!-- Encryption Note -->
+		<div
+			class="fade-in stagger-4 flex items-center justify-center gap-2 text-sm text-base-content/50 {heroVisible
+				? 'visible'
+				: ''}"
+		>
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				class="h-4 w-4"
+				viewBox="0 0 20 20"
+				fill="currentColor"
+			>
+				<path
+					fill-rule="evenodd"
+					d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+					clip-rule="evenodd"
+				/>
+			</svg>
+			<span>End-to-end encrypted & private</span>
 		</div>
 	</div>
 
 	<!-- Scroll indicator -->
-	<div class="animate-bounce pb-8 text-center">
+	<div class="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
 		<svg
 			xmlns="http://www.w3.org/2000/svg"
-			class="mx-auto h-6 w-6 text-base-content/30"
+			class="h-6 w-6 text-base-content/30"
 			fill="none"
 			viewBox="0 0 24 24"
 			stroke="currentColor"
@@ -179,128 +229,98 @@
 	</div>
 </section>
 
-<!-- The Problem Section -->
-<section class="bg-base-200 py-20" id="problems-section">
+<!-- Core Values Section -->
+<section id="core-values-section" class="bg-base-200 py-24">
 	<div class="container mx-auto px-4">
-		<div class="fade-in mx-auto mb-16 max-w-3xl text-center {problemsVisible ? 'visible' : ''}">
-			<h2 class="mb-4 text-3xl font-bold md:text-4xl">The things we never say</h2>
-			<p class="text-lg text-base-content/70">
-				We carry words we've never spoken. To parents, partners, friends, and sometimes to those no
-				longer here.
+		<div class="fade-in mb-16 {coreValuesVisible ? 'visible' : ''}">
+			<h2 class="mb-4 text-3xl font-bold md:text-4xl">Core Values</h2>
+			<p class="text-base-content/60">
+				Tools designed to help you communicate with clarity and confidence.
 			</p>
 		</div>
 
-		<div class="mx-auto grid max-w-5xl gap-6 md:grid-cols-2 lg:grid-cols-4">
-			<Card
-				compact
-				class="card-hover fade-in stagger-1 text-center {problemsVisible ? 'visible' : ''}"
-			>
-				<div class="mb-3 text-4xl">😶</div>
-				<h3 class="mb-2 font-semibold">Emotional Overwhelm</h3>
-				<p class="text-sm text-base-content/70">
-					The weight of what we feel paralyzes our ability to express it
-				</p>
-			</Card>
-
-			<Card
-				compact
-				class="card-hover fade-in stagger-2 text-center {problemsVisible ? 'visible' : ''}"
-			>
-				<div class="mb-3 text-4xl">🔍</div>
-				<h3 class="mb-2 font-semibold">Vocabulary Poverty</h3>
-				<p class="text-sm text-base-content/70">We lack the precise words for nuanced emotions</p>
-			</Card>
-
-			<Card
-				compact
-				class="card-hover fade-in stagger-3 text-center {problemsVisible ? 'visible' : ''}"
-			>
-				<div class="mb-3 text-4xl">😰</div>
-				<h3 class="mb-2 font-semibold">Fear of Inadequacy</h3>
-				<p class="text-sm text-base-content/70">Afraid our words won't match what we really mean</p>
-			</Card>
-
-			<Card
-				compact
-				class="card-hover fade-in stagger-4 text-center {problemsVisible ? 'visible' : ''}"
-			>
-				<div class="mb-3 text-4xl">🚫</div>
-				<h3 class="mb-2 font-semibold">Starting Paralysis</h3>
-				<p class="text-sm text-base-content/70">
-					Not knowing how to begin a vulnerable conversation
-				</p>
-			</Card>
-		</div>
-	</div>
-</section>
-
-<!-- How It Works Section -->
-<section class="py-20" id="steps-section">
-	<div class="container mx-auto px-4">
-		<div class="fade-in mx-auto mb-16 max-w-3xl text-center {stepsVisible ? 'visible' : ''}">
-			<h2 class="mb-4 text-3xl font-bold md:text-4xl">How The Unsaid helps</h2>
-			<p class="text-lg text-base-content/70">
-				A quiet space to find your words, with gentle guidance when you need it.
-			</p>
-		</div>
-
-		<div class="mx-auto max-w-4xl space-y-12">
-			<!-- Step 1 -->
+		<div class="grid gap-6 md:grid-cols-3">
+			<!-- AI-Assisted Clarity -->
 			<div
-				class="fade-in stagger-1 flex flex-col items-center gap-8 md:flex-row {stepsVisible
+				class="fade-in stagger-1 card bg-base-300/50 transition-all duration-300 card-border hover:bg-base-300 hover:shadow-lg {coreValuesVisible
 					? 'visible'
 					: ''}"
 			>
-				<div
-					class="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-primary/10"
-				>
-					<span class="text-2xl font-bold text-primary">1</span>
-				</div>
-				<div>
-					<h3 class="mb-2 text-xl font-semibold">Start with a prompt or blank page</h3>
-					<p class="text-base-content/70">
-						Choose from curated conversation starters, or begin with what's on your mind. No
-						pressure, no rush.
+				<div class="card-body">
+					<div class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							class="h-6 w-6 text-primary"
+							viewBox="0 0 24 24"
+							fill="currentColor"
+						>
+							<path
+								d="M12 2L9.19 8.63L2 9.24L7.46 13.97L5.82 21L12 17.27L18.18 21L16.54 13.97L22 9.24L14.81 8.63L12 2Z"
+							/>
+						</svg>
+					</div>
+					<h3 class="card-title text-lg">AI-Assisted Clarity</h3>
+					<p class="text-sm text-base-content/60">
+						Turn messy emotions into clear communication. Our AI helps refine your raw thoughts into
+						coherent messages.
 					</p>
 				</div>
 			</div>
 
-			<!-- Step 2 -->
+			<!-- Privacy First -->
 			<div
-				class="fade-in stagger-2 flex flex-col items-center gap-8 md:flex-row {stepsVisible
+				class="fade-in stagger-2 card bg-base-300/50 transition-all duration-300 card-border hover:bg-base-300 hover:shadow-lg {coreValuesVisible
 					? 'visible'
 					: ''}"
 			>
-				<div
-					class="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-secondary/10"
-				>
-					<span class="text-2xl font-bold text-secondary">2</span>
-				</div>
-				<div>
-					<h3 class="mb-2 text-xl font-semibold">Write in your own voice</h3>
-					<p class="text-base-content/70">
-						Draft what you want to say. Your words are encrypted before they leave your device. We
-						can never read them.
+				<div class="card-body">
+					<div class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-secondary/10">
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							class="h-6 w-6 text-secondary"
+							viewBox="0 0 20 20"
+							fill="currentColor"
+						>
+							<path
+								fill-rule="evenodd"
+								d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+								clip-rule="evenodd"
+							/>
+						</svg>
+					</div>
+					<h3 class="card-title text-lg">Privacy First</h3>
+					<p class="text-sm text-base-content/60">
+						Your words never leave your browser until you choose to send them. We prioritize local
+						processing.
 					</p>
 				</div>
 			</div>
 
-			<!-- Step 3 -->
+			<!-- Emotional Intelligence -->
 			<div
-				class="fade-in stagger-3 flex flex-col items-center gap-8 md:flex-row {stepsVisible
+				class="fade-in stagger-3 card bg-base-300/50 transition-all duration-300 card-border hover:bg-base-300 hover:shadow-lg {coreValuesVisible
 					? 'visible'
 					: ''}"
 			>
-				<div
-					class="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-accent/20"
-				>
-					<span class="text-2xl font-bold text-accent-content">3</span>
-				</div>
-				<div>
-					<h3 class="mb-2 text-xl font-semibold">Get help finding the right words</h3>
-					<p class="text-base-content/70">
-						Optional AI assistance offers alternatives, clarifies meaning, or suggests openings. It
-						never writes for you. It helps you write better.
+				<div class="card-body">
+					<div class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-accent/10">
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							class="h-6 w-6 text-accent"
+							viewBox="0 0 20 20"
+							fill="currentColor"
+						>
+							<path
+								fill-rule="evenodd"
+								d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"
+								clip-rule="evenodd"
+							/>
+						</svg>
+					</div>
+					<h3 class="card-title text-lg">Emotional Intelligence</h3>
+					<p class="text-sm text-base-content/60">
+						Real-time tone checks ensure your message lands exactly how you intend, preserving
+						relationships.
 					</p>
 				</div>
 			</div>
@@ -308,65 +328,350 @@
 	</div>
 </section>
 
-<!-- Privacy Section -->
-<section class="bg-base-200 py-20">
+<!-- Demo Section - From Messy Thoughts to Clear Words -->
+<section id="demo-section" class="bg-base-300 py-24">
 	<div class="container mx-auto px-4">
-		<div class="mx-auto max-w-3xl text-center">
-			<div class="mb-8">
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					class="mx-auto h-16 w-16 text-primary"
-					fill="none"
-					viewBox="0 0 24 24"
-					stroke="currentColor"
+		<div class="grid items-center gap-12 lg:grid-cols-2">
+			<!-- Left Content -->
+			<div class="fade-in {demoVisible ? 'visible' : ''}">
+				<h2 class="mb-4 text-3xl font-bold md:text-4xl">
+					From Messy Thoughts to
+					<br />
+					<span class="text-primary">Clear Words</span>
+				</h2>
+				<p class="mb-8 text-base-content/60">
+					See how The Unsaid transforms scattered feelings into articulate, meaningful messages in
+					real-time. It's not just editing; it's translating your heart.
+				</p>
+
+				<div class="space-y-4">
+					<div class="flex items-start gap-3">
+						<div class="mt-1 flex h-5 w-5 items-center justify-center rounded-full bg-success/20">
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								class="h-3 w-3 text-success"
+								viewBox="0 0 20 20"
+								fill="currentColor"
+							>
+								<path
+									fill-rule="evenodd"
+									d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+									clip-rule="evenodd"
+								/>
+							</svg>
+						</div>
+						<div>
+							<h4 class="font-semibold">Safe Drafting Environment</h4>
+							<p class="text-sm text-base-content/60">
+								A calm, dark interface designed to reduce anxiety while you write.
+							</p>
+						</div>
+					</div>
+
+					<div class="flex items-start gap-3">
+						<div class="mt-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary/20">
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								class="h-3 w-3 text-primary"
+								viewBox="0 0 20 20"
+								fill="currentColor"
+							>
+								<path
+									fill-rule="evenodd"
+									d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z"
+									clip-rule="evenodd"
+								/>
+							</svg>
+						</div>
+						<div>
+							<h4 class="font-semibold">Contextual Suggestions</h4>
+							<p class="text-sm text-base-content/60">
+								Get prompts based on the emotional undertone of your draft.
+							</p>
+						</div>
+					</div>
+				</div>
+
+				<a href={resolve('/signup')} class="btn mt-8 gap-2 pl-0 btn-link btn-primary">
+					Try Interactive Demo
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						class="h-4 w-4"
+						viewBox="0 0 20 20"
+						fill="currentColor"
+					>
+						<path
+							fill-rule="evenodd"
+							d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
+							clip-rule="evenodd"
+						/>
+					</svg>
+				</a>
+			</div>
+
+			<!-- Right - Demo Mockup -->
+			<div class="fade-in stagger-2 {demoVisible ? 'visible' : ''}">
+				<div class="mockup-browser border border-base-content/10 bg-base-100 shadow-2xl">
+					<!-- Browser toolbar dots -->
+					<div class="mockup-browser-toolbar">
+						<div class="flex gap-2 pl-4">
+							<div class="h-3 w-3 rounded-full bg-error/60"></div>
+							<div class="h-3 w-3 rounded-full bg-warning/60"></div>
+							<div class="h-3 w-3 rounded-full bg-success/60"></div>
+						</div>
+					</div>
+
+					<!-- Demo Content -->
+					<div class="bg-base-200 p-6">
+						<!-- Recipient Field -->
+						<div class="mb-4">
+							<span
+								class="mb-1 block text-xs font-medium tracking-wider text-base-content/40 uppercase"
+								>Recipient</span
+							>
+							<div
+								class="rounded-lg border border-base-content/10 bg-base-300 px-4 py-3 text-base-content"
+							>
+								Sarah
+							</div>
+						</div>
+
+						<!-- Draft Field -->
+						<div class="mb-4">
+							<span
+								class="mb-1 block text-xs font-medium tracking-wider text-base-content/40 uppercase"
+								>Draft</span
+							>
+							<div
+								class="min-h-[120px] rounded-lg border border-base-content/10 bg-base-300 px-4 py-3"
+							>
+								<p class="text-base-content">
+									{typedText}
+									{#if !typingComplete}
+										<span class="animate-blink ml-0.5 inline-block h-5 w-0.5 bg-primary"></span>
+									{/if}
+								</p>
+								{#if typingComplete}
+									<span
+										class="mt-2 inline-block rounded bg-primary/20 px-2 py-0.5 text-sm text-primary"
+										>you didn't care about my news.</span
+									>
+								{/if}
+							</div>
+						</div>
+
+						<!-- AI Suggestion -->
+						{#if typingComplete}
+							<div class="animate-fadeIn rounded-lg border border-primary/20 bg-primary/5 p-4">
+								<div class="mb-2 flex items-center gap-2 text-sm font-medium text-primary">
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										class="h-4 w-4"
+										viewBox="0 0 24 24"
+										fill="currentColor"
+									>
+										<path
+											d="M12 2L9.19 8.63L2 9.24L7.46 13.97L5.82 21L12 17.27L18.18 21L16.54 13.97L22 9.24L14.81 8.63L12 2Z"
+										/>
+									</svg>
+									Softer phrasing suggestion:
+								</div>
+								<p class="text-sm text-base-content/70">
+									"I felt disappointed when we didn't connect, as I was really excited to share my
+									news with you."
+								</p>
+							</div>
+						{/if}
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</section>
+
+<!-- Trust Section - Built on Trust -->
+<section id="trust-section" class="bg-base-200 py-24">
+	<div class="container mx-auto px-4">
+		<div class="fade-in mx-auto mb-16 max-w-2xl text-center {trustVisible ? 'visible' : ''}">
+			<h2 class="mb-4 text-3xl font-bold md:text-4xl">Built on Trust</h2>
+			<p class="text-base-content/60">
+				We believe a safe space requires absolute security. Your privacy is our priority, not an
+				afterthought.
+			</p>
+		</div>
+
+		<div class="mx-auto grid max-w-4xl gap-8 md:grid-cols-3">
+			<!-- No Data Storage -->
+			<div class="fade-in stagger-1 text-center {trustVisible ? 'visible' : ''}">
+				<div
+					class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-base-300"
 				>
-					<path
-						stroke-linecap="round"
-						stroke-linejoin="round"
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						class="h-8 w-8 text-base-content/70"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke="currentColor"
 						stroke-width="1.5"
-						d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-					/>
-				</svg>
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"
+						/>
+					</svg>
+				</div>
+				<h3 class="mb-2 font-semibold">No Data Storage</h3>
+				<p class="text-sm text-base-content/60">
+					We never store your drafts or conversations. Once you close the tab, it's gone from us.
+				</p>
 			</div>
-			<h2 class="mb-4 text-3xl font-bold md:text-4xl">Privacy you can trust</h2>
-			<p class="mb-8 text-lg text-base-content/70">
-				Your drafts are encrypted on your device before they're stored. We physically cannot read
-				what you write. If you delete your account, everything goes with it.
-			</p>
-			<div class="flex flex-wrap justify-center gap-4">
-				<div class="badge badge-outline badge-lg">End-to-end encrypted</div>
-				<div class="badge badge-outline badge-lg">No tracking</div>
-				<div class="badge badge-outline badge-lg">No ads</div>
-				<div class="badge badge-outline badge-lg">Your data, your control</div>
+
+			<!-- End-to-End Encryption -->
+			<div class="fade-in stagger-2 text-center {trustVisible ? 'visible' : ''}">
+				<div
+					class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-base-300"
+				>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						class="h-8 w-8 text-base-content/70"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke="currentColor"
+						stroke-width="1.5"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+						/>
+					</svg>
+				</div>
+				<h3 class="mb-2 font-semibold">End-to-End Encryption</h3>
+				<p class="text-sm text-base-content/60">
+					Your data is encrypted locally on your device before it ever touches our processing
+					servers.
+				</p>
+			</div>
+
+			<!-- Zero Judgment -->
+			<div class="fade-in stagger-3 text-center {trustVisible ? 'visible' : ''}">
+				<div
+					class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-base-300"
+				>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						class="h-8 w-8 text-base-content/70"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke="currentColor"
+						stroke-width="1.5"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+						/>
+					</svg>
+				</div>
+				<h3 class="mb-2 font-semibold">Zero Judgment</h3>
+				<p class="text-sm text-base-content/60">
+					An unbiased digital environment designed solely to help you express yourself freely.
+				</p>
 			</div>
 		</div>
 	</div>
 </section>
 
 <!-- Final CTA Section -->
-<section class="py-20">
+<section id="cta-section" class="bg-base-300 py-24">
 	<div class="container mx-auto px-4">
-		<div class="mx-auto max-w-2xl text-center">
-			<h2 class="mb-4 text-3xl font-bold md:text-4xl">What do you need to say?</h2>
-			<p class="mb-8 text-lg text-base-content/70">
-				If it helps you once, it's done its job. If you never need it again, that means your
-				conversations are going well.
+		<div class="fade-in mx-auto max-w-2xl text-center {ctaVisible ? 'visible' : ''}">
+			<h2 class="mb-4 text-3xl font-bold md:text-4xl lg:text-5xl">Ready to find your words?</h2>
+			<p class="mb-10 text-base-content/60">
+				Join thousands of people using The Unsaid to improve their relationships and mental clarity.
 			</p>
-			<a href={resolve('/signup')} class="btn btn-lg btn-primary"> Start writing — it's free </a>
+			<a
+				href={resolve('/signup')}
+				class="btn shadow-lg shadow-primary/25 transition-all duration-300 btn-lg btn-primary hover:scale-105 hover:shadow-xl hover:shadow-primary/30"
+			>
+				Start Writing For Free
+			</a>
 		</div>
 	</div>
 </section>
 
 <!-- Footer -->
-<footer class="border-t border-base-200 py-8">
+<footer class="border-t border-base-content/10 bg-base-300 py-8">
 	<div class="container mx-auto px-4">
-		<div class="text-center text-sm text-base-content/50">
-			© 2025 The Unsaid. Turn feelings into words.
+		<div class="flex flex-col items-center justify-between gap-6 md:flex-row">
+			<!-- Logo and Copyright -->
+			<div class="flex items-center gap-2">
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					class="h-5 w-5 text-primary"
+					viewBox="0 0 24 24"
+					fill="currentColor"
+				>
+					<path
+						d="M12 2L9.19 8.63L2 9.24L7.46 13.97L5.82 21L12 17.27L18.18 21L16.54 13.97L22 9.24L14.81 8.63L12 2Z"
+					/>
+				</svg>
+				<span class="text-sm text-base-content/60">The Unsaid &copy; 2024</span>
+			</div>
+
+			<!-- Footer Links -->
+			<!-- eslint-disable svelte/no-navigation-without-resolve -- routes not yet created -->
+			<nav class="flex flex-wrap justify-center gap-6">
+				<a
+					href="/about"
+					class="link text-sm text-base-content/60 link-hover transition-colors hover:text-base-content"
+					>About</a
+				>
+				<a
+					href="/privacy"
+					class="link text-sm text-base-content/60 link-hover transition-colors hover:text-base-content"
+					>Privacy Policy</a
+				>
+				<a
+					href="/terms"
+					class="link text-sm text-base-content/60 link-hover transition-colors hover:text-base-content"
+					>Terms of Service</a
+				>
+				<a
+					href="/contact"
+					class="link text-sm text-base-content/60 link-hover transition-colors hover:text-base-content"
+					>Contact</a
+				>
+			</nav>
+			<!-- eslint-enable svelte/no-navigation-without-resolve -->
+
+			<!-- Social Links -->
+			<a
+				href="https://twitter.com"
+				target="_blank"
+				rel="noopener noreferrer"
+				class="text-base-content/60 transition-colors hover:text-base-content"
+				aria-label="Twitter"
+			>
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					width="20"
+					height="20"
+					viewBox="0 0 24 24"
+					class="fill-current"
+				>
+					<path
+						d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"
+					></path>
+				</svg>
+			</a>
 		</div>
 	</div>
 </footer>
 
 <style>
+	/* Fade-in animations */
 	.fade-in {
 		opacity: 0;
 		transform: translateY(20px);
@@ -380,6 +685,7 @@
 		transform: translateY(0);
 	}
 
+	/* Staggered delays */
 	.stagger-1 {
 		transition-delay: 0.1s;
 	}
@@ -388,5 +694,69 @@
 	}
 	.stagger-3 {
 		transition-delay: 0.3s;
+	}
+	.stagger-4 {
+		transition-delay: 0.4s;
+	}
+
+	/* Floating animation for background orbs */
+	@keyframes float-slow {
+		0%,
+		100% {
+			transform: translateY(0) translateX(0);
+		}
+		50% {
+			transform: translateY(-20px) translateX(10px);
+		}
+	}
+
+	@keyframes float-slower {
+		0%,
+		100% {
+			transform: translateY(0) translateX(0);
+		}
+		50% {
+			transform: translateY(15px) translateX(-15px);
+		}
+	}
+
+	:global(.animate-float-slow) {
+		animation: float-slow 8s ease-in-out infinite;
+	}
+
+	:global(.animate-float-slower) {
+		animation: float-slower 12s ease-in-out infinite;
+	}
+
+	/* Typing cursor blink */
+	@keyframes blink {
+		0%,
+		50% {
+			opacity: 1;
+		}
+		51%,
+		100% {
+			opacity: 0;
+		}
+	}
+
+	:global(.animate-blink) {
+		animation: blink 1s infinite;
+	}
+
+	/* Fade in for AI suggestion */
+	@keyframes fadeIn {
+		from {
+			opacity: 0;
+			transform: translateY(10px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	:global(.animate-fadeIn) {
+		animation: fadeIn 0.5s ease-out forwards;
 	}
 </style>

@@ -119,7 +119,7 @@ export interface ConversationPrompt {
 	situation: string;
 }
 
-export type PromptCategory = 'parents' | 'partners' | 'friends' | 'grief' | 'self';
+export type PromptCategory = 'gratitude' | 'apologies' | 'empathy' | 'boundaries' | 'self-love';
 
 // ------------------------------------------
 // Export Types

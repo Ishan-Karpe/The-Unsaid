@@ -1,52 +1,641 @@
 <!--
-  Write Page - Core drafting experience
+  Write Page - Core drafting experience with sidebar, AI tools, and elegant animations
+  Matches the landing page design language with DaisyUI and Tailwind CSS
 -->
 <script lang="ts">
-	import { Card, Textarea, Input, Button } from '$lib/components';
+	import { onMount } from 'svelte';
+	import { conversationPrompts, categoryLabels } from '$lib/data/prompts';
+	import type { PromptCategory, AIMode } from '$lib/types';
+
+	// Animation states
+	let sidebarVisible = $state(false);
+	let editorVisible = $state(false);
+
+	// Draft state
+	let title = $state('');
+	let content = $state('');
+	let recipient = $state('');
+	let intent = $state('');
+	let selectedFeelings = $state<string[]>([]);
+	let privacyMode = $state(true);
+
+	// Save state
+	let saveStatus = $state<'saved' | 'saving' | 'unsaved'>('saved');
+	let lastSaved = $state<Date | null>(null);
+
+	// Undo/Redo history
+	let history = $state<string[]>(['']);
+	let historyIndex = $state(0);
+
+	// Prompt selector state
+	let selectedCategory = $state<PromptCategory>('gratitude');
+	let showPrompts = $state(false);
+
+	// Feelings options
+	const feelings = [
+		'Grateful',
+		'Anxious',
+		'Hopeful',
+		'Hurt',
+		'Confused',
+		'Loving',
+		'Frustrated',
+		'Relieved'
+	];
+
+	// Intent options
+	const intents = [
+		{ value: 'appreciation', label: 'Express Appreciation' },
+		{ value: 'apology', label: 'Apologize' },
+		{ value: 'boundary', label: 'Set a Boundary' },
+		{ value: 'reconnect', label: 'Reconnect' },
+		{ value: 'closure', label: 'Find Closure' },
+		{ value: 'other', label: 'Other' }
+	];
+
+	// AI tools
+	const aiTools: { mode: AIMode; label: string; icon: string }[] = [
+		{ mode: 'tone', label: 'Check Tone', icon: 'tone' },
+		{ mode: 'expand', label: 'Expand Thought', icon: 'expand' },
+		{ mode: 'clarify', label: 'Rewrite for Clarity', icon: 'clarify' }
+	];
+
+	// Computed values
+	let wordCount = $derived(content.trim() ? content.trim().split(/\s+/).length : 0);
+	let readTime = $derived(Math.max(1, Math.ceil(wordCount / 200)));
+
+	onMount(() => {
+		setTimeout(() => (sidebarVisible = true), 100);
+		setTimeout(() => (editorVisible = true), 200);
+	});
+
+	function toggleFeeling(feeling: string) {
+		if (selectedFeelings.includes(feeling)) {
+			selectedFeelings = selectedFeelings.filter((f) => f !== feeling);
+		} else {
+			selectedFeelings = [...selectedFeelings, feeling];
+		}
+		markUnsaved();
+	}
+
+	function selectPrompt(promptText: string) {
+		content = promptText + ' ';
+		showPrompts = false;
+		markUnsaved();
+		// Focus on editor
+	}
+
+	function markUnsaved() {
+		saveStatus = 'unsaved';
+	}
+
+	function handleContentChange() {
+		markUnsaved();
+		// Add to history for undo/redo
+		if (content !== history[historyIndex]) {
+			history = [...history.slice(0, historyIndex + 1), content];
+			historyIndex = history.length - 1;
+		}
+	}
+
+	function undo() {
+		if (historyIndex > 0) {
+			historyIndex--;
+			content = history[historyIndex];
+		}
+	}
+
+	function redo() {
+		if (historyIndex < history.length - 1) {
+			historyIndex++;
+			content = history[historyIndex];
+		}
+	}
+
+	async function saveDraft() {
+		saveStatus = 'saving';
+		// Simulate save - in real app, this would encrypt and save to Supabase
+		await new Promise((resolve) => setTimeout(resolve, 800));
+		saveStatus = 'saved';
+		lastSaved = new Date();
+	}
+
+	function analyzeTone() {
+		// Placeholder for AI tone analysis
+		console.log('Analyzing tone...');
+	}
+
+	function handleAITool(mode: AIMode) {
+		console.log(`Using AI tool: ${mode}`);
+	}
+
+	let canUndo = $derived(historyIndex > 0);
+	let canRedo = $derived(historyIndex < history.length - 1);
 </script>
 
 <svelte:head>
 	<title>Write | The Unsaid</title>
 </svelte:head>
 
-<div class="space-y-6">
-	<!-- Header -->
-	<div class="flex items-center justify-between">
-		<h1 class="text-2xl font-bold">Write</h1>
-		<div class="flex items-center gap-2 text-sm text-base-content/60">
-			<span class="badge badge-ghost">Saved</span>
+<div class="flex min-h-[calc(100vh-5rem)] gap-4">
+	<!-- Left Sidebar -->
+	<aside class="fade-in hidden w-72 shrink-0 space-y-4 lg:block {sidebarVisible ? 'visible' : ''}">
+		<!-- Context Section -->
+		<div class="card border border-base-content/10 bg-base-100 shadow-sm">
+			<div class="card-body gap-4 p-4">
+				<h3
+					class="flex items-center gap-2 text-sm font-semibold tracking-wider text-base-content/70 uppercase"
+				>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						class="h-4 w-4"
+						viewBox="0 0 20 20"
+						fill="currentColor"
+					>
+						<path
+							fill-rule="evenodd"
+							d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z"
+							clip-rule="evenodd"
+						/>
+					</svg>
+					Context
+				</h3>
+
+				<!-- Recipient -->
+				<div class="form-control">
+					<label for="recipient" class="label py-1">
+						<span class="label-text text-xs font-medium text-base-content/60">Recipient</span>
+					</label>
+					<input
+						type="text"
+						id="recipient"
+						bind:value={recipient}
+						oninput={markUnsaved}
+						placeholder="Who are you writing to?"
+						class="input-bordered input input-sm w-full bg-base-200/50 transition-all duration-200 focus:bg-base-100"
+					/>
+				</div>
+
+				<!-- Intent -->
+				<div class="form-control">
+					<label for="intent" class="label py-1">
+						<span class="label-text text-xs font-medium text-base-content/60">Intent</span>
+					</label>
+					<select
+						id="intent"
+						bind:value={intent}
+						onchange={markUnsaved}
+						class="select-bordered select w-full bg-base-200/50 select-sm transition-all duration-200 focus:bg-base-100"
+					>
+						<option value="" disabled>What do you want to express?</option>
+						{#each intents as { value, label } (value)}
+							<option {value}>{label}</option>
+						{/each}
+					</select>
+				</div>
+
+				<!-- Current Feeling -->
+				<div class="form-control">
+					<!-- svelte-ignore a11y_label_has_associated_control -->
+					<label class="label py-1">
+						<span class="label-text text-xs font-medium text-base-content/60">Current Feeling</span>
+					</label>
+					<div class="flex flex-wrap gap-1.5">
+						{#each feelings as feeling (feeling)}
+							<button
+								type="button"
+								class="badge cursor-pointer transition-all duration-200 {selectedFeelings.includes(
+									feeling
+								)
+									? 'badge-primary'
+									: 'hover:badge-primary/50 badge-ghost'}"
+								onclick={() => toggleFeeling(feeling)}
+							>
+								{feeling}
+							</button>
+						{/each}
+					</div>
+				</div>
+			</div>
 		</div>
+
+		<!-- Prompts Section -->
+		<div class="card border border-base-content/10 bg-base-100 shadow-sm">
+			<div class="card-body gap-3 p-4">
+				<button
+					type="button"
+					class="flex w-full items-center justify-between text-sm font-semibold tracking-wider text-base-content/70 uppercase"
+					onclick={() => (showPrompts = !showPrompts)}
+				>
+					<span class="flex items-center gap-2">
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							class="h-4 w-4"
+							viewBox="0 0 20 20"
+							fill="currentColor"
+						>
+							<path
+								d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1h4v1a2 2 0 11-4 0zM12 14c.015-.34.208-.646.477-.859a4 4 0 10-4.954 0c.27.213.462.519.476.859h4.002z"
+							/>
+						</svg>
+						Prompts
+					</span>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						class="h-4 w-4 transition-transform duration-200 {showPrompts ? 'rotate-180' : ''}"
+						viewBox="0 0 20 20"
+						fill="currentColor"
+					>
+						<path
+							fill-rule="evenodd"
+							d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+							clip-rule="evenodd"
+						/>
+					</svg>
+				</button>
+
+				{#if showPrompts}
+					<div class="animate-slideDown space-y-3">
+						<!-- Category Tabs -->
+						<div class="flex flex-wrap gap-1">
+							{#each Object.keys(conversationPrompts) as category (category)}
+								<button
+									type="button"
+									class="badge cursor-pointer text-xs transition-all duration-200 {selectedCategory ===
+									category
+										? 'badge-primary'
+										: 'hover:badge-primary/50 badge-ghost'}"
+									onclick={() => (selectedCategory = category as PromptCategory)}
+								>
+									{categoryLabels[category as PromptCategory]}
+								</button>
+							{/each}
+						</div>
+
+						<!-- Prompts List -->
+						<div class="max-h-40 space-y-1 overflow-y-auto">
+							{#each conversationPrompts[selectedCategory] as prompt (prompt.id)}
+								<button
+									type="button"
+									class="w-full rounded-lg p-2 text-left text-sm text-base-content/80 transition-colors duration-150 hover:bg-base-200"
+									onclick={() => selectPrompt(prompt.text)}
+								>
+									"{prompt.text}"
+								</button>
+							{/each}
+						</div>
+					</div>
+				{/if}
+			</div>
+		</div>
+
+		<!-- AI Tools Section -->
+		<div class="card border border-base-content/10 bg-base-100 shadow-sm">
+			<div class="card-body gap-3 p-4">
+				<h3
+					class="flex items-center gap-2 text-sm font-semibold tracking-wider text-base-content/70 uppercase"
+				>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						class="h-4 w-4"
+						viewBox="0 0 24 24"
+						fill="currentColor"
+					>
+						<path
+							d="M12 2L9.19 8.63L2 9.24L7.46 13.97L5.82 21L12 17.27L18.18 21L16.54 13.97L22 9.24L14.81 8.63L12 2Z"
+						/>
+					</svg>
+					AI Tools
+				</h3>
+
+				<div class="space-y-2">
+					{#each aiTools as tool (tool.mode)}
+						<button
+							type="button"
+							class="btn w-full justify-start gap-2 btn-ghost transition-all duration-200 btn-sm hover:bg-primary/10 hover:text-primary"
+							onclick={() => handleAITool(tool.mode)}
+							disabled={!content.trim()}
+						>
+							{#if tool.icon === 'tone'}
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									class="h-4 w-4"
+									viewBox="0 0 20 20"
+									fill="currentColor"
+								>
+									<path
+										fill-rule="evenodd"
+										d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+										clip-rule="evenodd"
+									/>
+								</svg>
+							{:else if tool.icon === 'expand'}
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									class="h-4 w-4"
+									viewBox="0 0 20 20"
+									fill="currentColor"
+								>
+									<path
+										fill-rule="evenodd"
+										d="M3 4a1 1 0 011-1h4a1 1 0 010 2H6.414l2.293 2.293a1 1 0 11-1.414 1.414L5 6.414V8a1 1 0 01-2 0V4zm9 1a1 1 0 010-2h4a1 1 0 011 1v4a1 1 0 01-2 0V6.414l-2.293 2.293a1 1 0 11-1.414-1.414L13.586 5H12zm-9 7a1 1 0 012 0v1.586l2.293-2.293a1 1 0 111.414 1.414L6.414 15H8a1 1 0 010 2H4a1 1 0 01-1-1v-4zm13-1a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 010-2h1.586l-2.293-2.293a1 1 0 111.414-1.414L15 13.586V12a1 1 0 011-1z"
+										clip-rule="evenodd"
+									/>
+								</svg>
+							{:else}
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									class="h-4 w-4"
+									viewBox="0 0 20 20"
+									fill="currentColor"
+								>
+									<path
+										d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"
+									/>
+								</svg>
+							{/if}
+							{tool.label}
+						</button>
+					{/each}
+				</div>
+
+				<!-- Privacy Mode Toggle -->
+				<div class="divider my-2"></div>
+				<label class="flex cursor-pointer items-center justify-between">
+					<span class="flex items-center gap-2 text-sm text-base-content/70">
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							class="h-4 w-4"
+							viewBox="0 0 20 20"
+							fill="currentColor"
+						>
+							<path
+								fill-rule="evenodd"
+								d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+								clip-rule="evenodd"
+							/>
+						</svg>
+						Privacy Mode
+					</span>
+					<input
+						type="checkbox"
+						bind:checked={privacyMode}
+						class="toggle toggle-primary toggle-sm"
+					/>
+				</label>
+			</div>
+		</div>
+	</aside>
+
+	<!-- Main Editor Area -->
+	<main class="fade-in stagger-1 flex min-w-0 flex-1 flex-col {editorVisible ? 'visible' : ''}">
+		<!-- Status Bar -->
+		<div
+			class="mb-4 flex items-center justify-between rounded-lg border border-base-content/10 bg-base-100 px-4 py-2 shadow-sm"
+		>
+			<div class="flex items-center gap-4">
+				<!-- Save Status -->
+				<div class="flex items-center gap-2 text-sm">
+					{#if saveStatus === 'saved'}
+						<span class="h-2 w-2 rounded-full bg-success"></span>
+						<span class="text-base-content/60">Saved</span>
+					{:else if saveStatus === 'saving'}
+						<span class="loading loading-xs loading-spinner text-primary"></span>
+						<span class="text-base-content/60">Saving...</span>
+					{:else}
+						<span class="h-2 w-2 rounded-full bg-warning"></span>
+						<span class="text-base-content/60">Unsaved changes</span>
+					{/if}
+				</div>
+
+				{#if lastSaved}
+					<span class="text-xs text-base-content/40">
+						Last saved {lastSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+					</span>
+				{/if}
+			</div>
+
+			<div class="flex items-center gap-4 text-sm text-base-content/60">
+				<span>{wordCount} words</span>
+				<span class="text-base-content/20">|</span>
+				<span>{readTime} min read</span>
+			</div>
+		</div>
+
+		<!-- Editor Card -->
+		<div class="card flex-1 border border-base-content/10 bg-base-100 shadow-sm">
+			<div class="card-body flex flex-col gap-4 p-6">
+				<!-- Title Input -->
+				<input
+					type="text"
+					bind:value={title}
+					oninput={markUnsaved}
+					placeholder="Give your letter a title..."
+					class="border-0 bg-transparent text-2xl font-bold text-base-content placeholder:text-base-content/30 focus:outline-none"
+				/>
+
+				<!-- Content Editor -->
+				<div class="relative flex-1">
+					<textarea
+						bind:value={content}
+						oninput={handleContentChange}
+						placeholder="Start writing... Take your time. There's no rush. This is your safe space to express what you've been holding back."
+						class="h-full min-h-[300px] w-full resize-none border-0 bg-transparent text-base leading-relaxed text-base-content placeholder:text-base-content/40 focus:outline-none"
+					></textarea>
+
+					{#if privacyMode}
+						<div
+							class="pointer-events-none absolute right-0 bottom-0 flex items-center gap-1 rounded-tl-lg bg-base-200/80 px-2 py-1 text-xs text-base-content/50"
+						>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								class="h-3 w-3"
+								viewBox="0 0 20 20"
+								fill="currentColor"
+							>
+								<path
+									fill-rule="evenodd"
+									d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+									clip-rule="evenodd"
+								/>
+							</svg>
+							Encrypted
+						</div>
+					{/if}
+				</div>
+			</div>
+		</div>
+
+		<!-- Bottom Action Bar -->
+		<div
+			class="mt-4 flex items-center justify-between rounded-lg border border-base-content/10 bg-base-100 px-4 py-3 shadow-sm"
+		>
+			<!-- Undo/Redo -->
+			<div class="flex items-center gap-1">
+				<button
+					type="button"
+					class="btn gap-1 btn-ghost btn-sm"
+					onclick={undo}
+					disabled={!canUndo}
+					title="Undo"
+				>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						class="h-4 w-4"
+						viewBox="0 0 20 20"
+						fill="currentColor"
+					>
+						<path
+							fill-rule="evenodd"
+							d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"
+							clip-rule="evenodd"
+						/>
+					</svg>
+					Undo
+				</button>
+				<button
+					type="button"
+					class="btn gap-1 btn-ghost btn-sm"
+					onclick={redo}
+					disabled={!canRedo}
+					title="Redo"
+				>
+					Redo
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						class="h-4 w-4"
+						viewBox="0 0 20 20"
+						fill="currentColor"
+					>
+						<path
+							fill-rule="evenodd"
+							d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
+							clip-rule="evenodd"
+						/>
+					</svg>
+				</button>
+			</div>
+
+			<!-- Primary Actions -->
+			<div class="flex items-center gap-2">
+				<button
+					type="button"
+					class="btn gap-2 btn-ghost btn-sm"
+					onclick={analyzeTone}
+					disabled={!content.trim()}
+				>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						class="h-4 w-4"
+						viewBox="0 0 20 20"
+						fill="currentColor"
+					>
+						<path
+							d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z"
+						/>
+					</svg>
+					Analyze Tone
+				</button>
+				<button
+					type="button"
+					class="btn gap-2 shadow-sm transition-all duration-200 btn-sm btn-primary hover:shadow-md hover:shadow-primary/25"
+					onclick={saveDraft}
+					disabled={saveStatus === 'saving'}
+				>
+					{#if saveStatus === 'saving'}
+						<span class="loading loading-xs loading-spinner"></span>
+					{:else}
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							class="h-4 w-4"
+							viewBox="0 0 20 20"
+							fill="currentColor"
+						>
+							<path
+								d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293zM9 4a1 1 0 012 0v2H9V4z"
+							/>
+						</svg>
+					{/if}
+					Save Draft
+				</button>
+			</div>
+		</div>
+	</main>
+
+	<!-- Mobile Context Drawer Toggle (shown on smaller screens) -->
+	<div class="fixed right-4 bottom-24 lg:hidden">
+		<button
+			type="button"
+			class="btn btn-circle shadow-lg btn-primary"
+			onclick={() => {}}
+			aria-label="Open context menu"
+		>
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				class="h-5 w-5"
+				viewBox="0 0 20 20"
+				fill="currentColor"
+			>
+				<path
+					fill-rule="evenodd"
+					d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z"
+					clip-rule="evenodd"
+				/>
+			</svg>
+		</button>
 	</div>
-
-	<!-- Metadata Fields -->
-	<Card compact>
-		<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-			<Input label="Who are you writing to?" placeholder="e.g., Mom, Partner, Friend" />
-			<Input label="What do you want to express?" placeholder="e.g., Gratitude, Apology, Love" />
-		</div>
-	</Card>
-
-	<!-- Editor -->
-	<Card>
-		<Textarea
-			label="Your message"
-			placeholder="Start writing... Take your time. There's no rush."
-			rows={12}
-			showCount
-		/>
-	</Card>
-
-	<!-- AI Assistant (placeholder) -->
-	<Card title="Need help finding words?" compact>
-		<p class="mb-4 text-sm text-base-content/70">
-			AI can help you clarify, find alternatives, or adjust the tone of your message.
-		</p>
-		<div class="flex flex-wrap gap-2">
-			<Button variant="ghost" size="sm">Clarify</Button>
-			<Button variant="ghost" size="sm">Alternatives</Button>
-			<Button variant="ghost" size="sm">Adjust Tone</Button>
-			<Button variant="ghost" size="sm">Go Deeper</Button>
-			<Button variant="ghost" size="sm">Opening</Button>
-		</div>
-	</Card>
 </div>
+
+<style>
+	/* Fade-in animations matching landing page */
+	.fade-in {
+		opacity: 0;
+		transform: translateY(20px);
+		transition:
+			opacity 0.6s ease-out,
+			transform 0.6s ease-out;
+	}
+
+	.fade-in.visible {
+		opacity: 1;
+		transform: translateY(0);
+	}
+
+	.stagger-1 {
+		transition-delay: 0.1s;
+	}
+
+	/* Slide down animation for prompts */
+	@keyframes slideDown {
+		from {
+			opacity: 0;
+			transform: translateY(-10px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	:global(.animate-slideDown) {
+		animation: slideDown 0.3s ease-out forwards;
+	}
+
+	/* Custom scrollbar for prompts */
+	.max-h-40::-webkit-scrollbar {
+		width: 4px;
+	}
+
+	.max-h-40::-webkit-scrollbar-track {
+		background: transparent;
+	}
+
+	.max-h-40::-webkit-scrollbar-thumb {
+		background: oklch(var(--bc) / 0.2);
+		border-radius: 2px;
+	}
+
+	.max-h-40::-webkit-scrollbar-thumb:hover {
+		background: oklch(var(--bc) / 0.3);
+	}
+</style>
