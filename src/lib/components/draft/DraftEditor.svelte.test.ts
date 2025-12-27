@@ -134,8 +134,9 @@ describe('DraftEditor Component', () => {
 			unmount();
 		});
 
-		it('should disable autosave when autosaveEnabled is false', async () => {
-			const { unmount } = render(DraftEditor, { autosaveEnabled: false });
+		it('should render with autosave always enabled', async () => {
+			// Autosave is always enabled (no toggle prop exists)
+			const { unmount } = render(DraftEditor);
 
 			const textarea = page.getByRole('textbox');
 			await expect.element(textarea).toBeInTheDocument();

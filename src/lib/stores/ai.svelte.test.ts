@@ -7,7 +7,8 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { aiStore } from './ai.svelte';
 import { aiService } from '$lib/services/ai';
-import type { AuthResponse, Session } from '@supabase/supabase-js';
+import type { AuthError, Session, User, UserResponse } from '@supabase/supabase-js';
+import type { AIMode } from '$lib/types';
 
 // Mock the AI service
 vi.mock('$lib/services/ai', () => ({
@@ -31,10 +32,9 @@ vi.mock('$lib/services/supabase', () => ({
 import { supabase } from '$lib/services/supabase';
 
 // Helper to create mock session response
-function mockSessionResponse(token: string | null): {
-	data: { session: Session | null };
-	error: null;
-} {
+function mockSessionResponse(
+	token: string | null
+): { data: { session: Session }; error: null } | { data: { session: null }; error: null } {
 	if (!token) {
 		return { data: { session: null }, error: null };
 	}
@@ -44,6 +44,7 @@ function mockSessionResponse(token: string | null): {
 				access_token: token,
 				refresh_token: 'refresh-token',
 				expires_in: 3600,
+				expires_at: Math.floor(Date.now() / 1000) + 3600,
 				token_type: 'bearer',
 				user: {
 					id: 'test-user-id',
@@ -67,9 +68,12 @@ function mockSessionResponse(token: string | null): {
 }
 
 // Helper to create mock user response
-function mockUserResponse(hasUser: boolean): AuthResponse {
+function mockUserResponse(hasUser: boolean): UserResponse {
 	if (!hasUser) {
-		return { data: { user: null }, error: null } as AuthResponse;
+		return {
+			data: { user: null },
+			error: { name: 'AuthError', message: 'No user found' } as AuthError
+		};
 	}
 	return {
 		data: {
@@ -87,10 +91,10 @@ function mockUserResponse(hasUser: boolean): AuthResponse {
 				identities: [],
 				created_at: '2024-01-01T00:00:00Z',
 				updated_at: '2024-01-01T00:00:00Z'
-			}
+			} as User
 		},
 		error: null
-	} as AuthResponse;
+	};
 }
 
 describe('AI Store', () => {
@@ -145,7 +149,7 @@ describe('AI Store', () => {
 
 			// Mock AI service to resolve quickly after we check state
 			type AIResolve = (value: {
-				data: { options: { text: string; why: string }[]; original_valid: boolean; mode: string };
+				data: { options: { text: string; why: string }[]; original_valid: boolean; mode: AIMode };
 				error: null;
 			}) => void;
 			let resolveAI: AIResolve;
@@ -255,7 +259,7 @@ describe('AI Store', () => {
 			vi.mocked(supabase.auth.getSession).mockResolvedValue(mockSessionResponse('test-token'));
 
 			type AIResponse = {
-				data: { options: { text: string; why: string }[]; original_valid: boolean; mode: string };
+				data: { options: { text: string; why: string }[]; original_valid: boolean; mode: AIMode };
 				error: null;
 			};
 			let resolveFirst: (value: AIResponse) => void;
@@ -401,7 +405,7 @@ describe('AI Store', () => {
 			vi.mocked(supabase.auth.getSession).mockResolvedValue(mockSessionResponse('test-token'));
 
 			type AIResolve = (value: {
-				data: { options: { text: string; why: string }[]; original_valid: boolean; mode: string };
+				data: { options: { text: string; why: string }[]; original_valid: boolean; mode: AIMode };
 				error: null;
 			}) => void;
 			let resolveAI: AIResolve;
