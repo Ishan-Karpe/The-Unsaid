@@ -1,5 +1,5 @@
 <!--
-  History Page - View and manage past drafts with elegant animations
+  History Page - View and manage past drafts with pagination, filters, and trash
   Matches the landing page design language with DaisyUI and Tailwind CSS
 -->
 <script lang="ts">
@@ -8,7 +8,14 @@
 	import { resolve } from '$app/paths';
 	import { draftService } from '$lib/services';
 	import { draftStore } from '$lib/stores/draft.svelte';
-	import type { Draft } from '$lib/types';
+	import {
+		FilterPanel,
+		DraftPreview,
+		TrashView,
+		FirstUseWelcome,
+		ProgressBar
+	} from '$lib/components';
+	import type { Draft, DateRange } from '$lib/types';
 
 	// Animation states
 	let headerVisible = $state(false);
@@ -18,12 +25,23 @@
 	// Data state
 	let drafts = $state<Draft[]>([]);
 	let loading = $state(true);
+	let loadingMore = $state(false);
 	let error = $state<string | null>(null);
+
+	// Pagination state
+	const PAGE_SIZE = 20;
+	let offset = $state(0);
+	let totalDrafts = $state(0);
+	let hasMore = $state(false);
 
 	// Filter state
 	let searchQuery = $state('');
 	let selectedRecipient = $state('');
 	let sortBy = $state<'updated' | 'created'>('updated');
+	let dateRange = $state<DateRange>({ start: null, end: null });
+
+	// Trash view state
+	let showTrash = $state(false);
 
 	// Delete confirmation
 	let deletingId = $state<string | null>(null);
@@ -53,6 +71,24 @@
 			result = result.filter((d) => d.recipient === selectedRecipient);
 		}
 
+		// Filter by date range
+		if (dateRange.start) {
+			result = result.filter((d) => {
+				const draftDate = sortBy === 'updated' ? d.updatedAt : d.createdAt;
+				return draftDate && draftDate >= dateRange.start!;
+			});
+		}
+		if (dateRange.end) {
+			// Add one day to include the end date fully
+			// eslint-disable-next-line svelte/prefer-svelte-reactivity -- Date used in function, not reactive state
+			const endOfDay = new Date(dateRange.end);
+			endOfDay.setHours(23, 59, 59, 999);
+			result = result.filter((d) => {
+				const draftDate = sortBy === 'updated' ? d.updatedAt : d.createdAt;
+				return draftDate && draftDate <= endOfDay;
+			});
+		}
+
 		// Sort
 		result.sort((a, b) => {
 			const dateA = sortBy === 'updated' ? a.updatedAt : a.createdAt;
@@ -72,8 +108,12 @@
 		// Load drafts
 		loadDrafts();
 
-		// Listen for encryption key restoration (when user enters password after session restore)
-		const handleKeyRestored = () => loadDrafts();
+		// Listen for encryption key restoration
+		const handleKeyRestored = () => {
+			offset = 0;
+			drafts = [];
+			loadDrafts();
+		};
 		window.addEventListener('encryption-key-restored', handleKeyRestored);
 
 		return () => {
@@ -85,15 +125,42 @@
 		loading = true;
 		error = null;
 
-		const result = await draftService.getDrafts();
+		const result = await draftService.getDraftsPaginated({
+			limit: PAGE_SIZE,
+			offset: 0
+		});
 
 		if (result.error) {
 			error = result.error;
 		} else {
 			drafts = result.drafts;
+			totalDrafts = result.total;
+			hasMore = result.hasMore;
+			offset = PAGE_SIZE;
 		}
 
 		loading = false;
+	}
+
+	async function loadMoreDrafts() {
+		if (loadingMore || !hasMore) return;
+
+		loadingMore = true;
+
+		const result = await draftService.getDraftsPaginated({
+			limit: PAGE_SIZE,
+			offset
+		});
+
+		if (result.error) {
+			error = result.error;
+		} else {
+			drafts = [...drafts, ...result.drafts];
+			hasMore = result.hasMore;
+			offset += PAGE_SIZE;
+		}
+
+		loadingMore = false;
 	}
 
 	async function handleDelete(id: string) {
@@ -103,12 +170,14 @@
 		}
 
 		deletingId = id;
-		const result = await draftService.deleteDraft(id);
+		// Use soft delete instead of hard delete
+		const result = await draftService.softDeleteDraft(id);
 
 		if (result.error) {
 			error = result.error;
 		} else {
 			drafts = drafts.filter((d) => d.id !== id);
+			totalDrafts--;
 		}
 
 		deletingId = null;
@@ -136,11 +205,6 @@
 		}
 	}
 
-	function getPreview(content: string, maxLength: number = 120): string {
-		if (content.length <= maxLength) return content;
-		return content.slice(0, maxLength).trim() + '...';
-	}
-
 	function getIntentLabel(intent: string): string {
 		const labels: Record<string, string> = {
 			appreciation: 'Appreciation',
@@ -162,6 +226,23 @@
 		draftStore.loadDraft(draft);
 		goto(resolve('/write'));
 	}
+
+	function handleDateChange(range: DateRange) {
+		dateRange = range;
+	}
+
+	function clearAllFilters() {
+		searchQuery = '';
+		selectedRecipient = '';
+		dateRange = { start: null, end: null };
+	}
+
+	function handleDraftRestored() {
+		// Reload drafts to include restored one
+		offset = 0;
+		drafts = [];
+		loadDrafts();
+	}
 </script>
 
 <svelte:head>
@@ -180,83 +261,68 @@
 					{:else if filteredDrafts.length === 0 && drafts.length > 0}
 						No drafts match your filters
 					{:else}
-						{drafts.length} {drafts.length === 1 ? 'draft' : 'drafts'} saved
+						{totalDrafts} {totalDrafts === 1 ? 'draft' : 'drafts'} saved
 					{/if}
 				</p>
 			</div>
-			<button
-				type="button"
-				onclick={handleNewDraft}
-				class="btn gap-2 shadow-sm transition-all duration-200 btn-primary hover:shadow-md hover:shadow-primary/25"
-			>
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					class="h-4 w-4"
-					viewBox="0 0 20 20"
-					fill="currentColor"
+			<div class="flex items-center gap-2">
+				<button
+					type="button"
+					class="btn gap-1 btn-ghost btn-sm"
+					onclick={() => (showTrash = true)}
+					title="View trash"
 				>
-					<path
-						fill-rule="evenodd"
-						d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
-						clip-rule="evenodd"
-					/>
-				</svg>
-				New Draft
-			</button>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						class="h-4 w-4"
+						viewBox="0 0 20 20"
+						fill="currentColor"
+					>
+						<path
+							fill-rule="evenodd"
+							d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+							clip-rule="evenodd"
+						/>
+					</svg>
+					Trash
+				</button>
+				<button
+					type="button"
+					onclick={handleNewDraft}
+					class="btn gap-2 shadow-sm transition-all duration-200 btn-primary hover:shadow-md hover:shadow-primary/25"
+				>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						class="h-4 w-4"
+						viewBox="0 0 20 20"
+						fill="currentColor"
+					>
+						<path
+							fill-rule="evenodd"
+							d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+							clip-rule="evenodd"
+						/>
+					</svg>
+					New Draft
+				</button>
+			</div>
 		</div>
 	</div>
 
 	<!-- Search and Filters -->
 	<div class="fade-in stagger-1 {filtersVisible ? 'visible' : ''}">
-		<div
-			class="card border border-base-content/10 bg-base-100 shadow-sm transition-shadow duration-200 hover:shadow-md"
-		>
-			<div class="card-body gap-4 p-4">
-				<div class="flex flex-col gap-4 md:flex-row md:items-center">
-					<!-- Search -->
-					<div class="relative flex-1">
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							class="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-base-content/40"
-							viewBox="0 0 20 20"
-							fill="currentColor"
-						>
-							<path
-								fill-rule="evenodd"
-								d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
-								clip-rule="evenodd"
-							/>
-						</svg>
-						<input
-							type="search"
-							bind:value={searchQuery}
-							placeholder="Search drafts..."
-							class="input-bordered input w-full bg-base-200/50 pl-10 transition-all duration-200 focus:bg-base-100"
-						/>
-					</div>
-
-					<!-- Recipient Filter -->
-					<select
-						bind:value={selectedRecipient}
-						class="select-bordered select w-full bg-base-200/50 transition-all duration-200 focus:bg-base-100 md:w-48"
-					>
-						<option value="">All recipients</option>
-						{#each uniqueRecipients as recipient (recipient)}
-							<option value={recipient}>{recipient}</option>
-						{/each}
-					</select>
-
-					<!-- Sort -->
-					<select
-						bind:value={sortBy}
-						class="select-bordered select w-full bg-base-200/50 transition-all duration-200 focus:bg-base-100 md:w-40"
-					>
-						<option value="updated">Last updated</option>
-						<option value="created">Date created</option>
-					</select>
-				</div>
-			</div>
-		</div>
+		<FilterPanel
+			{searchQuery}
+			{selectedRecipient}
+			{sortBy}
+			{dateRange}
+			recipients={uniqueRecipients}
+			onsearchchange={(v) => (searchQuery = v)}
+			onrecipientchange={(v) => (selectedRecipient = v)}
+			onsortchange={(v) => (sortBy = v)}
+			ondatechange={handleDateChange}
+			onclearall={clearAllFilters}
+		/>
 	</div>
 
 	<!-- Draft List -->
@@ -307,62 +373,35 @@
 				</div>
 			</div>
 		{:else if filteredDrafts.length === 0}
-			<!-- Empty State -->
-			<div
-				class="card border border-base-content/10 bg-base-100 shadow-sm transition-all duration-300 hover:shadow-md"
-			>
-				<div class="card-body items-center py-16 text-center">
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						class="mb-4 h-16 w-16 text-base-content/20"
-						viewBox="0 0 20 20"
-						fill="currentColor"
-					>
-						<path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
-						<path
-							fill-rule="evenodd"
-							d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z"
-							clip-rule="evenodd"
-						/>
-					</svg>
-					{#if drafts.length === 0}
-						<h3 class="mb-2 text-lg font-semibold text-base-content/80">No drafts yet</h3>
-						<p class="mb-6 max-w-sm text-base-content/60">
-							Start writing to express what matters most. Your drafts will appear here.
-						</p>
-						<button
-							type="button"
-							onclick={handleNewDraft}
-							class="btn gap-2 shadow-sm transition-all duration-200 btn-primary hover:shadow-md hover:shadow-primary/25"
+			{#if drafts.length === 0}
+				<!-- First-time user welcome -->
+				<FirstUseWelcome onnewdraft={handleNewDraft} />
+			{:else}
+				<!-- No matching drafts -->
+				<div
+					class="card border border-base-content/10 bg-base-100 shadow-sm transition-all duration-300 hover:shadow-md"
+				>
+					<div class="card-body items-center py-12 text-center">
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							class="mb-4 h-12 w-12 text-base-content/20"
+							viewBox="0 0 20 20"
+							fill="currentColor"
 						>
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								class="h-4 w-4"
-								viewBox="0 0 20 20"
-								fill="currentColor"
-							>
-								<path
-									d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"
-								/>
-							</svg>
-							Start Writing
-						</button>
-					{:else}
+							<path
+								fill-rule="evenodd"
+								d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
+								clip-rule="evenodd"
+							/>
+						</svg>
 						<h3 class="mb-2 text-lg font-semibold text-base-content/80">No matching drafts</h3>
 						<p class="mb-4 text-base-content/60">Try adjusting your search or filters.</p>
-						<button
-							type="button"
-							class="btn btn-ghost btn-sm"
-							onclick={() => {
-								searchQuery = '';
-								selectedRecipient = '';
-							}}
-						>
+						<button type="button" class="btn btn-ghost btn-sm" onclick={clearAllFilters}>
 							Clear Filters
 						</button>
-					{/if}
+					</div>
 				</div>
-			</div>
+			{/if}
 		{:else}
 			<!-- Draft Cards -->
 			<div class="space-y-4">
@@ -385,10 +424,8 @@
 										</span>
 									</div>
 
-									<!-- Preview -->
-									<p class="leading-relaxed text-base-content/70">
-										{getPreview(draft.content)}
-									</p>
+									<!-- Preview with search highlighting -->
+									<DraftPreview content={draft.content} {searchQuery} />
 								</div>
 
 								<!-- Actions -->
@@ -470,9 +507,46 @@
 					</div>
 				{/each}
 			</div>
+
+			<!-- Load More section -->
+			{#if hasMore}
+				<div class="flex flex-col items-center gap-3 pt-4">
+					<ProgressBar loaded={drafts.length} total={totalDrafts} class="w-full max-w-xs" />
+					<button
+						type="button"
+						class="btn gap-2 btn-outline"
+						onclick={loadMoreDrafts}
+						disabled={loadingMore}
+					>
+						{#if loadingMore}
+							<span class="loading loading-sm loading-spinner"></span>
+							Loading...
+						{:else}
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								class="h-4 w-4"
+								viewBox="0 0 20 20"
+								fill="currentColor"
+							>
+								<path
+									fill-rule="evenodd"
+									d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+									clip-rule="evenodd"
+								/>
+							</svg>
+							Load More ({totalDrafts - drafts.length} remaining)
+						{/if}
+					</button>
+				</div>
+			{/if}
 		{/if}
 	</div>
 </div>
+
+<!-- Trash Modal -->
+{#if showTrash}
+	<TrashView onclose={() => (showTrash = false)} ondraftrestored={handleDraftRestored} />
+{/if}
 
 <style>
 	/* Fade-in animations matching write page */

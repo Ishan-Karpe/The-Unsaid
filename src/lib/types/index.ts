@@ -38,6 +38,7 @@ export interface EncryptedDraft {
 	iv: string;
 	created_at: string;
 	updated_at: string;
+	deleted_at: string | null; // For soft delete
 }
 
 // ------------------------------------------
@@ -140,4 +141,27 @@ export interface ExportedDraft {
 	emotion?: string;
 	createdAt: string;
 	updatedAt: string;
+}
+
+// ------------------------------------------
+// Pagination Types
+// ------------------------------------------
+export interface PaginationParams {
+	limit: number;
+	offset: number;
+}
+
+export interface PaginatedResult<T> {
+	items: T[];
+	total: number;
+	hasMore: boolean;
+	offset: number;
+}
+
+// ------------------------------------------
+// Date Range Types
+// ------------------------------------------
+export interface DateRange {
+	start: Date | null;
+	end: Date | null;
 }

@@ -22,6 +22,19 @@ export interface DeleteDraftResult {
 	error: string | null;
 }
 
+export interface GetDraftsOptions {
+	limit?: number;
+	offset?: number;
+	includeDeleted?: boolean;
+}
+
+export interface GetDraftsPaginatedResult {
+	drafts: Draft[];
+	total: number;
+	hasMore: boolean;
+	error: string | null;
+}
+
 export const draftService = {
 	/**
 	 * Save a draft (create or update)
@@ -130,6 +143,7 @@ export const draftService = {
 		const { data, error } = await supabase
 			.from('drafts')
 			.select('*')
+			.is('deleted_at', null)
 			.order('updated_at', { ascending: false });
 
 		if (error) {
@@ -223,6 +237,165 @@ export const draftService = {
 	async deleteDraft(id: string): Promise<DeleteDraftResult> {
 		const { error } = await supabase.from('drafts').delete().eq('id', id);
 
+		return { error: error?.message || null };
+	},
+
+	/**
+	 * Get drafts with pagination support
+	 * Automatically decrypts after retrieval
+	 *
+	 * @param options - Pagination and filter options
+	 * @returns Paginated drafts with total count
+	 */
+	async getDraftsPaginated(options: GetDraftsOptions = {}): Promise<GetDraftsPaginatedResult> {
+		const { limit = 20, offset = 0, includeDeleted = false } = options;
+
+		// Check if encryption is ready first
+		if (!encryptionService.isReady()) {
+			return {
+				drafts: [],
+				total: 0,
+				hasMore: false,
+				error: 'Please log in again to access your encrypted drafts'
+			};
+		}
+
+		// Build query with count
+		let query = supabase.from('drafts').select('*', { count: 'exact' });
+
+		// Filter out soft-deleted unless explicitly requested
+		if (!includeDeleted) {
+			query = query.is('deleted_at', null);
+		}
+
+		// Apply pagination and ordering
+		const { data, error, count } = await query
+			.order('updated_at', { ascending: false })
+			.range(offset, offset + limit - 1);
+
+		if (error) {
+			return { drafts: [], total: 0, hasMore: false, error: error.message };
+		}
+
+		// Decrypt all drafts
+		const decryptedDrafts: Draft[] = [];
+		for (const encryptedDraft of data as EncryptedDraft[]) {
+			const { draft, error: decryptError } = await encryptionService.decryptDraft({
+				encrypted_content: encryptedDraft.encrypted_content,
+				encrypted_metadata: encryptedDraft.encrypted_metadata,
+				iv: encryptedDraft.iv
+			});
+
+			if (decryptError || !draft) {
+				console.error('Failed to decrypt draft:', encryptedDraft.id, decryptError);
+				continue; // Skip corrupted drafts rather than failing entirely
+			}
+
+			decryptedDrafts.push({
+				id: encryptedDraft.id,
+				content: draft.content,
+				recipient: draft.recipient,
+				intent: draft.intent,
+				emotion: draft.emotion,
+				createdAt: new Date(encryptedDraft.created_at),
+				updatedAt: new Date(encryptedDraft.updated_at)
+			});
+		}
+
+		const total = count ?? 0;
+		const hasMore = offset + limit < total;
+
+		return { drafts: decryptedDrafts, total, hasMore, error: null };
+	},
+
+	/**
+	 * Soft delete a draft (moves to trash)
+	 * Can be restored later
+	 *
+	 * @param id - The draft's unique identifier
+	 * @returns Error if soft deletion failed
+	 */
+	async softDeleteDraft(id: string): Promise<DeleteDraftResult> {
+		const { error } = await supabase
+			.from('drafts')
+			.update({ deleted_at: new Date().toISOString() })
+			.eq('id', id);
+
+		return { error: error?.message || null };
+	},
+
+	/**
+	 * Restore a soft-deleted draft
+	 *
+	 * @param id - The draft's unique identifier
+	 * @returns Error if restoration failed
+	 */
+	async restoreDraft(id: string): Promise<DeleteDraftResult> {
+		const { error } = await supabase.from('drafts').update({ deleted_at: null }).eq('id', id);
+
+		return { error: error?.message || null };
+	},
+
+	/**
+	 * Get soft-deleted drafts (trash)
+	 *
+	 * @returns Deleted drafts that can be restored
+	 */
+	async getDeletedDrafts(): Promise<GetDraftsResult> {
+		if (!encryptionService.isReady()) {
+			return {
+				drafts: [],
+				error: 'Please log in again to access your encrypted drafts'
+			};
+		}
+
+		const { data, error } = await supabase
+			.from('drafts')
+			.select('*')
+			.not('deleted_at', 'is', null)
+			.order('deleted_at', { ascending: false });
+
+		if (error) {
+			return { drafts: [], error: error.message };
+		}
+
+		// Decrypt all drafts
+		const decryptedDrafts: Draft[] = [];
+		for (const encryptedDraft of data as EncryptedDraft[]) {
+			const { draft, error: decryptError } = await encryptionService.decryptDraft({
+				encrypted_content: encryptedDraft.encrypted_content,
+				encrypted_metadata: encryptedDraft.encrypted_metadata,
+				iv: encryptedDraft.iv
+			});
+
+			if (decryptError || !draft) {
+				console.error('Failed to decrypt draft:', encryptedDraft.id, decryptError);
+				continue;
+			}
+
+			decryptedDrafts.push({
+				id: encryptedDraft.id,
+				content: draft.content,
+				recipient: draft.recipient,
+				intent: draft.intent,
+				emotion: draft.emotion,
+				createdAt: new Date(encryptedDraft.created_at),
+				updatedAt: new Date(encryptedDraft.updated_at)
+			});
+		}
+
+		return { drafts: decryptedDrafts, error: null };
+	},
+
+	/**
+	 * Permanently delete a draft (hard delete)
+	 * Only call this for drafts already in trash
+	 *
+	 * @param id - The draft's unique identifier
+	 * @returns Error if deletion failed
+	 */
+	async permanentlyDeleteDraft(id: string): Promise<DeleteDraftResult> {
+		const { error } = await supabase.from('drafts').delete().eq('id', id);
 		return { error: error?.message || null };
 	}
 };
