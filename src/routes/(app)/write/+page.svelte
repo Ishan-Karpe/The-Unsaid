@@ -7,13 +7,22 @@
 	import { onMount } from 'svelte';
 	import { conversationPrompts, categoryLabels } from '$lib/data/prompts';
 	import type { PromptCategory, AIMode } from '$lib/types';
-	import { DraftEditor, MetadataFields, SyncIndicator, AISuggestions } from '$lib/components';
+	import {
+		DraftEditor,
+		MetadataFields,
+		SyncIndicator,
+		AISuggestions,
+		MobileDrawer
+	} from '$lib/components';
 	import { draftStore } from '$lib/stores/draft.svelte';
 	import { aiStore } from '$lib/stores/ai.svelte';
 
 	// Animation states
 	let sidebarVisible = $state(false);
 	let editorVisible = $state(false);
+
+	// Mobile drawer state
+	let mobileDrawerOpen = $state(false);
 
 	// Local UI state (not draft data)
 	let privacyMode = $state(true);
@@ -412,13 +421,13 @@
 	<div class="fixed right-4 bottom-24 lg:hidden">
 		<button
 			type="button"
-			class="btn btn-circle shadow-lg btn-primary"
-			onclick={() => {}}
+			class="btn btn-circle min-h-[56px] min-w-[56px] shadow-lg btn-primary"
+			onclick={() => (mobileDrawerOpen = true)}
 			aria-label="Open context menu"
 		>
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
-				class="h-5 w-5"
+				class="h-6 w-6"
 				viewBox="0 0 20 20"
 				fill="currentColor"
 			>
@@ -430,6 +439,9 @@
 			</svg>
 		</button>
 	</div>
+
+	<!-- Mobile Drawer for Context (metadata, feelings) -->
+	<MobileDrawer bind:open={mobileDrawerOpen} />
 </div>
 
 <style>

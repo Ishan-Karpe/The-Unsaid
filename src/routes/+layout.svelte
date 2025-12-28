@@ -85,9 +85,14 @@
 	<meta name="theme-color" content="#6366f1" />
 </svelte:head>
 
+<!-- Skip link for keyboard navigation - visible only on focus -->
+<a href="#main-content" class="skip-link"> Skip to main content </a>
+
 <!-- App shell with theme support -->
 <div class="min-h-screen bg-base-100 text-base-content">
-	{@render children()}
+	<main id="main-content" tabindex="-1">
+		{@render children()}
+	</main>
 </div>
 
 <!-- Password prompt for session restoration -->
