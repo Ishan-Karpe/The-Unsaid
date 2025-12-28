@@ -135,10 +135,13 @@
 	<!-- Animated background gradient orbs -->
 	<div class="pointer-events-none absolute inset-0 overflow-hidden">
 		<div
-			class="animate-float-slow absolute top-1/4 -left-32 h-96 w-96 rounded-full bg-primary/5 blur-3xl"
+			class="animate-float-slow absolute top-1/4 -left-32 h-96 w-96 rounded-full bg-purple-500/10 blur-3xl"
 		></div>
 		<div
-			class="animate-float-slower absolute top-1/2 -right-32 h-80 w-80 rounded-full bg-secondary/5 blur-3xl"
+			class="animate-float-slower absolute top-1/2 -right-32 h-80 w-80 rounded-full bg-violet-500/10 blur-3xl"
+		></div>
+		<div
+			class="animate-float-slow absolute bottom-1/4 left-1/3 h-64 w-64 rounded-full bg-purple-600/5 blur-3xl"
 		></div>
 	</div>
 
@@ -163,7 +166,8 @@
 		>
 			<span class="text-base-content">Say What You</span>
 			<br />
-			<span class="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent"
+			<span
+				class="bg-gradient-to-r from-purple-400 via-violet-500 to-purple-600 bg-clip-text text-transparent"
 				>Need to Say</span
 			>
 		</h1>
@@ -242,15 +246,15 @@
 		<div class="grid gap-6 md:grid-cols-3">
 			<!-- AI-Assisted Clarity -->
 			<div
-				class="fade-in stagger-1 card bg-base-300/50 transition-all duration-300 card-border hover:bg-base-300 hover:shadow-lg {coreValuesVisible
+				class="fade-in stagger-1 card bg-gradient-to-br from-base-300/50 to-purple-500/5 transition-all duration-300 card-border hover:from-base-300 hover:to-purple-500/10 hover:shadow-lg hover:shadow-purple-500/5 {coreValuesVisible
 					? 'visible'
 					: ''}"
 			>
 				<div class="card-body">
-					<div class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+					<div class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-purple-500/10">
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
-							class="h-6 w-6 text-primary"
+							class="h-6 w-6 text-purple-500"
 							viewBox="0 0 24 24"
 							fill="currentColor"
 						>
@@ -269,15 +273,15 @@
 
 			<!-- Privacy First -->
 			<div
-				class="fade-in stagger-2 card bg-base-300/50 transition-all duration-300 card-border hover:bg-base-300 hover:shadow-lg {coreValuesVisible
+				class="fade-in stagger-2 card bg-gradient-to-br from-base-300/50 to-violet-500/5 transition-all duration-300 card-border hover:from-base-300 hover:to-violet-500/10 hover:shadow-lg hover:shadow-violet-500/5 {coreValuesVisible
 					? 'visible'
 					: ''}"
 			>
 				<div class="card-body">
-					<div class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-secondary/10">
+					<div class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-violet-500/10">
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
-							class="h-6 w-6 text-secondary"
+							class="h-6 w-6 text-violet-500"
 							viewBox="0 0 20 20"
 							fill="currentColor"
 						>
@@ -298,15 +302,15 @@
 
 			<!-- Emotional Intelligence -->
 			<div
-				class="fade-in stagger-3 card bg-base-300/50 transition-all duration-300 card-border hover:bg-base-300 hover:shadow-lg {coreValuesVisible
+				class="fade-in stagger-3 card bg-gradient-to-br from-base-300/50 to-fuchsia-500/5 transition-all duration-300 card-border hover:from-base-300 hover:to-fuchsia-500/10 hover:shadow-lg hover:shadow-fuchsia-500/5 {coreValuesVisible
 					? 'visible'
 					: ''}"
 			>
 				<div class="card-body">
-					<div class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-accent/10">
+					<div class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-fuchsia-500/10">
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
-							class="h-6 w-6 text-accent"
+							class="h-6 w-6 text-fuchsia-500"
 							viewBox="0 0 20 20"
 							fill="currentColor"
 						>
@@ -337,7 +341,10 @@
 				<h2 class="mb-4 text-3xl font-bold md:text-4xl">
 					From Messy Thoughts to
 					<br />
-					<span class="text-primary">Clear Words</span>
+					<span
+						class="bg-gradient-to-r from-purple-400 via-violet-500 to-purple-600 bg-clip-text text-transparent"
+						>Clear Words</span
+					>
 				</h2>
 				<p class="mb-8 text-base-content/60">
 					See how The Unsaid transforms scattered feelings into articulate, meaningful messages in
@@ -432,7 +439,7 @@
 							<div
 								class="rounded-lg border border-base-content/10 bg-base-300 px-4 py-3 text-base-content"
 							>
-								Sarah
+								Ishan
 							</div>
 						</div>
 

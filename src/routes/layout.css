@@ -73,8 +73,8 @@
 
 /* Dark theme adjustments */
 [data-theme='dark'] {
-	/* Primary: Lighter indigo for dark mode */
-	--color-primary: oklch(65% 0.18 260);
+	/* Primary: Bright indigo matching #6471EE */
+	--color-primary: oklch(59% 0.19 275);
 	--color-primary-content: oklch(15% 0.01 260);
 
 	/* Secondary: Lighter purple for dark mode */
