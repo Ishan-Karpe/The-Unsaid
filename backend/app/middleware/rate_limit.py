@@ -4,7 +4,9 @@
 import os
 import time
 from collections import defaultdict
-from fastapi import Request, HTTPException
+
+from fastapi import HTTPException, Request
+from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
 
@@ -25,6 +27,10 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         if not request.url.path.startswith("/api/ai"):
             return await call_next(request)
 
+        # Ignore OPTIONS requests (CORS preflight)
+        if request.method == "OPTIONS":
+            return await call_next(request)
+
         # Get user identifier (IP for now, could use JWT user_id)
         client_ip = request.client.host if request.client else "unknown"
 
@@ -37,9 +43,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
         # Check rate limit
         if len(self.requests[client_ip]) >= self.limit:
-            raise HTTPException(
+            return JSONResponse(
                 status_code=429,
-                detail=f"Rate limit exceeded. Maximum {self.limit} AI requests per hour."
+                content={"detail": f"Rate limit exceeded. Maximum {self.limit} AI requests per hour."}
             )
 
         # Record this request

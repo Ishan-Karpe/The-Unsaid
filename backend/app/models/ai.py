@@ -1,8 +1,8 @@
 # ===========================================
 # THE UNSAID - Pydantic Models for AI
 # ===========================================
+
 from pydantic import BaseModel, Field
-from typing import List, Optional
 
 
 class AIOption(BaseModel):
@@ -13,16 +13,22 @@ class AIOption(BaseModel):
 
 class AIResponse(BaseModel):
     """Response from AI endpoints"""
-    options: List[AIOption] = Field(..., description="List of suggestions")
+    options: list[AIOption] = Field(..., description="List of suggestions")
     original_valid: bool = Field(default=True, description="Whether original text is valid")
 
 
 # Request models for each AI mode
 class BaseAIRequest(BaseModel):
     """Base request for all AI endpoints"""
-    draft_text: str = Field(..., min_length=1, max_length=10000, description="The draft text")
-    recipient: str = Field(..., min_length=1, max_length=100, description="Who the message is for")
-    intent: str = Field(..., min_length=1, max_length=500, description="What the user wants to express")
+    draft_text: str = Field(
+        ..., min_length=1, max_length=10000, description="The draft text"
+    )
+    recipient: str = Field(
+        ..., min_length=1, max_length=100, description="Who the message is for"
+    )
+    intent: str = Field(
+        ..., min_length=1, max_length=500, description="What to express"
+    )
 
 
 class ClarifyRequest(BaseAIRequest):
@@ -37,7 +43,9 @@ class AlternativesRequest(BaseAIRequest):
 
 class ToneRequest(BaseAIRequest):
     """Request for tone calibration"""
-    target_tone: Optional[str] = Field(default=None, description="Desired tone (softer, warmer, direct)")
+    target_tone: str | None = Field(
+        default=None, description="Desired tone (softer, warmer, direct)"
+    )
 
 
 class ExpandRequest(BaseAIRequest):

@@ -12,10 +12,13 @@
 		MetadataFields,
 		SyncIndicator,
 		AISuggestions,
-		MobileDrawer
+		MobileDrawer,
+		AIConsentModal
 	} from '$lib/components';
 	import { draftStore } from '$lib/stores/draft.svelte';
 	import { aiStore } from '$lib/stores/ai.svelte';
+	import { authStore } from '$lib/stores/auth.svelte';
+	import { preferencesService } from '$lib/services';
 
 	// Animation states
 	let sidebarVisible = $state(false);
@@ -28,6 +31,11 @@
 	let privacyMode = $state(true);
 	let showPrompts = $state(false);
 	let selectedCategory = $state<PromptCategory>('gratitude');
+
+	// AI consent state
+	let aiEnabled = $state(false);
+	let showConsentModal = $state(false);
+	let pendingAIMode = $state<AIMode | null>(null);
 
 	// Feelings options for the sidebar
 	const feelings = [
@@ -63,6 +71,28 @@
 		setTimeout(() => (editorVisible = true), 200);
 	});
 
+	// Check AI consent when user is available
+	$effect(() => {
+		if (authStore.user?.id) {
+			checkAIConsent();
+		}
+	});
+
+	async function checkAIConsent() {
+		const user = authStore.user;
+		if (!user?.id) return;
+
+		try {
+			const enabled = await preferencesService.isAIEnabled(user.id);
+			aiEnabled = enabled;
+		} catch (err) {
+			// If we can't check consent, assume AI is disabled for safety
+			// User can still enable via settings
+			console.error('Failed to check AI consent:', err);
+			aiEnabled = false;
+		}
+	}
+
 	function toggleFeeling(feeling: string) {
 		// Toggle emotion - if already selected, clear it
 		if (currentEmotion === feeling) {
@@ -81,6 +111,19 @@
 		// Don't trigger if already loading or no content
 		if (isAILoading || !hasContent) return;
 
+		// Check for AI consent
+		if (!aiEnabled) {
+			// Show consent modal and store pending mode
+			pendingAIMode = mode;
+			showConsentModal = true;
+			return;
+		}
+
+		// Proceed with AI request
+		executeAIRequest(mode);
+	}
+
+	function executeAIRequest(mode: AIMode) {
 		// Get current draft data
 		const draftText = draftStore.draft.content;
 		const recipient = draftStore.draft.recipient || 'someone special';
@@ -88,6 +131,22 @@
 
 		// Request AI suggestions
 		aiStore.requestSuggestions(mode, draftText, recipient, intent);
+	}
+
+	function handleConsentGranted() {
+		aiEnabled = true;
+		showConsentModal = false;
+
+		// Execute the pending AI request if any
+		if (pendingAIMode) {
+			executeAIRequest(pendingAIMode);
+			pendingAIMode = null;
+		}
+	}
+
+	function handleConsentDeclined() {
+		showConsentModal = false;
+		pendingAIMode = null;
 	}
 
 	function handleApplySuggestion(text: string) {
@@ -442,6 +501,15 @@
 
 	<!-- Mobile Drawer for Context (metadata, feelings) -->
 	<MobileDrawer bind:open={mobileDrawerOpen} />
+
+	<!-- AI Consent Modal -->
+	{#if showConsentModal && authStore.user}
+		<AIConsentModal
+			userId={authStore.user.id}
+			onConsent={handleConsentGranted}
+			onDecline={handleConsentDeclined}
+		/>
+	{/if}
 </div>
 
 <style>

@@ -93,6 +93,7 @@ export const aiStore = {
 		originalValid = true;
 
 		try {
+			console.log('AI Store: Requesting suggestions...', { mode, draftText });
 			// Get auth token from Supabase (use getUser for security)
 			const {
 				data: { user },

@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { supabase } from '$lib/services/supabase';
 	import { keyDerivationService } from '$lib/services';
+	import { authStore } from '$lib/stores/auth.svelte';
 	import { PasswordPrompt } from '$lib/components/ui';
 	import './layout.css';
 	import favicon from '$lib/assets/favicon.svg';
@@ -27,9 +28,16 @@
 				error
 			} = await supabase.auth.getUser();
 
-			if (user && !error && !keyDerivationService.isKeyReady()) {
-				// Session exists but no encryption key - need password to restore
-				needsPasswordPrompt = true;
+			if (user && !error) {
+				// Update auth store with current user
+				authStore.setUser(user);
+
+				if (!keyDerivationService.isKeyReady()) {
+					// Session exists but no encryption key - need password to restore
+					needsPasswordPrompt = true;
+				}
+			} else {
+				authStore.setUser(null);
 			}
 		};
 
@@ -38,7 +46,13 @@
 		// Listen for auth state changes
 		const {
 			data: { subscription }
-		} = supabase.auth.onAuthStateChange(async (event) => {
+		} = supabase.auth.onAuthStateChange(async (event, session) => {
+			if (session?.user) {
+				authStore.setUser(session.user);
+			} else {
+				authStore.setUser(null);
+			}
+
 			if (event === 'SIGNED_IN') {
 				// User signed in - key will be derived in login page after sign in
 				// Don't prompt here since login flow handles key derivation

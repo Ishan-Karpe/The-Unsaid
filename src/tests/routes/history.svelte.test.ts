@@ -21,7 +21,15 @@ vi.mock('$lib/services', async () => {
 			restoreDraft: vi.fn(),
 			getDeletedDrafts: vi.fn(),
 			permanentlyDeleteDraft: vi.fn()
-		}
+		},
+		// Include other exports to prevent module resolution errors
+		keyDerivationService: {},
+		encryptionService: {},
+		saltService: {},
+		authService: {},
+		aiService: {},
+		preferencesService: {},
+		supabase: {}
 	};
 });
 

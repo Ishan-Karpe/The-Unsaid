@@ -7,7 +7,12 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
-	import { authService, keyDerivationService } from '$lib/services';
+	import {
+		authService,
+		keyDerivationService,
+		preferencesService,
+		type AIPersonality
+	} from '$lib/services';
 
 	// Get user data from page store
 	let user = $derived($page.data.user);
@@ -24,11 +29,16 @@
 	let newPassword = $state('');
 	let confirmPassword = $state('');
 
-	// AI Settings
+	// AI Settings (persisted to Supabase)
 	let emotionalAnalysis = $state(true);
 	let autosuggestions = $state(true);
 	let therapeuticMode = $state(false);
-	let aiPersonality = $state('empathetic');
+	let aiPersonality = $state<AIPersonality>('empathetic');
+
+	// Preferences loading states
+	let preferencesLoading = $state(true);
+	let preferencesSaving = $state(false);
+	let preferencesError = $state<string | null>(null);
 
 	// Loading states
 	let savingProfile = $state(false);
@@ -37,8 +47,8 @@
 	let deletingAccount = $state(false);
 	let loggingOut = $state(false);
 
-	// Initialize form with user data
-	onMount(() => {
+	// Initialize form with user data and load preferences
+	onMount(async () => {
 		if (user?.email) {
 			email = user.email;
 			// Parse name if available in user metadata
@@ -47,10 +57,73 @@
 			if (metadata?.last_name) lastName = metadata.last_name;
 		}
 
+		// Load preferences from database
+		if (user?.id) {
+			const { preferences, error } = await preferencesService.getPreferences(user.id);
+			if (preferences) {
+				emotionalAnalysis = preferences.emotional_analysis;
+				autosuggestions = preferences.autosuggestions;
+				therapeuticMode = preferences.therapeutic_mode;
+				aiPersonality = preferences.ai_personality;
+			}
+			if (error) {
+				preferencesError = error;
+			}
+			preferencesLoading = false;
+		} else {
+			preferencesLoading = false;
+		}
+
 		// Stagger animations
 		setTimeout(() => (sectionsVisible = true), 100);
 		setTimeout(() => (rightColumnVisible = true), 200);
 	});
+
+	/**
+	 * Save a single preference change to the database
+	 */
+	async function savePreference(
+		key: 'emotional_analysis' | 'autosuggestions' | 'therapeutic_mode' | 'ai_personality',
+		value: boolean | AIPersonality
+	) {
+		if (!user?.id) return;
+
+		preferencesSaving = true;
+		preferencesError = null;
+
+		const { error } = await preferencesService.updatePreferences(user.id, {
+			[key]: value
+		});
+
+		if (error) {
+			preferencesError = error;
+			// Revert the toggle on error
+			if (key === 'emotional_analysis') emotionalAnalysis = !value;
+			if (key === 'autosuggestions') autosuggestions = !value;
+			if (key === 'therapeutic_mode') therapeuticMode = !value;
+		}
+
+		preferencesSaving = false;
+	}
+
+	/**
+	 * Handle toggle changes with auto-save
+	 */
+	function handleEmotionalAnalysisChange() {
+		savePreference('emotional_analysis', emotionalAnalysis);
+	}
+
+	function handleAutosuggestionsChange() {
+		savePreference('autosuggestions', autosuggestions);
+	}
+
+	function handleTherapeuticModeChange() {
+		savePreference('therapeutic_mode', therapeuticMode);
+	}
+
+	function handlePersonalityChange() {
+		savePreference('ai_personality', aiPersonality);
+	}
 
 	// Get user initials for avatar
 	let initials = $derived.by(() => {
@@ -539,6 +612,8 @@
 							<input
 								type="checkbox"
 								bind:checked={emotionalAnalysis}
+								onchange={handleEmotionalAnalysisChange}
+								disabled={preferencesLoading}
 								class="toggle transition-all toggle-primary"
 							/>
 						</div>
@@ -552,6 +627,8 @@
 							<input
 								type="checkbox"
 								bind:checked={autosuggestions}
+								onchange={handleAutosuggestionsChange}
+								disabled={preferencesLoading}
 								class="toggle transition-all toggle-primary"
 							/>
 						</div>
@@ -565,6 +642,8 @@
 							<input
 								type="checkbox"
 								bind:checked={therapeuticMode}
+								onchange={handleTherapeuticModeChange}
+								disabled={preferencesLoading}
 								class="toggle transition-all toggle-primary"
 							/>
 						</div>
@@ -581,6 +660,8 @@
 							<select
 								id="aiPersonality"
 								bind:value={aiPersonality}
+								onchange={handlePersonalityChange}
+								disabled={preferencesLoading}
 								class="select-bordered select w-full bg-base-200 transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
 							>
 								<option value="empathetic">Empathetic & Gentle</option>
@@ -588,6 +669,20 @@
 								<option value="supportive">Supportive & Encouraging</option>
 								<option value="neutral">Neutral & Professional</option>
 							</select>
+
+							<!-- Saving indicator and error display -->
+							{#if preferencesSaving}
+								<div class="mt-2 flex items-center gap-1 text-xs text-primary">
+									<span class="loading loading-xs loading-spinner"></span>
+									Saving...
+								</div>
+							{/if}
+
+							{#if preferencesError}
+								<div class="mt-2 text-xs text-error">
+									{preferencesError}
+								</div>
+							{/if}
 						</div>
 					</div>
 				</div>

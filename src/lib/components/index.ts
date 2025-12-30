@@ -2,3 +2,6 @@
 export * from './ui';
 export * from './draft';
 export * from './history';
+
+// Standalone components
+export { default as AIConsentModal } from './AIConsentModal.svelte';

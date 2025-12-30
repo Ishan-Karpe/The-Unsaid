@@ -2,11 +2,12 @@
 # THE UNSAID - Auth Middleware
 # ===========================================
 import os
-from fastapi import HTTPException, Header
-from supabase import create_client, Client
+
+from fastapi import Header, HTTPException
+from supabase import Client, create_client
 
 # Initialize Supabase client
-supabase_url = os.getenv("SUPABASE_URL", "")
+supabase_url = os.getenv("SUPABASE_URL") or os.getenv("PUBLIC_SUPABASE_URL", "")
 supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
 
 supabase: Client | None = None
@@ -49,7 +50,13 @@ async def verify_ai_consent(authorization: str = Header(...)) -> bool:
 
     try:
         # Check preferences table for AI consent
-        result = supabase.table("preferences").select("ai_enabled").eq("user_id", user_id).single().execute()
+        result = (
+            supabase.table("preferences")
+            .select("ai_enabled")
+            .eq("user_id", user_id)
+            .single()
+            .execute()
+        )
 
         if not result.data or not result.data.get("ai_enabled"):
             raise HTTPException(
