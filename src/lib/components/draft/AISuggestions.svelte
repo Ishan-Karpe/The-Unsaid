@@ -6,7 +6,7 @@
 <script lang="ts">
 	import { aiStore } from '$lib/stores/ai.svelte';
 	import { aiService } from '$lib/services/ai';
-	import { LoadingSpinner, Alert } from '$lib/components';
+	import { Alert } from '$lib/components';
 
 	interface Props {
 		onApply?: (text: string) => void;
@@ -95,11 +95,26 @@
 
 		<!-- Content Area -->
 		<div class="max-h-80 overflow-y-auto p-4">
-			<!-- Loading State -->
+			<!-- Loading State with Skeleton Cards -->
 			{#if isLoading}
-				<div class="flex flex-col items-center justify-center gap-3 py-8">
-					<LoadingSpinner size="lg" class="text-secondary" />
-					<p class="text-sm text-base-content/60">Analyzing your words...</p>
+				<div class="space-y-3">
+					<!-- Skeleton Cards -->
+					{#each [1, 2, 3] as idx (idx)}
+						<div class="rounded-lg border border-base-content/10 bg-base-200/50 p-4">
+							<div class="animate-pulse space-y-2">
+								<div class="flex items-center gap-2">
+									<div class="h-5 w-16 skeleton rounded bg-base-300"></div>
+								</div>
+								<div class="h-4 w-full skeleton rounded bg-base-300"></div>
+								<div class="h-4 w-3/4 skeleton rounded bg-base-300"></div>
+								<div class="mt-2 h-3 w-1/2 skeleton rounded bg-base-300"></div>
+							</div>
+						</div>
+					{/each}
+					<p class="text-center text-sm text-base-content/60">
+						<span class="loading loading-sm loading-dots"></span>
+						Analyzing your words...
+					</p>
 				</div>
 
 				<!-- Error State -->

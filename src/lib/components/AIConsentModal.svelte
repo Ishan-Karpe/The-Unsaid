@@ -55,7 +55,6 @@
 
 <svelte:window onkeydown={handleKeydown} />
 
-<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <!-- Modal backdrop -->
 <div
 	class="modal-open modal"

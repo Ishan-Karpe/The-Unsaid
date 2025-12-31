@@ -2,11 +2,13 @@
 // THE UNSAID - AI Store (Svelte 5 Runes)
 // ===========================================
 // Manages ephemeral state for AI interactions: loading, results, errors
+// Includes session-level caching to avoid redundant API calls
 // Following the same pattern as auth.svelte.ts and draft.svelte.ts
 
 import type { AIMode, AIOption } from '$lib/types';
 import { aiService } from '$lib/services/ai';
 import { supabase } from '$lib/services/supabase';
+import { SvelteMap } from 'svelte/reactivity';
 
 // ------------------------------------------
 // Types
@@ -20,6 +22,49 @@ export interface AIState {
 	originalText: string;
 	originalValid: boolean;
 	error: string | null;
+}
+
+// ------------------------------------------
+// Session Cache for AI Responses
+// ------------------------------------------
+// Key format: `${mode}:${hash(draftText)}`
+// Caches responses to avoid redundant API calls when switching modes
+
+interface CacheEntry {
+	options: AIOption[];
+	originalValid: boolean;
+	timestamp: number;
+}
+
+const responseCache = new SvelteMap<string, CacheEntry>();
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+/**
+ * Generate a simple hash for cache key
+ * Uses a djb2-like algorithm for fast string hashing
+ */
+function hashText(text: string): string {
+	let hash = 5381;
+	for (let i = 0; i < text.length; i++) {
+		const char = text.charCodeAt(i);
+		hash = ((hash << 5) + hash) ^ char; // hash * 33 ^ char
+	}
+	// Convert to positive number and then to base36 for shorter string
+	return (hash >>> 0).toString(36);
+}
+
+/**
+ * Build cache key from mode and text
+ */
+function buildCacheKey(mode: AIMode, draftText: string): string {
+	return `${mode}:${hashText(draftText.trim())}`;
+}
+
+/**
+ * Check if cache entry is still valid
+ */
+function isCacheValid(entry: CacheEntry): boolean {
+	return Date.now() - entry.timestamp < CACHE_TTL_MS;
 }
 
 // ------------------------------------------
@@ -67,6 +112,7 @@ export const aiStore = {
 
 	/**
 	 * Request AI suggestions for a draft
+	 * Uses session-level caching to avoid redundant API calls
 	 * @param mode - The AI mode (clarify, alternatives, tone, expand, opening)
 	 * @param draftText - The draft content to analyze
 	 * @param recipient - Who the message is for
@@ -78,6 +124,22 @@ export const aiStore = {
 		recipient: string,
 		intent: string
 	): Promise<void> {
+		// Check cache first
+		const cacheKey = buildCacheKey(mode, draftText);
+		const cached = responseCache.get(cacheKey);
+
+		if (cached && isCacheValid(cached)) {
+			// Use cached response - no API call needed
+			status = 'success';
+			activeMode = mode;
+			originalText = draftText;
+			suggestions = cached.options;
+			originalValid = cached.originalValid;
+			error = null;
+			console.log('AI Store: Using cached response for', mode);
+			return;
+		}
+
 		// Cancel any existing request
 		if (abortController) {
 			abortController.abort();
@@ -93,7 +155,10 @@ export const aiStore = {
 		originalValid = true;
 
 		try {
-			console.log('AI Store: Requesting suggestions...', { mode, draftText });
+			console.log('AI Store: Requesting suggestions...', {
+				mode,
+				draftText: draftText.slice(0, 50) + '...'
+			});
 			// Get auth token from Supabase (use getUser for security)
 			const {
 				data: { user },
@@ -139,6 +204,14 @@ export const aiStore = {
 				status = 'success';
 				suggestions = result.data.options;
 				originalValid = result.data.original_valid;
+
+				// Cache the response for future use
+				responseCache.set(cacheKey, {
+					options: result.data.options,
+					originalValid: result.data.original_valid,
+					timestamp: Date.now()
+				});
+				console.log('AI Store: Cached response for', mode);
 			}
 		} catch (err) {
 			// Don't update state if request was aborted
@@ -203,6 +276,25 @@ export const aiStore = {
 		originalText = '';
 		originalValid = true;
 		error = null;
+	},
+
+	/**
+	 * Clear the response cache
+	 * Call this on logout or when content changes significantly
+	 */
+	clearCache() {
+		responseCache.clear();
+		console.log('AI Store: Cache cleared');
+	},
+
+	/**
+	 * Get cache stats for debugging
+	 */
+	getCacheStats() {
+		return {
+			size: responseCache.size,
+			keys: Array.from(responseCache.keys())
+		};
 	},
 
 	// Test helpers (prefixed with _ to indicate internal use)

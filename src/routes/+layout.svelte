@@ -3,7 +3,7 @@
 	import { supabase } from '$lib/services/supabase';
 	import { keyDerivationService } from '$lib/services';
 	import { authStore } from '$lib/stores/auth.svelte';
-	import { PasswordPrompt } from '$lib/components/ui';
+	import { PasswordPrompt, ToastContainer } from '$lib/components/ui';
 	import './layout.css';
 	import favicon from '$lib/assets/favicon.svg';
 
@@ -113,3 +113,6 @@
 {#if needsPasswordPrompt}
 	<PasswordPrompt onSuccess={handlePasswordSuccess} onCancel={handlePasswordCancel} />
 {/if}
+
+<!-- Toast notifications container -->
+<ToastContainer />

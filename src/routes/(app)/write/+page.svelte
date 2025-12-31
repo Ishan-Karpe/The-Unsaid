@@ -18,6 +18,7 @@
 	import { draftStore } from '$lib/stores/draft.svelte';
 	import { aiStore } from '$lib/stores/ai.svelte';
 	import { authStore } from '$lib/stores/auth.svelte';
+	import { toastStore } from '$lib/stores/toast.svelte';
 	import { preferencesService } from '$lib/services';
 
 	// Animation states
@@ -37,6 +38,9 @@
 	let showConsentModal = $state(false);
 	let pendingAIMode = $state<AIMode | null>(null);
 
+	// Duplicate request prevention
+	let lastRequestKey = $state<string>('');
+
 	// Feelings options for the sidebar
 	const feelings = [
 		{ value: 'grateful', label: 'Grateful' },
@@ -49,11 +53,38 @@
 		{ value: 'relieved', label: 'Relieved' }
 	];
 
-	// AI tools
-	const aiTools: { mode: AIMode; label: string; icon: string }[] = [
-		{ mode: 'tone', label: 'Check Tone', icon: 'tone' },
-		{ mode: 'expand', label: 'Expand Thought', icon: 'expand' },
-		{ mode: 'clarify', label: 'Rewrite for Clarity', icon: 'clarify' }
+	// AI tools - all 5 modes with descriptions for tooltips
+	const aiTools: { mode: AIMode; label: string; icon: string; description: string }[] = [
+		{
+			mode: 'clarify',
+			label: 'Clarify',
+			icon: 'clarify',
+			description: 'Simplify while preserving meaning'
+		},
+		{
+			mode: 'alternatives',
+			label: 'Alternatives',
+			icon: 'alternatives',
+			description: 'Different ways to say it'
+		},
+		{
+			mode: 'tone',
+			label: 'Tone',
+			icon: 'tone',
+			description: 'Adjust emotional delivery'
+		},
+		{
+			mode: 'expand',
+			label: 'Go Deeper',
+			icon: 'expand',
+			description: 'Questions to explore further'
+		},
+		{
+			mode: 'opening',
+			label: 'Opening',
+			icon: 'opening',
+			description: 'How to start your message'
+		}
 	];
 
 	// Computed values from store
@@ -125,9 +156,20 @@
 
 	function executeAIRequest(mode: AIMode) {
 		// Get current draft data
-		const draftText = draftStore.draft.content;
+		const draftText = draftStore.draft.content.trim();
 		const recipient = draftStore.draft.recipient || 'someone special';
 		const intent = draftStore.draft.intent || 'express my feelings';
+
+		// Build request key to detect duplicates
+		const requestKey = `${mode}:${draftText.slice(0, 100)}`;
+
+		// Skip if same request as last time (user double-clicked)
+		if (requestKey === lastRequestKey && aiStore.isLoading) {
+			console.log('Skipping duplicate AI request');
+			return;
+		}
+
+		lastRequestKey = requestKey;
 
 		// Request AI suggestions
 		aiStore.requestSuggestions(mode, draftText, recipient, intent);
@@ -152,10 +194,14 @@
 	function handleApplySuggestion(text: string) {
 		// Replace draft content with selected suggestion
 		draftStore.setContent(text);
+
+		// Show success toast to confirm the action
+		toastStore.success('Suggestion applied! Your original is preserved in history.');
 	}
 
 	function handleDismissSuggestions() {
 		// Clear AI state (already handled by AISuggestions component)
+		// Optionally show a subtle info message
 	}
 </script>
 
@@ -314,7 +360,32 @@
 							onclick={() => handleAITool(tool.mode)}
 							disabled={!hasContent || isAILoading}
 						>
-							{#if tool.icon === 'tone'}
+							{#if tool.icon === 'clarify'}
+								<!-- Pencil/Edit icon for Clarify -->
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									class="h-4 w-4"
+									viewBox="0 0 20 20"
+									fill="currentColor"
+								>
+									<path
+										d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"
+									/>
+								</svg>
+							{:else if tool.icon === 'alternatives'}
+								<!-- Switch/Arrows icon for Alternatives -->
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									class="h-4 w-4"
+									viewBox="0 0 20 20"
+									fill="currentColor"
+								>
+									<path
+										d="M8 5a1 1 0 100 2h5.586l-1.293 1.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L13.586 5H8zM12 15a1 1 0 100-2H6.414l1.293-1.293a1 1 0 10-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L6.414 15H12z"
+									/>
+								</svg>
+							{:else if tool.icon === 'tone'}
+								<!-- Info/Mood icon for Tone -->
 								<svg
 									xmlns="http://www.w3.org/2000/svg"
 									class="h-4 w-4"
@@ -328,6 +399,7 @@
 									/>
 								</svg>
 							{:else if tool.icon === 'expand'}
+								<!-- Expand arrows icon -->
 								<svg
 									xmlns="http://www.w3.org/2000/svg"
 									class="h-4 w-4"
@@ -340,7 +412,8 @@
 										clip-rule="evenodd"
 									/>
 								</svg>
-							{:else}
+							{:else if tool.icon === 'opening'}
+								<!-- Quote/Speech icon for Opening -->
 								<svg
 									xmlns="http://www.w3.org/2000/svg"
 									class="h-4 w-4"
@@ -348,7 +421,9 @@
 									fill="currentColor"
 								>
 									<path
-										d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"
+										fill-rule="evenodd"
+										d="M18 13V5a2 2 0 00-2-2H4a2 2 0 00-2 2v8a2 2 0 002 2h3l3 3 3-3h3a2 2 0 002-2zM5 7a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1zm1 3a1 1 0 100 2h3a1 1 0 100-2H6z"
+										clip-rule="evenodd"
 									/>
 								</svg>
 							{/if}

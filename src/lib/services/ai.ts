@@ -39,6 +39,48 @@ export interface AIError {
 	retryable: boolean;
 }
 
+/**
+ * User-friendly error messages with actionable hints
+ */
+const ERROR_DETAILS: Record<AIErrorType, { message: string; action: string }> = {
+	network: {
+		message: 'Unable to connect to AI service.',
+		action: 'Check your internet connection and try again.'
+	},
+	auth: {
+		message: 'Your session has expired.',
+		action: 'Please log in again to continue.'
+	},
+	rate_limit: {
+		message: 'Too many requests.',
+		action: 'Wait a moment and try again.'
+	},
+	consent: {
+		message: 'AI features are disabled.',
+		action: 'Enable AI in Settings to use this feature.'
+	},
+	validation: {
+		message: 'Invalid request.',
+		action: 'Please write at least a few words before requesting suggestions.'
+	},
+	server: {
+		message: 'AI service is temporarily unavailable.',
+		action: 'Please try again in a few minutes.'
+	},
+	unknown: {
+		message: 'Something went wrong.',
+		action: 'Please try again.'
+	}
+};
+
+/**
+ * Get full error message with action hint
+ */
+export function getDetailedError(type: AIErrorType): string {
+	const errorInfo = ERROR_DETAILS[type];
+	return `${errorInfo.message} ${errorInfo.action}`;
+}
+
 // ------------------------------------------
 // Helper Functions
 // ------------------------------------------
