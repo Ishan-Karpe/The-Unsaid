@@ -100,6 +100,7 @@ function mockUserResponse(hasUser: boolean): UserResponse {
 describe('AI Store', () => {
 	beforeEach(() => {
 		aiStore.reset();
+		aiStore.clearCache(); // Clear cache to prevent test interference
 		vi.clearAllMocks();
 	});
 

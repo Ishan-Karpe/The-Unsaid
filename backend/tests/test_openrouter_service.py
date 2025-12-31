@@ -28,11 +28,12 @@ class TestOpenRouterServiceInit:
 
     def test_service_uses_default_model(self):
         """Should use default model when not specified"""
-        with patch.dict(
-            os.environ,
-            {"OPENROUTER_API_KEY": "test-key", "OPENROUTER_DEFAULT_MODEL": ""},
-            clear=False,
-        ):
+        # Remove OPENROUTER_DEFAULT_MODEL to test default value
+        env_copy = os.environ.copy()
+        env_copy.pop("OPENROUTER_DEFAULT_MODEL", None)  # Remove if exists
+        env_copy["OPENROUTER_API_KEY"] = "test-key"
+
+        with patch.dict(os.environ, env_copy, clear=True):
             from app.services.openrouter import OpenRouterService
 
             service = OpenRouterService()
@@ -134,30 +135,42 @@ class TestOpenRouterServiceAPICall:
 
             return OpenRouterService()
 
+    def _create_mock_response(self, json_data, status_code=200, is_success=True):
+        """Helper to create a mock httpx response"""
+        mock_response = MagicMock()
+        mock_response.json.return_value = json_data
+        mock_response.status_code = status_code
+        mock_response.is_success = is_success
+        mock_response.text = str(json_data)
+        return mock_response
+
     @pytest.mark.asyncio
     async def test_clarify_success(self, service):
         """Should return AIResponse for clarify mode"""
-        mock_response = MagicMock()
-        mock_response.json.return_value = {
-            "choices": [
-                {
-                    "message": {
-                        "content": """
+        mock_response = self._create_mock_response(
+            {
+                "choices": [
+                    {
+                        "message": {
+                            "content": """
                         1. "I felt hurt by those words"
                         Why: This is clearer
 
                         2. "When you said that, I felt pain"
                         Why: Focuses on impact
                         """
+                        }
                     }
-                }
-            ]
-        }
-        mock_response.raise_for_status = MagicMock()
+                ]
+            }
+        )
 
-        with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post:
-            mock_post.return_value = mock_response
+        mock_client = MagicMock()
+        mock_client.post = AsyncMock(return_value=mock_response)
+        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client.__aexit__ = AsyncMock(return_value=None)
 
+        with patch("httpx.AsyncClient", return_value=mock_client):
             result = await service.clarify(
                 draft_text="You hurt me",
                 recipient="friend",
@@ -172,15 +185,16 @@ class TestOpenRouterServiceAPICall:
     @pytest.mark.asyncio
     async def test_alternatives_success(self, service):
         """Should return AIResponse for alternatives mode"""
-        mock_response = MagicMock()
-        mock_response.json.return_value = {
-            "choices": [{"message": {"content": "Option 1: Alt 1\nWhy: reason"}}]
-        }
-        mock_response.raise_for_status = MagicMock()
+        mock_response = self._create_mock_response(
+            {"choices": [{"message": {"content": "Option 1: Alt 1\nWhy: reason"}}]}
+        )
 
-        with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post:
-            mock_post.return_value = mock_response
+        mock_client = MagicMock()
+        mock_client.post = AsyncMock(return_value=mock_response)
+        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client.__aexit__ = AsyncMock(return_value=None)
 
+        with patch("httpx.AsyncClient", return_value=mock_client):
             result = await service.alternatives(
                 draft_text="I need you to understand",
                 recipient="parent",
@@ -192,15 +206,16 @@ class TestOpenRouterServiceAPICall:
     @pytest.mark.asyncio
     async def test_tone_success(self, service):
         """Should return AIResponse for tone mode"""
-        mock_response = MagicMock()
-        mock_response.json.return_value = {
-            "choices": [{"message": {"content": "Option 1: Softer\nWhy: gentler"}}]
-        }
-        mock_response.raise_for_status = MagicMock()
+        mock_response = self._create_mock_response(
+            {"choices": [{"message": {"content": "Option 1: Softer\nWhy: gentler"}}]}
+        )
 
-        with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post:
-            mock_post.return_value = mock_response
+        mock_client = MagicMock()
+        mock_client.post = AsyncMock(return_value=mock_response)
+        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client.__aexit__ = AsyncMock(return_value=None)
 
+        with patch("httpx.AsyncClient", return_value=mock_client):
             result = await service.tone(
                 draft_text="You're being unreasonable",
                 recipient="partner",
@@ -212,15 +227,16 @@ class TestOpenRouterServiceAPICall:
     @pytest.mark.asyncio
     async def test_expand_success(self, service):
         """Should return AIResponse for expand mode"""
-        mock_response = MagicMock()
-        mock_response.json.return_value = {
-            "choices": [{"message": {"content": "1. What triggered this?\nWhy: Explores cause"}}]
-        }
-        mock_response.raise_for_status = MagicMock()
+        mock_response = self._create_mock_response(
+            {"choices": [{"message": {"content": "1. What triggered this?\nWhy: Explores cause"}}]}
+        )
 
-        with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post:
-            mock_post.return_value = mock_response
+        mock_client = MagicMock()
+        mock_client.post = AsyncMock(return_value=mock_response)
+        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client.__aexit__ = AsyncMock(return_value=None)
 
+        with patch("httpx.AsyncClient", return_value=mock_client):
             result = await service.expand(
                 draft_text="I'm upset",
                 recipient="therapist",
@@ -232,15 +248,16 @@ class TestOpenRouterServiceAPICall:
     @pytest.mark.asyncio
     async def test_opening_success(self, service):
         """Should return AIResponse for opening mode"""
-        mock_response = MagicMock()
-        mock_response.json.return_value = {
-            "choices": [{"message": {"content": "1. I wanted to talk\nWhy: Gentle"}}]
-        }
-        mock_response.raise_for_status = MagicMock()
+        mock_response = self._create_mock_response(
+            {"choices": [{"message": {"content": "1. I wanted to talk\nWhy: Gentle"}}]}
+        )
 
-        with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post:
-            mock_post.return_value = mock_response
+        mock_client = MagicMock()
+        mock_client.post = AsyncMock(return_value=mock_response)
+        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client.__aexit__ = AsyncMock(return_value=None)
 
+        with patch("httpx.AsyncClient", return_value=mock_client):
             result = await service.opening(
                 draft_text="",
                 recipient="boss",
@@ -251,15 +268,21 @@ class TestOpenRouterServiceAPICall:
 
     @pytest.mark.asyncio
     async def test_api_error_handling(self, service):
-        """Should raise exception on API error"""
-        with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post:
-            mock_post.side_effect = httpx.HTTPStatusError(
-                "API Error",
-                request=MagicMock(),
-                response=MagicMock(status_code=500),
-            )
+        """Should raise AIProviderError on API error"""
+        from app.services.openrouter import AIProviderError
 
-            with pytest.raises(httpx.HTTPStatusError):
+        mock_response = MagicMock()
+        mock_response.status_code = 500
+        mock_response.is_success = False
+        mock_response.text = "Server Error"
+
+        mock_client = MagicMock()
+        mock_client.post = AsyncMock(return_value=mock_response)
+        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client.__aexit__ = AsyncMock(return_value=None)
+
+        with patch("httpx.AsyncClient", return_value=mock_client):
+            with pytest.raises(AIProviderError):
                 await service.clarify(
                     draft_text="Test",
                     recipient="friend",
@@ -268,11 +291,16 @@ class TestOpenRouterServiceAPICall:
 
     @pytest.mark.asyncio
     async def test_timeout_handling(self, service):
-        """Should handle timeout errors"""
-        with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post:
-            mock_post.side_effect = httpx.TimeoutException("Request timed out")
+        """Should raise AITimeoutError on timeout"""
+        from app.services.openrouter import AITimeoutError
 
-            with pytest.raises(httpx.TimeoutException):
+        mock_client = MagicMock()
+        mock_client.post = AsyncMock(side_effect=httpx.TimeoutException("Request timed out"))
+        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client.__aexit__ = AsyncMock(return_value=None)
+
+        with patch("httpx.AsyncClient", return_value=mock_client):
+            with pytest.raises(AITimeoutError):
                 await service.clarify(
                     draft_text="Test",
                     recipient="friend",
@@ -304,11 +332,15 @@ class TestOpenRouterServiceHeaders:
         mock_response.json.return_value = {
             "choices": [{"message": {"content": "1. Test\nWhy: reason"}}]
         }
-        mock_response.raise_for_status = MagicMock()
+        mock_response.status_code = 200
+        mock_response.is_success = True
 
-        with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post:
-            mock_post.return_value = mock_response
+        mock_client = MagicMock()
+        mock_client.post = AsyncMock(return_value=mock_response)
+        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client.__aexit__ = AsyncMock(return_value=None)
 
+        with patch("httpx.AsyncClient", return_value=mock_client):
             await service.clarify(
                 draft_text="Test",
                 recipient="friend",
@@ -316,10 +348,10 @@ class TestOpenRouterServiceHeaders:
             )
 
             # Check that post was called
-            mock_post.assert_called_once()
+            mock_client.post.assert_called_once()
 
             # Get the call args
-            call_kwargs = mock_post.call_args.kwargs
+            call_kwargs = mock_client.post.call_args.kwargs
             headers = call_kwargs.get("headers", {})
 
             assert "Authorization" in headers

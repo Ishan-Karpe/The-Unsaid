@@ -42,11 +42,7 @@ allow_origins = [frontend_url]
 
 # Add localhost variants if in development
 if os.getenv("NODE_ENV", "development") == "development":
-    allow_origins.extend([
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://0.0.0.0:5173"
-    ])
+    allow_origins.extend(["http://localhost:5173", "http://127.0.0.1:5173", "http://0.0.0.0:5173"])
     # Deduplicate
     allow_origins = list(set(allow_origins))
 

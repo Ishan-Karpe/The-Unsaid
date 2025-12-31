@@ -60,8 +60,7 @@ async def verify_ai_consent(authorization: str = Header(...)) -> bool:
 
         if not result.data or not result.data.get("ai_enabled"):
             raise HTTPException(
-                status_code=403,
-                detail="AI features require consent. Please enable AI in settings."
+                status_code=403, detail="AI features require consent. Please enable AI in settings."
             )
         return True
     except HTTPException:
@@ -69,6 +68,5 @@ async def verify_ai_consent(authorization: str = Header(...)) -> bool:
     except Exception:
         # If no preferences exist, AI is not enabled
         raise HTTPException(
-            status_code=403,
-            detail="AI features require consent. Please enable AI in settings."
+            status_code=403, detail="AI features require consent. Please enable AI in settings."
         )

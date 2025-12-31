@@ -42,8 +42,7 @@ def handle_ai_error(e: Exception) -> HTTPException:
     else:
         logger.error(f"Unexpected AI error: {type(e).__name__}: {e}")
         return HTTPException(
-            status_code=500,
-            detail="An unexpected error occurred. Please try again."
+            status_code=500, detail="An unexpected error occurred. Please try again."
         )
 
 

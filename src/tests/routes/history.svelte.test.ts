@@ -254,11 +254,11 @@ describe('History Page', () => {
 
 			await new Promise((resolve) => setTimeout(resolve, 100));
 
-			const welcomeTitle = page.getByText('Start Your First Draft');
+			const welcomeTitle = page.getByText('Welcome to The Unsaid');
 			await expect.element(welcomeTitle).toBeInTheDocument();
 		});
 
-		it('should show Start Writing button in welcome state', async () => {
+		it('should show Write Your First Draft button in welcome state', async () => {
 			vi.mocked(draftService.getDraftsPaginated).mockResolvedValue({
 				drafts: [],
 				total: 0,
@@ -270,7 +270,7 @@ describe('History Page', () => {
 
 			await new Promise((resolve) => setTimeout(resolve, 100));
 
-			const startButton = page.getByText('Start Writing');
+			const startButton = page.getByText('Write Your First Draft');
 			await expect.element(startButton).toBeInTheDocument();
 		});
 	});
@@ -362,13 +362,13 @@ describe('History Page', () => {
 				error: null
 			});
 
-			const { container } = render(HistoryPage);
+			render(HistoryPage);
 
 			await new Promise((resolve) => setTimeout(resolve, 100));
 
-			// Progress bar should be rendered
-			const progressBar = container.querySelector('[role="progressbar"]');
-			expect(progressBar).not.toBeNull();
+			// Progress bar shows "X of Y" text
+			const progressText = page.getByText(/3 of 50/);
+			await expect.element(progressText).toBeInTheDocument();
 		});
 
 		it('should load more drafts when clicking Load More', async () => {
@@ -508,14 +508,17 @@ describe('History Page', () => {
 
 	describe('Trash View', () => {
 		it('should open trash modal when clicking Trash button', async () => {
-			render(HistoryPage);
+			const { container } = render(HistoryPage);
 
 			const trashButton = page.getByText('Trash');
 			await trashButton.click();
 
-			// TrashView modal should be visible (has "Trash" as title in modal)
-			const modalTitle = page.getByRole('heading', { name: 'Trash' });
-			await expect.element(modalTitle).toBeInTheDocument();
+			// Wait for modal to appear
+			await new Promise((resolve) => setTimeout(resolve, 100));
+
+			// TrashView modal should be visible - check for the dialog element
+			const dialog = container.querySelector('dialog.modal-open');
+			expect(dialog).not.toBeNull();
 		});
 	});
 

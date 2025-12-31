@@ -14,7 +14,9 @@ from app.models.ai import AIOption, AIResponse
 class TestClarifyEndpoint:
     """Tests for POST /api/ai/clarify"""
 
-    def test_clarify_success(self, client, mock_supabase_consent, valid_auth_header, sample_clarify_request):
+    def test_clarify_success(
+        self, client, mock_supabase_consent, valid_auth_header, sample_clarify_request
+    ):
         """Should return AI suggestions for clarifying text"""
         mock_response = AIResponse(
             options=[
@@ -78,7 +80,9 @@ class TestClarifyEndpoint:
 class TestToneEndpoint:
     """Tests for POST /api/ai/tone"""
 
-    def test_tone_success(self, client, mock_supabase_consent, valid_auth_header, sample_tone_request):
+    def test_tone_success(
+        self, client, mock_supabase_consent, valid_auth_header, sample_tone_request
+    ):
         """Should return tone analysis suggestions"""
         mock_response = AIResponse(
             options=[
@@ -118,7 +122,9 @@ class TestAlternativesEndpoint:
             original_valid=True,
         )
 
-        with patch("app.routers.ai.ai_service.alternatives", new_callable=AsyncMock) as mock_alternatives:
+        with patch(
+            "app.routers.ai.ai_service.alternatives", new_callable=AsyncMock
+        ) as mock_alternatives:
             mock_alternatives.return_value = mock_response
 
             response = client.post(
@@ -135,11 +141,15 @@ class TestAlternativesEndpoint:
 class TestExpandEndpoint:
     """Tests for POST /api/ai/expand"""
 
-    def test_expand_success(self, client, mock_supabase_consent, valid_auth_header, sample_expand_request):
+    def test_expand_success(
+        self, client, mock_supabase_consent, valid_auth_header, sample_expand_request
+    ):
         """Should return expanded versions of brief text"""
         mock_response = AIResponse(
             options=[
-                AIOption(text="What specifically triggered this feeling?", why="Explores the cause"),
+                AIOption(
+                    text="What specifically triggered this feeling?", why="Explores the cause"
+                ),
                 AIOption(text="When did you first notice feeling this way?", why="Adds context"),
             ],
             original_valid=True,
@@ -162,10 +172,15 @@ class TestExpandEndpoint:
 class TestOpeningEndpoint:
     """Tests for POST /api/ai/opening"""
 
-    def test_opening_success(self, client, mock_supabase_consent, valid_auth_header, sample_opening_request):
+    def test_opening_success(
+        self, client, mock_supabase_consent, valid_auth_header, sample_opening_request
+    ):
         """Should return opening line suggestions"""
         # Opening endpoint requires at least 1 char for draft_text
-        request = {**sample_opening_request, "draft_text": "I need to tell you something important."}
+        request = {
+            **sample_opening_request,
+            "draft_text": "I need to tell you something important.",
+        }
 
         mock_response = AIResponse(
             options=[
@@ -208,9 +223,7 @@ class TestConsentVerification:
 
             mock_table = MagicMock()
             mock_supabase.table.return_value = mock_table
-            mock_table.select.return_value.eq.return_value.single.return_value.execute.return_value = (
-                mock_prefs_response
-            )
+            mock_table.select.return_value.eq.return_value.single.return_value.execute.return_value = mock_prefs_response
 
             response = client.post(
                 "/api/ai/clarify",

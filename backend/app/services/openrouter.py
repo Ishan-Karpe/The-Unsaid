@@ -121,7 +121,9 @@ class OpenRouterService:
                     raise AIProviderError("AI service payment required. Please contact support.")
                 elif response.status_code >= 500:
                     logger.error(f"OpenRouter server error: {response.status_code}")
-                    raise AIProviderError("AI service is experiencing issues. Please try again later.")
+                    raise AIProviderError(
+                        "AI service is experiencing issues. Please try again later."
+                    )
                 elif not response.is_success:
                     logger.error(f"OpenRouter error: {response.status_code} - {response.text}")
                     raise AIProviderError(f"AI service returned error: {response.status_code}")
@@ -145,7 +147,9 @@ class OpenRouterService:
             raise AITimeoutError("AI request took too long. Please try again.")
         except httpx.ConnectError as e:
             logger.error(f"OpenRouter connection error: {e}")
-            raise AIProviderError("Unable to connect to AI service. Check your internet connection.")
+            raise AIProviderError(
+                "Unable to connect to AI service. Check your internet connection."
+            )
         except httpx.HTTPStatusError as e:
             logger.error(f"OpenRouter HTTP error: {e}")
             if e.response.status_code == 429:
@@ -159,7 +163,7 @@ class OpenRouterService:
             raise AIServiceError(
                 message="An unexpected error occurred. Please try again.",
                 error_type="unknown",
-                retryable=True
+                retryable=True,
             )
 
     def _parse_options(self, response_text: str) -> list[AIOption]:
@@ -174,7 +178,9 @@ class OpenRouterService:
             line = line.strip()
             if line.startswith(("Option 1:", "Option 2:", "Option 3:", "1.", "2.", "3.")):
                 if current_text:
-                    options.append(AIOption(text=current_text, why=current_why or "A valid alternative"))
+                    options.append(
+                        AIOption(text=current_text, why=current_why or "A valid alternative")
+                    )
                 # Extract text after the label
                 current_text = line.split(":", 1)[-1].strip() if ":" in line else line[2:].strip()
                 current_why = ""
