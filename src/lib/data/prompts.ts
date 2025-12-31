@@ -1,77 +1,407 @@
 // ===========================================
-// THE UNSAID - Conversation Prompts Data
+// THE UNSAID - Conversation Prompts Library
 // ===========================================
-import type { ConversationPrompt, PromptCategory } from '$lib/types';
+// A curated collection of 30+ prompts organized by relationship type
+// to help users find the right words for meaningful conversations.
 
-export interface PhrasePrompt {
-	id: string;
-	title: string;
-	text: string;
-	category: PromptCategory;
-	uses: number;
-}
+import type {
+	ConversationPrompt,
+	RelationshipCategory,
+	PromptSituation,
+	PromptCategory,
+	EmotionCategory
+} from '$lib/types';
 
-export const phrasePrompts: PhrasePrompt[] = [
+// ------------------------------------------
+// Prompt Data - 30+ Curated Prompts
+// ------------------------------------------
+
+export const prompts: ConversationPrompt[] = [
+	// ==========================================
+	// PARENTS (6 prompts)
+	// ==========================================
 	{
-		id: 'p1',
-		title: 'Deep Appreciation',
-		text: "I wanted to take a moment to express my deepest gratitude for everything you've done...",
-		category: 'gratitude',
-		uses: 842
+		id: 'parents-001',
+		text: "I've never told you this, but...",
+		relationship: 'parents',
+		situation: 'appreciation',
+		emotion: 'gratitude'
 	},
 	{
-		id: 'p2',
-		title: 'Sincere Regret',
-		text: 'I realize now that my words were hurtful, and for that, I am truly sorry. I hope you can...',
-		category: 'apologies',
-		uses: 1500
+		id: 'parents-002',
+		text: 'I understand now why you...',
+		relationship: 'parents',
+		situation: 'understanding',
+		emotion: 'empathy'
 	},
 	{
-		id: 'p3',
-		title: 'Holding Space',
-		text: "I can only imagine how difficult this must be for you right now. Please know that I'm here...",
-		category: 'empathy',
-		uses: 320
+		id: 'parents-003',
+		text: "I'm sorry I never said...",
+		relationship: 'parents',
+		situation: 'apology',
+		emotion: 'apologies'
 	},
 	{
-		id: 'p4',
-		title: 'Kind Refusal',
-		text: 'I value our relationship, but I need to decline this request to protect my own energy...',
-		category: 'boundaries',
-		uses: 980
+		id: 'parents-004',
+		text: "Growing up, I didn't realize how much you sacrificed when...",
+		relationship: 'parents',
+		situation: 'appreciation',
+		emotion: 'gratitude'
 	},
 	{
-		id: 'p5',
-		title: 'Everyday Thanks',
-		text: 'Thank you for the small things you do that often go unnoticed. They mean the world to me...',
-		category: 'gratitude',
-		uses: 2100
+		id: 'parents-005',
+		text: 'I want you to know that the way you raised me shaped who I am because...',
+		relationship: 'parents',
+		situation: 'gratitude',
+		emotion: 'gratitude'
+	},
+	{
+		id: 'parents-006',
+		text: "There's something I've been wanting to tell you for years...",
+		relationship: 'parents',
+		situation: 'vulnerability',
+		emotion: 'empathy'
+	},
+
+	// ==========================================
+	// PARTNERS (6 prompts)
+	// ==========================================
+	{
+		id: 'partners-001',
+		text: 'I fall in love with you again when...',
+		relationship: 'partners',
+		situation: 'appreciation',
+		emotion: 'gratitude'
+	},
+	{
+		id: 'partners-002',
+		text: "I've been holding back about...",
+		relationship: 'partners',
+		situation: 'honesty',
+		emotion: 'boundaries'
+	},
+	{
+		id: 'partners-003',
+		text: 'What I really need from you right now is...',
+		relationship: 'partners',
+		situation: 'vulnerability',
+		emotion: 'boundaries'
+	},
+	{
+		id: 'partners-004',
+		text: "I'm afraid to tell you this, but I need to be honest about...",
+		relationship: 'partners',
+		situation: 'honesty',
+		emotion: 'boundaries'
+	},
+	{
+		id: 'partners-005',
+		text: 'When we first met, I never imagined...',
+		relationship: 'partners',
+		situation: 'appreciation',
+		emotion: 'gratitude'
+	},
+	{
+		id: 'partners-006',
+		text: 'I want us to work through this together because...',
+		relationship: 'partners',
+		situation: 'encouragement',
+		emotion: 'empathy'
+	},
+
+	// ==========================================
+	// FRIENDS (6 prompts)
+	// ==========================================
+	{
+		id: 'friends-001',
+		text: 'Our friendship means more than I show because...',
+		relationship: 'friends',
+		situation: 'appreciation',
+		emotion: 'gratitude'
+	},
+	{
+		id: 'friends-002',
+		text: 'I miss when we used to...',
+		relationship: 'friends',
+		situation: 'reconnection',
+		emotion: 'empathy'
+	},
+	{
+		id: 'friends-003',
+		text: "I've been thinking about our friendship and wanted to say...",
+		relationship: 'friends',
+		situation: 'appreciation',
+		emotion: 'gratitude'
+	},
+	{
+		id: 'friends-004',
+		text: "I know we haven't talked in a while, but...",
+		relationship: 'friends',
+		situation: 'reconnection',
+		emotion: 'empathy'
+	},
+	{
+		id: 'friends-005',
+		text: "You've always been there for me, and I want you to know...",
+		relationship: 'friends',
+		situation: 'gratitude',
+		emotion: 'gratitude'
+	},
+	{
+		id: 'friends-006',
+		text: 'I owe you an apology for...',
+		relationship: 'friends',
+		situation: 'apology',
+		emotion: 'apologies'
+	},
+
+	// ==========================================
+	// GRIEF (6 prompts)
+	// ==========================================
+	{
+		id: 'grief-001',
+		text: 'I wish I had told you...',
+		relationship: 'grief',
+		situation: 'regret',
+		emotion: 'empathy'
+	},
+	{
+		id: 'grief-002',
+		text: 'You taught me...',
+		relationship: 'grief',
+		situation: 'legacy',
+		emotion: 'gratitude'
+	},
+	{
+		id: 'grief-003',
+		text: 'If I could talk to you one more time, I would say...',
+		relationship: 'grief',
+		situation: 'regret',
+		emotion: 'empathy'
+	},
+	{
+		id: 'grief-004',
+		text: 'I carry you with me every day because...',
+		relationship: 'grief',
+		situation: 'legacy',
+		emotion: 'gratitude'
+	},
+	{
+		id: 'grief-005',
+		text: 'The hardest part of losing you was...',
+		relationship: 'grief',
+		situation: 'vulnerability',
+		emotion: 'empathy'
+	},
+	{
+		id: 'grief-006',
+		text: 'I know you would want me to...',
+		relationship: 'grief',
+		situation: 'encouragement',
+		emotion: 'self-love'
+	},
+
+	// ==========================================
+	// SELF (6 prompts)
+	// ==========================================
+	{
+		id: 'self-001',
+		text: 'I need to forgive myself for...',
+		relationship: 'self',
+		situation: 'healing',
+		emotion: 'self-love'
+	},
+	{
+		id: 'self-002',
+		text: "The truth I've been avoiding is...",
+		relationship: 'self',
+		situation: 'honesty',
+		emotion: 'boundaries'
+	},
+	{
+		id: 'self-003',
+		text: "I'm proud of myself for...",
+		relationship: 'self',
+		situation: 'appreciation',
+		emotion: 'self-love'
+	},
+	{
+		id: 'self-004',
+		text: 'What I really want for my life is...',
+		relationship: 'self',
+		situation: 'vulnerability',
+		emotion: 'self-love'
+	},
+	{
+		id: 'self-005',
+		text: 'I give myself permission to...',
+		relationship: 'self',
+		situation: 'healing',
+		emotion: 'boundaries'
+	},
+	{
+		id: 'self-006',
+		text: "I've been too hard on myself about...",
+		relationship: 'self',
+		situation: 'forgiveness',
+		emotion: 'self-love'
 	}
 ];
 
-// Legacy exports for compatibility
-export const conversationPrompts: Record<PromptCategory, ConversationPrompt[]> = {
-	gratitude: [
-		{
-			id: 'p1',
-			text: phrasePrompts[0].text,
-			category: 'gratitude',
-			situation: 'Deep Appreciation'
-		},
-		{ id: 'p5', text: phrasePrompts[4].text, category: 'gratitude', situation: 'Everyday Thanks' }
-	],
-	apologies: [
-		{ id: 'p2', text: phrasePrompts[1].text, category: 'apologies', situation: 'Sincere Regret' }
-	],
-	empathy: [
-		{ id: 'p3', text: phrasePrompts[2].text, category: 'empathy', situation: 'Holding Space' }
-	],
-	boundaries: [
-		{ id: 'p4', text: phrasePrompts[3].text, category: 'boundaries', situation: 'Kind Refusal' }
-	],
-	'self-love': []
+// ------------------------------------------
+// Category Labels & Helpers
+// ------------------------------------------
+
+export const relationshipLabels: Record<RelationshipCategory, string> = {
+	parents: 'Parents',
+	partners: 'Partners',
+	friends: 'Friends',
+	grief: 'Grief & Loss',
+	self: 'Self'
 };
 
+export const relationshipDescriptions: Record<RelationshipCategory, string> = {
+	parents: 'Express gratitude, understanding, or unspoken feelings to your parents',
+	partners: 'Deepen intimacy and honesty in your romantic relationships',
+	friends: 'Reconnect, appreciate, or mend friendships that matter',
+	grief: 'Process loss and honor those who are no longer with us',
+	self: 'Practice self-compassion and inner dialogue'
+};
+
+export const situationLabels: Record<PromptSituation, string> = {
+	appreciation: 'Appreciation',
+	understanding: 'Understanding',
+	apology: 'Apology',
+	honesty: 'Honesty',
+	reconnection: 'Reconnection',
+	regret: 'Regret',
+	legacy: 'Legacy',
+	healing: 'Healing',
+	gratitude: 'Gratitude',
+	vulnerability: 'Vulnerability',
+	forgiveness: 'Forgiveness',
+	encouragement: 'Encouragement'
+};
+
+// ------------------------------------------
+// Query Functions
+// ------------------------------------------
+
+/**
+ * Get all prompts
+ */
+export function getAllPrompts(): ConversationPrompt[] {
+	return prompts;
+}
+
+/**
+ * Get prompts by relationship category
+ */
+export function getPromptsByRelationship(relationship: RelationshipCategory): ConversationPrompt[] {
+	return prompts.filter((p) => p.relationship === relationship);
+}
+
+/**
+ * Get prompts by situation
+ */
+export function getPromptsBySituation(situation: PromptSituation): ConversationPrompt[] {
+	return prompts.filter((p) => p.situation === situation);
+}
+
+/**
+ * Get a specific prompt by ID
+ */
+export function getPromptById(id: string): ConversationPrompt | undefined {
+	return prompts.find((p) => p.id === id);
+}
+
+/**
+ * Search prompts by keyword
+ */
+export function searchPrompts(query: string): ConversationPrompt[] {
+	const normalizedQuery = query.toLowerCase().trim();
+	if (!normalizedQuery) return prompts;
+
+	return prompts.filter(
+		(p) =>
+			p.text.toLowerCase().includes(normalizedQuery) ||
+			p.relationship.toLowerCase().includes(normalizedQuery) ||
+			p.situation.toLowerCase().includes(normalizedQuery) ||
+			(p.emotion && p.emotion.toLowerCase().includes(normalizedQuery))
+	);
+}
+
+/**
+ * Get unique situations for a relationship category
+ */
+export function getSituationsForRelationship(
+	relationship: RelationshipCategory
+): PromptSituation[] {
+	const situations = prompts.filter((p) => p.relationship === relationship).map((p) => p.situation);
+	return [...new Set(situations)];
+}
+
+// ------------------------------------------
+// Recently Used Prompts (localStorage)
+// ------------------------------------------
+
+const RECENTLY_USED_KEY = 'unsaid-recently-used-prompts';
+const MAX_RECENTLY_USED = 5;
+
+/**
+ * Get recently used prompt IDs from localStorage
+ */
+export function getRecentlyUsedIds(): string[] {
+	if (typeof window === 'undefined') return [];
+	try {
+		const stored = localStorage.getItem(RECENTLY_USED_KEY);
+		return stored ? JSON.parse(stored) : [];
+	} catch {
+		return [];
+	}
+}
+
+/**
+ * Get recently used prompts
+ */
+export function getRecentlyUsedPrompts(): ConversationPrompt[] {
+	const ids = getRecentlyUsedIds();
+	return ids.map((id) => getPromptById(id)).filter((p): p is ConversationPrompt => p !== undefined);
+}
+
+/**
+ * Mark a prompt as recently used
+ */
+export function markPromptAsUsed(promptId: string): void {
+	if (typeof window === 'undefined') return;
+	try {
+		const ids = getRecentlyUsedIds();
+		// Remove if already exists, then add to front
+		const filtered = ids.filter((id) => id !== promptId);
+		const updated = [promptId, ...filtered].slice(0, MAX_RECENTLY_USED);
+		localStorage.setItem(RECENTLY_USED_KEY, JSON.stringify(updated));
+	} catch {
+		// Ignore localStorage errors
+	}
+}
+
+/**
+ * Clear recently used prompts
+ */
+export function clearRecentlyUsed(): void {
+	if (typeof window === 'undefined') return;
+	try {
+		localStorage.removeItem(RECENTLY_USED_KEY);
+	} catch {
+		// Ignore localStorage errors
+	}
+}
+
+// ------------------------------------------
+// Legacy Exports for Backward Compatibility
+// ------------------------------------------
+
+/** Legacy emotion-based category labels */
 export const categoryLabels: Record<PromptCategory, string> = {
 	gratitude: 'Gratitude',
 	apologies: 'Apologies',
@@ -80,14 +410,44 @@ export const categoryLabels: Record<PromptCategory, string> = {
 	'self-love': 'Self-Love'
 };
 
-export function getAllPrompts(): ConversationPrompt[] {
-	return Object.values(conversationPrompts).flat();
-}
+/**
+ * Legacy format for conversationPrompts
+ * Maps emotion categories to prompts (for Write page sidebar compatibility)
+ */
+export const conversationPrompts: Record<PromptCategory, ConversationPrompt[]> = {
+	gratitude: prompts.filter((p) => p.emotion === 'gratitude'),
+	apologies: prompts.filter((p) => p.emotion === 'apologies'),
+	empathy: prompts.filter((p) => p.emotion === 'empathy'),
+	boundaries: prompts.filter((p) => p.emotion === 'boundaries'),
+	'self-love': prompts.filter((p) => p.emotion === 'self-love')
+};
 
+/**
+ * Legacy getPromptsByCategory function for backward compatibility
+ */
 export function getPromptsByCategory(category: PromptCategory): ConversationPrompt[] {
 	return conversationPrompts[category];
 }
 
+/** Legacy PhrasePrompt interface for compatibility */
+export interface PhrasePrompt {
+	id: string;
+	title: string;
+	text: string;
+	category: EmotionCategory;
+	uses: number;
+}
+
+/** Legacy phrasePrompts array - maps to new prompts for backward compatibility */
+export const phrasePrompts: PhrasePrompt[] = prompts.slice(0, 5).map((p) => ({
+	id: p.id,
+	title: situationLabels[p.situation],
+	text: p.text,
+	category: p.emotion || 'gratitude',
+	uses: Math.floor(Math.random() * 2000) + 300
+}));
+
+/** Legacy formatUses helper */
 export function formatUses(uses: number): string {
 	if (uses >= 1000) {
 		return `${(uses / 1000).toFixed(1)}k uses`;

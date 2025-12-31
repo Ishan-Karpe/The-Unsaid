@@ -113,14 +113,39 @@ export interface UserInsights {
 // ------------------------------------------
 // Prompt Types
 // ------------------------------------------
+
+/** Emotion-based category for filtering by emotional intent (legacy) */
+export type EmotionCategory = 'gratitude' | 'apologies' | 'empathy' | 'boundaries' | 'self-love';
+
+/** Relationship-based category for filtering by recipient type */
+export type RelationshipCategory = 'parents' | 'partners' | 'friends' | 'grief' | 'self';
+
+/** Situation describes the context/emotion of the prompt */
+export type PromptSituation =
+	| 'appreciation'
+	| 'understanding'
+	| 'apology'
+	| 'honesty'
+	| 'reconnection'
+	| 'regret'
+	| 'legacy'
+	| 'healing'
+	| 'gratitude'
+	| 'vulnerability'
+	| 'forgiveness'
+	| 'encouragement';
+
+/** Enhanced prompt structure with relationship categories */
 export interface ConversationPrompt {
 	id: string;
 	text: string;
-	category: PromptCategory;
-	situation: string;
+	relationship: RelationshipCategory;
+	situation: PromptSituation;
+	emotion?: EmotionCategory; // Optional legacy compatibility
 }
 
-export type PromptCategory = 'gratitude' | 'apologies' | 'empathy' | 'boundaries' | 'self-love';
+/** Legacy alias for backward compatibility */
+export type PromptCategory = EmotionCategory;
 
 // ------------------------------------------
 // Export Types

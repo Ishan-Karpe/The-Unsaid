@@ -5,7 +5,13 @@
 -->
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { conversationPrompts, categoryLabels } from '$lib/data/prompts';
+	import { page } from '$app/stores';
+	import {
+		conversationPrompts,
+		categoryLabels,
+		getPromptById,
+		markPromptAsUsed
+	} from '$lib/data/prompts';
 	import type { PromptCategory, AIMode } from '$lib/types';
 	import {
 		DraftEditor,
@@ -100,6 +106,23 @@
 	onMount(() => {
 		setTimeout(() => (sidebarVisible = true), 100);
 		setTimeout(() => (editorVisible = true), 200);
+
+		// Check if coming from prompts page with a prompt ID
+		const promptId = $page.url.searchParams.get('prompt');
+		if (promptId) {
+			const prompt = getPromptById(promptId);
+			if (prompt) {
+				// Pre-populate the editor with the prompt text
+				draftStore.setContent(prompt.text + ' ');
+				markPromptAsUsed(promptId);
+				toastStore.info('Prompt loaded! Start writing your message.');
+
+				// Clear the URL parameter to prevent re-loading on refresh
+				const url = new URL(window.location.href);
+				url.searchParams.delete('prompt');
+				window.history.replaceState({}, '', url.toString());
+			}
+		}
 	});
 
 	// Check AI consent when user is available

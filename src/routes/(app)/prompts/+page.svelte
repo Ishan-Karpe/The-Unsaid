@@ -1,114 +1,156 @@
 <!--
-  Phrase Library Page - Curated conversation starters with elegant animations
+  Prompts Library Page - Curated conversation starters organized by relationship
+  Features: Category filtering, search, recently used, elegant animations
   Matches the landing page design language with DaisyUI and Tailwind CSS
 -->
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { SvelteSet } from 'svelte/reactivity';
+	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { phrasePrompts, categoryLabels, formatUses } from '$lib/data/prompts';
-	import type { PromptCategory } from '$lib/types';
+	import type { RelationshipCategory, ConversationPrompt } from '$lib/types';
+	import {
+		getAllPrompts,
+		getPromptsByRelationship,
+		markPromptAsUsed,
+		relationshipLabels,
+		relationshipDescriptions
+	} from '$lib/data/prompts';
+	import {
+		PromptCard,
+		CategoryFilter,
+		PromptSearch,
+		RecentlyUsed,
+		SuggestPromptForm
+	} from '$lib/components/prompts';
+	import { toastStore } from '$lib/stores/toast.svelte';
 
 	// Animation states
 	let headerVisible = $state(false);
 	let searchVisible = $state(false);
-	let categoriesVisible = $state(false);
+	let filtersVisible = $state(false);
 	let cardsVisible = $state(false);
 
 	// Filter state
 	let searchQuery = $state('');
-	let selectedCategory = $state<PromptCategory | 'all'>('all');
+	let selectedCategory = $state<RelationshipCategory | 'all'>('all');
 
-	// Bookmark state (local storage)
-	let bookmarkedIds = new SvelteSet<string>();
+	// Form state
+	let showSuggestForm = $state(false);
 
-	// Get all categories from the prompts
-	const categories: PromptCategory[] = [
-		'gratitude',
-		'apologies',
-		'empathy',
-		'boundaries',
-		'self-love'
-	];
+	// Filtered prompts based on category and search
+	let filteredPrompts = $derived.by(() => {
+		let results: ConversationPrompt[];
 
-	// Category colors for badges
-	const categoryColors: Record<PromptCategory, string> = {
-		gratitude: 'badge-primary',
-		apologies: 'badge-secondary',
-		empathy: 'badge-accent',
-		boundaries: 'badge-warning',
-		'self-love': 'badge-info'
-	};
+		// Apply category filter first
+		if (selectedCategory === 'all') {
+			results = getAllPrompts();
+		} else {
+			results = getPromptsByRelationship(selectedCategory);
+		}
 
-	// Pre-resolve the write path
-	const writePath = resolve('/write');
-
-	// Filtered prompts based on search and category
-	let filteredPrompts = $derived(() => {
-		let prompts =
-			selectedCategory === 'all'
-				? phrasePrompts
-				: phrasePrompts.filter((p) => p.category === selectedCategory);
-
+		// Apply search filter
 		if (searchQuery.trim()) {
 			const query = searchQuery.toLowerCase();
-			prompts = prompts.filter(
+			results = results.filter(
 				(p) =>
 					p.text.toLowerCase().includes(query) ||
-					p.title.toLowerCase().includes(query) ||
-					categoryLabels[p.category].toLowerCase().includes(query)
+					p.relationship.toLowerCase().includes(query) ||
+					p.situation.toLowerCase().includes(query) ||
+					(p.emotion && p.emotion.toLowerCase().includes(query))
 			);
 		}
 
-		return prompts;
+		return results;
 	});
+
+	// Group prompts by relationship for display (only when showing all and not searching)
+	let groupedPrompts = $derived.by(() => {
+		if (selectedCategory !== 'all' || searchQuery.trim()) {
+			// Don't group when filtering
+			return null;
+		}
+
+		// Group by relationship
+		const groups: Record<RelationshipCategory, ConversationPrompt[]> = {
+			parents: [],
+			partners: [],
+			friends: [],
+			grief: [],
+			self: []
+		};
+
+		for (const prompt of filteredPrompts) {
+			groups[prompt.relationship].push(prompt);
+		}
+
+		return groups;
+	});
+
+	// Categories with prompts count for display
+	const relationshipOrder: RelationshipCategory[] = [
+		'parents',
+		'partners',
+		'friends',
+		'grief',
+		'self'
+	];
 
 	onMount(() => {
-		// Staggered animations
+		// Staggered entrance animations
 		setTimeout(() => (headerVisible = true), 100);
 		setTimeout(() => (searchVisible = true), 200);
-		setTimeout(() => (categoriesVisible = true), 300);
+		setTimeout(() => (filtersVisible = true), 300);
 		setTimeout(() => (cardsVisible = true), 400);
-
-		// Load bookmarks from localStorage
-		try {
-			const saved = localStorage.getItem('unsaid-bookmarks');
-			if (saved) {
-				const ids = JSON.parse(saved) as string[];
-				for (const id of ids) {
-					bookmarkedIds.add(id);
-				}
-			}
-		} catch {
-			// Ignore localStorage errors
-		}
 	});
 
-	function toggleBookmark(id: string) {
-		if (bookmarkedIds.has(id)) {
-			bookmarkedIds.delete(id);
-		} else {
-			bookmarkedIds.add(id);
+	function handleSearch(query: string) {
+		searchQuery = query;
+	}
+
+	function handleCategorySelect(category: RelationshipCategory | 'all') {
+		selectedCategory = category;
+	}
+
+	function handleUsePrompt(promptId: string) {
+		// Mark as recently used
+		markPromptAsUsed(promptId);
+
+		// Dispatch event for RecentlyUsed component to refresh
+		if (typeof window !== 'undefined') {
+			window.dispatchEvent(new CustomEvent('prompt-used'));
 		}
 
-		// Persist to localStorage
-		try {
-			localStorage.setItem('unsaid-bookmarks', JSON.stringify([...bookmarkedIds]));
-		} catch {
-			// Ignore localStorage errors
-		}
+		// Show toast
+		toastStore.success('Prompt selected! Redirecting to editor...');
+
+		// Navigate to write page with prompt
+		// eslint-disable-next-line svelte/no-navigation-without-resolve -- query string requires manual construction
+		goto(`${resolve('/write')}?prompt=${promptId}`);
+	}
+
+	function clearFilters() {
+		searchQuery = '';
+		selectedCategory = 'all';
+	}
+
+	function handleSuggestSubmit() {
+		toastStore.success('Thank you for your suggestion!');
 	}
 </script>
 
 <svelte:head>
-	<title>Phrase Library | The Unsaid</title>
+	<title>Conversation Prompts | The Unsaid</title>
+	<meta
+		name="description"
+		content="Curated conversation starters to help you express what matters most."
+	/>
 </svelte:head>
 
-<div class="space-y-8">
+<div class="space-y-8 pb-12">
 	<!-- Header Section -->
 	<div class="fade-in text-center {headerVisible ? 'visible' : ''}">
-		<h1 class="text-3xl font-bold text-base-content md:text-4xl">Phrase Library</h1>
-		<p class="mt-2 font-serif text-xl text-primary italic md:text-2xl">Words for every emotion</p>
+		<h1 class="text-3xl font-bold text-base-content md:text-5xl">Phrase Library</h1>
+		<p class="mt-2 text-xl text-primary italic md:text-2xl">Words for every emotion</p>
 		<p class="mx-auto mt-4 max-w-2xl text-base-content/70">
 			A curated collection of expressions to help you communicate with clarity, depth, and
 			intention.
@@ -118,185 +160,26 @@
 	<!-- Search Bar -->
 	<div class="fade-in stagger-1 {searchVisible ? 'visible' : ''}">
 		<div class="mx-auto max-w-2xl">
-			<div
-				class="card border border-base-content/10 bg-base-100 shadow-sm transition-all duration-300 hover:shadow-md"
-			>
-				<div class="card-body p-3">
-					<div class="flex items-center gap-2">
-						<div class="relative flex-1">
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								class="pointer-events-none absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-base-content/40"
-								viewBox="0 0 20 20"
-								fill="currentColor"
-							>
-								<path
-									fill-rule="evenodd"
-									d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
-									clip-rule="evenodd"
-								/>
-							</svg>
-							<input
-								type="search"
-								bind:value={searchQuery}
-								placeholder="Search for 'gratitude', 'apology', or keywords..."
-								class="input-bordered input w-full bg-base-200/50 pl-10 transition-all duration-200 focus:bg-base-100"
-							/>
-						</div>
-						<button
-							type="button"
-							class="btn shadow-sm transition-all duration-200 btn-primary hover:shadow-md hover:shadow-primary/25"
-						>
-							Find Phrase
-						</button>
-					</div>
-				</div>
-			</div>
+			<PromptSearch query={searchQuery} onSearch={handleSearch} />
 		</div>
 	</div>
 
 	<!-- Category Filters -->
-	<div class="fade-in stagger-2 {categoriesVisible ? 'visible' : ''}">
-		<div class="flex flex-wrap justify-center gap-2">
-			<button
-				type="button"
-				class="btn transition-all duration-200 {selectedCategory === 'all'
-					? 'btn-primary'
-					: 'btn-ghost hover:bg-base-200'}"
-				onclick={() => (selectedCategory = 'all')}
-			>
-				All Phrases
-			</button>
-			{#each categories as cat (cat)}
-				<button
-					type="button"
-					class="btn transition-all duration-200 {selectedCategory === cat
-						? 'btn-primary'
-						: 'btn-ghost hover:bg-base-200'}"
-					onclick={() => (selectedCategory = cat)}
-				>
-					{categoryLabels[cat]}
-				</button>
-			{/each}
-		</div>
+	<div class="fade-in stagger-2 {filtersVisible ? 'visible' : ''}">
+		<CategoryFilter selected={selectedCategory} onSelect={handleCategorySelect} />
 	</div>
 
-	<!-- Phrase Cards Grid -->
+	<!-- Recently Used Section (only when not filtering) -->
+	{#if !searchQuery && selectedCategory === 'all'}
+		<RecentlyUsed onUse={handleUsePrompt} />
+	{/if}
+
+	<!-- Prompts Display -->
 	<div class="fade-in stagger-3 {cardsVisible ? 'visible' : ''}">
-		<div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-			<!-- Add New Phrase Card -->
-			<div
-				class="group card border-2 border-dashed border-base-content/20 bg-base-100/50 transition-all duration-300 hover:border-primary/50 hover:bg-base-100"
-			>
-				<div class="card-body items-center justify-center py-12 text-center">
-					<div
-						class="mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10 transition-all duration-300 group-hover:bg-primary/20"
-					>
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							class="h-7 w-7 text-primary"
-							viewBox="0 0 20 20"
-							fill="currentColor"
-						>
-							<path
-								d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"
-							/>
-							<path d="M8 11a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
-							<path d="M9 8a1 1 0 011-1h1a1 1 0 110 2h-1a1 1 0 01-1-1z" />
-						</svg>
-					</div>
-					<h3 class="text-lg font-semibold text-base-content">Add New Phrase</h3>
-					<p class="mt-1 text-sm text-base-content/60">
-						Contribute your own expressions to your personal library.
-					</p>
-					<a
-						href={writePath}
-						class="btn mt-4 shadow-sm transition-all duration-200 btn-outline btn-sm btn-primary hover:shadow-md"
-					>
-						Create Phrase
-					</a>
-				</div>
-			</div>
-
-			<!-- Phrase Cards -->
-			{#each filteredPrompts() as prompt, index (prompt.id)}
-				<div
-					class="card-hover card border border-base-content/10 bg-base-100 shadow-sm transition-all duration-300"
-					style="animation-delay: {(index + 1) * 50}ms"
-				>
-					<div class="card-body gap-3 p-5">
-						<!-- Category Badge & Bookmark -->
-						<div class="flex items-start justify-between">
-							<span class="badge badge-sm {categoryColors[prompt.category]}">
-								{categoryLabels[prompt.category].toUpperCase()}
-							</span>
-							<button
-								type="button"
-								class="btn btn-circle btn-ghost transition-all duration-200 btn-xs hover:bg-primary/10"
-								onclick={() => toggleBookmark(prompt.id)}
-								aria-label={bookmarkedIds.has(prompt.id) ? 'Remove bookmark' : 'Add bookmark'}
-							>
-								<svg
-									xmlns="http://www.w3.org/2000/svg"
-									class="h-4 w-4 {bookmarkedIds.has(prompt.id)
-										? 'fill-primary text-primary'
-										: 'text-base-content/40'}"
-									viewBox="0 0 20 20"
-									fill={bookmarkedIds.has(prompt.id) ? 'currentColor' : 'none'}
-									stroke="currentColor"
-									stroke-width="1.5"
-								>
-									<path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z" />
-								</svg>
-							</button>
-						</div>
-
-						<!-- Title -->
-						<h3 class="text-lg font-semibold text-base-content">
-							{prompt.title}
-						</h3>
-
-						<!-- Quote Preview -->
-						<blockquote
-							class="border-l-3 border-primary/30 pl-4 leading-relaxed text-base-content/70 italic"
-						>
-							"{prompt.text}"
-						</blockquote>
-
-						<!-- Footer with Uses and Action -->
-						<div class="mt-auto flex items-center justify-between pt-2">
-							<div class="flex items-center gap-1 text-xs text-base-content/40">
-								<svg
-									xmlns="http://www.w3.org/2000/svg"
-									class="h-3.5 w-3.5"
-									viewBox="0 0 20 20"
-									fill="currentColor"
-								>
-									<path
-										d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"
-									/>
-								</svg>
-								<span>{formatUses(prompt.uses)}</span>
-							</div>
-							<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- href is pre-resolved -->
-							<a
-								href="{writePath}?prompt={prompt.id}"
-								class="btn shadow-sm transition-all duration-200 btn-sm btn-primary hover:shadow-md hover:shadow-primary/25"
-							>
-								Use Phrase
-							</a>
-						</div>
-					</div>
-				</div>
-			{/each}
-		</div>
-
-		<!-- Empty State -->
-		{#if filteredPrompts().length === 0}
-			<div
-				class="card border border-base-content/10 bg-base-100 shadow-sm transition-all duration-300"
-			>
-				<div class="card-body items-center py-16 text-center">
+		{#if filteredPrompts.length === 0}
+			<!-- Empty State -->
+			<div class="card mx-auto max-w-md border border-base-content/10 bg-base-200/50 shadow-lg">
+				<div class="card-body items-center py-12 text-center">
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
 						class="mb-4 h-16 w-16 text-base-content/20"
@@ -309,47 +192,105 @@
 							clip-rule="evenodd"
 						/>
 					</svg>
-					<h3 class="mb-2 text-lg font-semibold text-base-content/80">No phrases found</h3>
+					<h3 class="mb-2 text-lg font-semibold text-base-content/80">No prompts found</h3>
 					<p class="mb-4 text-base-content/60">Try adjusting your search or category filter.</p>
-					<button
-						type="button"
-						class="btn btn-ghost btn-sm"
-						onclick={() => {
-							searchQuery = '';
-							selectedCategory = 'all';
-						}}
-					>
+					<button type="button" class="btn btn-ghost btn-sm" onclick={clearFilters}>
 						Clear Filters
 					</button>
 				</div>
 			</div>
-		{/if}
+		{:else if groupedPrompts}
+			<!-- Grouped by Category View -->
+			{#each relationshipOrder as category (category)}
+				{@const prompts = groupedPrompts[category]}
+				{#if prompts.length > 0}
+					<div class="mb-8">
+						<!-- Category Header -->
+						<div class="mb-4 flex items-center gap-3">
+							<h2 class="text-xl font-semibold text-base-content">
+								{relationshipLabels[category]}
+							</h2>
+							<span class="badge badge-ghost">{prompts.length} prompts</span>
+						</div>
+						<p class="mb-4 text-sm text-base-content/60">
+							{relationshipDescriptions[category]}
+						</p>
 
-		<!-- Load More Button -->
-		{#if filteredPrompts().length > 0}
-			<div class="mt-8 text-center">
-				<button
-					type="button"
-					class="btn btn-wide gap-2 shadow-sm transition-all duration-300 btn-outline hover:shadow-md"
-				>
-					Load More Phrases
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						class="h-4 w-4"
-						viewBox="0 0 20 20"
-						fill="currentColor"
-					>
-						<path
-							fill-rule="evenodd"
-							d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-							clip-rule="evenodd"
-						/>
-					</svg>
-				</button>
+						<!-- Prompts Grid with Add New Card -->
+						<div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+							<!-- Add New Phrase Card (only on first category) -->
+							{#if category === 'parents'}
+								<button
+									type="button"
+									onclick={() => (showSuggestForm = true)}
+									class="card flex min-h-[200px] cursor-pointer flex-col items-center justify-center gap-4 border-2 border-dashed border-primary/30 bg-base-200/30 p-6 text-center transition-all duration-300 hover:border-primary/50 hover:bg-base-200/50"
+								>
+									<div class="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/20">
+										<svg
+											xmlns="http://www.w3.org/2000/svg"
+											class="h-6 w-6 text-primary"
+											viewBox="0 0 20 20"
+											fill="currentColor"
+										>
+											<path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+											<path
+												fill-rule="evenodd"
+												d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z"
+												clip-rule="evenodd"
+											/>
+										</svg>
+									</div>
+									<div>
+										<h3 class="font-semibold text-base-content">Add New Phrase</h3>
+										<p class="mt-1 text-sm text-base-content/60">
+											Contribute your own expressions to your personal library.
+										</p>
+									</div>
+									<span class="btn btn-outline btn-sm btn-primary">Create Phrase</span>
+								</button>
+							{/if}
+							{#each prompts as prompt (prompt.id)}
+								<PromptCard {prompt} onUse={handleUsePrompt} showRelationship={false} />
+							{/each}
+						</div>
+					</div>
+				{/if}
+			{/each}
+		{:else}
+			<!-- Flat List View (when filtering) -->
+			<div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+				{#each filteredPrompts as prompt (prompt.id)}
+					<PromptCard {prompt} onUse={handleUsePrompt} />
+				{/each}
 			</div>
 		{/if}
 	</div>
 </div>
+
+<!-- Suggest Prompt Button (fixed bottom right on mobile) -->
+<div class="fixed right-4 bottom-6 z-40 lg:hidden">
+	<button
+		type="button"
+		class="btn btn-circle shadow-lg btn-lg btn-primary"
+		onclick={() => (showSuggestForm = true)}
+		aria-label="Suggest a prompt"
+	>
+		<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+			<path
+				fill-rule="evenodd"
+				d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+				clip-rule="evenodd"
+			/>
+		</svg>
+	</button>
+</div>
+
+<!-- Suggest Prompt Modal -->
+<SuggestPromptForm
+	open={showSuggestForm}
+	onClose={() => (showSuggestForm = false)}
+	onSubmit={handleSuggestSubmit}
+/>
 
 <style>
 	/* Fade-in animations matching other pages */
@@ -376,27 +317,5 @@
 
 	.stagger-3 {
 		transition-delay: 0.3s;
-	}
-
-	/* Card list entrance animation */
-	.card {
-		animation: cardFadeIn 0.4s ease-out forwards;
-		opacity: 0;
-	}
-
-	@keyframes cardFadeIn {
-		from {
-			opacity: 0;
-			transform: translateY(10px);
-		}
-		to {
-			opacity: 1;
-			transform: translateY(0);
-		}
-	}
-
-	/* Blockquote styling */
-	blockquote {
-		border-left-width: 3px;
 	}
 </style>
