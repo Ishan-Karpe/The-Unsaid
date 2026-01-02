@@ -101,13 +101,76 @@ export type SyncStatus =
 // ------------------------------------------
 // Insights Types
 // ------------------------------------------
+
+/** Time period for filtering insights */
+export type InsightPeriod = '7days' | 'month' | 'all';
+
+/** A single data point in a time series chart */
+export interface InsightSeriesPoint {
+	/** ISO date string (yyyy-mm-dd or yyyy-mm for month buckets) */
+	date: string;
+	/** UI-friendly label (Mon, Tue, Jan, Feb, etc.) */
+	label: string;
+	/** Number of drafts in this time bucket */
+	count: number;
+}
+
+/** Recipient-specific insight with recency tracking */
+export interface RecipientInsight {
+	/** Recipient name */
+	name: string;
+	/** Total drafts to this recipient */
+	count: number;
+	/** When the last draft to this recipient was created */
+	lastDraftAt: Date | null;
+	/** Days since the last draft (null if no drafts) */
+	daysSinceLastDraft: number | null;
+}
+
+/** Emotion frequency insight */
+export interface EmotionInsight {
+	/** Emotion name */
+	emotion: string;
+	/** Number of drafts with this emotion */
+	count: number;
+}
+
+/** Complete user insights computed client-side from decrypted drafts */
 export interface UserInsights {
+	/** The time period these insights cover */
+	period: InsightPeriod;
+
+	// All-time totals
+	/** Total number of drafts (all time) */
 	totalDrafts: number;
-	draftsThisMonth: number;
-	topRecipients: { name: string; count: number }[];
-	emotionsExpressed: { emotion: string; count: number }[];
-	averageLength: number;
+	/** Total word count across all drafts */
+	totalWords: number;
+	/** The longest draft by word count */
 	longestDraft: { id: string; wordCount: number } | null;
+	/** Current writing streak in consecutive days */
+	writingStreak: number;
+
+	// Period-filtered totals
+	/** Number of drafts in the selected period */
+	periodDrafts: number;
+	/** Total words in the selected period */
+	periodWords: number;
+	/** Average word count per draft in the period */
+	averageLength: number;
+
+	// Monthly comparison
+	/** Drafts created this calendar month */
+	draftsThisMonth: number;
+	/** Drafts created last calendar month */
+	draftsLastMonth: number;
+
+	// Breakdowns
+	/** Time series data for drafts-over-time visualization */
+	draftsOverTime: InsightSeriesPoint[];
+	/** Top recipients sorted by count descending */
+	topRecipients: RecipientInsight[];
+	/** Emotions expressed sorted by count descending */
+	emotionsExpressed: EmotionInsight[];
 }
 
 // ------------------------------------------
