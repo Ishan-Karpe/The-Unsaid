@@ -7,9 +7,10 @@
 	interface Props {
 		class?: string;
 		rounded?: 'none' | 'sm' | 'md' | 'lg' | 'full';
+		style?: string;
 	}
 
-	let { class: className = '', rounded = 'md' }: Props = $props();
+	let { class: className = '', rounded = 'md', style }: Props = $props();
 
 	const roundedClasses: Record<typeof rounded, string> = {
 		none: '',
@@ -24,6 +25,7 @@
 	class="skeleton animate-pulse bg-base-300 {roundedClasses[rounded]} {className}"
 	role="status"
 	aria-label="Loading..."
+	{style}
 >
 	<span class="sr-only">Loading...</span>
 </div>

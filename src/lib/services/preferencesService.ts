@@ -35,6 +35,10 @@ export type AIPersonality = 'empathetic' | 'direct' | 'supportive' | 'neutral';
  * @property {AIPersonality} ai_personality - Preferred AI response style
  * @property {string} [ai_consent_date] - When user consented to AI features
  * @property {string} [theme] - UI theme preference
+ * @property {boolean} onboarding_completed - Whether user finished onboarding
+ * @property {string} [onboarding_completed_at] - When onboarding was completed
+ * @property {string} [onboarding_skipped_at] - When user chose to skip onboarding
+ * @property {string} onboarding_version - Version of onboarding flow completed
  * @property {string} [created_at] - Record creation timestamp
  * @property {string} [updated_at] - Record last update timestamp
  */
@@ -47,6 +51,10 @@ export interface UserPreferences {
 	ai_personality: AIPersonality;
 	ai_consent_date?: string | null;
 	theme?: string;
+	onboarding_completed: boolean;
+	onboarding_completed_at?: string | null;
+	onboarding_skipped_at?: string | null;
+	onboarding_version: string;
 	created_at?: string;
 	updated_at?: string;
 }
@@ -54,6 +62,7 @@ export interface UserPreferences {
 /**
  * Default preferences for new users
  * AI is disabled by default - requires explicit consent
+ * Onboarding is not completed by default
  */
 const DEFAULT_PREFERENCES: Omit<UserPreferences, 'user_id' | 'created_at' | 'updated_at'> = {
 	ai_enabled: false,
@@ -62,8 +71,22 @@ const DEFAULT_PREFERENCES: Omit<UserPreferences, 'user_id' | 'created_at' | 'upd
 	therapeutic_mode: false,
 	ai_personality: 'empathetic',
 	ai_consent_date: null,
-	theme: 'system'
+	theme: 'system',
+	onboarding_completed: false,
+	onboarding_completed_at: null,
+	onboarding_skipped_at: null,
+	onboarding_version: 'v1'
 };
+
+/**
+ * Onboarding status result type
+ */
+export interface OnboardingStatus {
+	needsOnboarding: boolean;
+	completed: boolean;
+	skipped: boolean;
+	version: string;
+}
 
 /**
  * Result type for preference operations
@@ -301,5 +324,112 @@ export const preferencesService = {
 	 */
 	async disableAI(userId: string): Promise<PreferencesResult> {
 		return this.updatePreferences(userId, { ai_enabled: false });
+	},
+
+	// =========================================
+	// ONBOARDING HELPERS
+	// =========================================
+
+	/**
+	 * Get the onboarding status for a user.
+	 *
+	 * Determines if user needs to see onboarding based on:
+	 * - onboarding_completed = false AND
+	 * - onboarding_skipped_at = null
+	 *
+	 * @param {string} userId - The user's unique identifier
+	 * @returns {Promise<OnboardingStatus>} The user's onboarding status
+	 *
+	 * @example
+	 * const status = await preferencesService.getOnboardingStatus(userId);
+	 * if (status.needsOnboarding) {
+	 *   redirect('/onboarding');
+	 * }
+	 */
+	async getOnboardingStatus(userId: string): Promise<OnboardingStatus> {
+		const { preferences } = await this.getPreferences(userId);
+
+		if (!preferences) {
+			// New user - needs onboarding
+			return {
+				needsOnboarding: true,
+				completed: false,
+				skipped: false,
+				version: 'v1'
+			};
+		}
+
+		const completed = preferences.onboarding_completed;
+		const skipped = preferences.onboarding_skipped_at !== null;
+		const needsOnboarding = !completed && !skipped;
+
+		return {
+			needsOnboarding,
+			completed,
+			skipped,
+			version: preferences.onboarding_version
+		};
+	},
+
+	/**
+	 * Mark onboarding as completed.
+	 *
+	 * Called when user finishes all onboarding steps (including first draft).
+	 * Records timestamp for tracking.
+	 *
+	 * @param {string} userId - The user's unique identifier
+	 * @returns {Promise<PreferencesResult>} Success result
+	 *
+	 * @example
+	 * // After user completes final onboarding step
+	 * await preferencesService.completeOnboarding(userId);
+	 * goto('/write');
+	 */
+	async completeOnboarding(userId: string): Promise<PreferencesResult> {
+		return this.updatePreferences(userId, {
+			onboarding_completed: true,
+			onboarding_completed_at: new Date().toISOString()
+		});
+	},
+
+	/**
+	 * Skip onboarding (for power users).
+	 *
+	 * Records skip timestamp. User won't be redirected to onboarding again.
+	 * Can be reset via Settings.
+	 *
+	 * @param {string} userId - The user's unique identifier
+	 * @returns {Promise<PreferencesResult>} Success result
+	 *
+	 * @example
+	 * // When user clicks "Skip onboarding"
+	 * await preferencesService.skipOnboarding(userId);
+	 * goto('/write');
+	 */
+	async skipOnboarding(userId: string): Promise<PreferencesResult> {
+		return this.updatePreferences(userId, {
+			onboarding_skipped_at: new Date().toISOString()
+		});
+	},
+
+	/**
+	 * Reset onboarding (allow user to restart from Settings).
+	 *
+	 * Clears completion and skip timestamps so user sees onboarding again.
+	 *
+	 * @param {string} userId - The user's unique identifier
+	 * @returns {Promise<PreferencesResult>} Success result
+	 *
+	 * @example
+	 * // In Settings when user clicks "Restart onboarding"
+	 * await preferencesService.resetOnboarding(userId);
+	 * goto('/onboarding');
+	 */
+	async resetOnboarding(userId: string): Promise<PreferencesResult> {
+		return this.updatePreferences(userId, {
+			onboarding_completed: false,
+			onboarding_completed_at: null,
+			onboarding_skipped_at: null
+		});
 	}
 };

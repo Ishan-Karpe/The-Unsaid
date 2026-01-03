@@ -64,6 +64,10 @@ export interface UserPreferences {
 	theme: 'light' | 'dark' | 'system';
 	ai_enabled: boolean;
 	ai_consent_date: string | null;
+	onboarding_completed: boolean;
+	onboarding_completed_at: string | null;
+	onboarding_skipped_at: string | null;
+	onboarding_version: string;
 }
 
 // ------------------------------------------

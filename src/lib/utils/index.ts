@@ -2,3 +2,4 @@
 export * from './validation';
 export * from './helpers';
 export * from './responsive';
+export * from './sanitization';

@@ -3,7 +3,12 @@
 	import { supabase } from '$lib/services/supabase';
 	import { keyDerivationService } from '$lib/services';
 	import { authStore } from '$lib/stores/auth.svelte';
-	import { PasswordPrompt, ToastContainer } from '$lib/components/ui';
+	import {
+		PasswordPrompt,
+		ToastContainer,
+		ErrorBoundary,
+		OfflineIndicator
+	} from '$lib/components/ui';
 	import './layout.css';
 	import favicon from '$lib/assets/favicon.svg';
 
@@ -105,7 +110,13 @@
 <!-- App shell with theme support -->
 <div class="min-h-screen bg-base-100 text-base-content">
 	<main id="main-content" tabindex="-1">
-		{@render children()}
+		<ErrorBoundary
+			fallbackTitle="Something went wrong"
+			fallbackDescription="We encountered an unexpected error. Please try refreshing the page."
+			variant="full"
+		>
+			{@render children()}
+		</ErrorBoundary>
 	</main>
 </div>
 
@@ -116,3 +127,6 @@
 
 <!-- Toast notifications container -->
 <ToastContainer />
+
+<!-- Offline status indicator -->
+<OfflineIndicator />
