@@ -128,5 +128,60 @@ export const authService = {
 				callback(null);
 			}
 		});
+	},
+
+	/**
+	 * Delete the current user's account
+	 *
+	 * This deletes all user data including:
+	 * - All drafts (active and deleted)
+	 * - User preferences
+	 * - Encryption salt
+	 * - The auth account itself
+	 *
+	 * @returns Error if deletion failed
+	 *
+	 * @note In production, this would call a backend endpoint
+	 * that uses the Supabase admin API to delete the user.
+	 */
+	async deleteAccount(): Promise<{ error: string | null }> {
+		// For now, we'll use Supabase's sign out and let the user know
+		// that account deletion requires manual intervention.
+		// In production, this would call a backend endpoint that:
+		// 1. Deletes all drafts
+		// 2. Deletes user_salts
+		// 3. Deletes user_preferences
+		// 4. Uses supabase.auth.admin.deleteUser(userId)
+
+		try {
+			// Get current user
+			const { user, error: userError } = await this.getUser();
+			if (userError || !user) {
+				return { error: userError || 'No user logged in' };
+			}
+
+			// Delete user data via API (this would be a real endpoint in production)
+			const response = await fetch('/api/account/delete', {
+				method: 'DELETE',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				credentials: 'include'
+			});
+
+			if (!response.ok) {
+				const data = await response.json();
+				return { error: data.error || 'Failed to delete account' };
+			}
+
+			// Sign out
+			await this.logout();
+
+			return { error: null };
+		} catch (err) {
+			return {
+				error: err instanceof Error ? err.message : 'Failed to delete account'
+			};
+		}
 	}
 };

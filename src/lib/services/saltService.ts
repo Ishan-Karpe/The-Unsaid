@@ -208,5 +208,42 @@ export const saltService = {
 			const message = err instanceof Error ? err.message : 'Failed to get salt';
 			return { salt: null, error: message };
 		}
+	},
+
+	/**
+	 * Update salt for a user (used during password change).
+	 *
+	 * WARNING: Changing salt will make all existing encrypted data
+	 * unreadable unless you re-encrypt it with the new key!
+	 *
+	 * This should only be called as part of a password change flow
+	 * that includes re-encryption of all user data.
+	 *
+	 * @param {string} userId - The user's unique identifier
+	 * @param {Uint8Array} newSalt - The new salt to store
+	 *
+	 * @returns {Promise<{error: string | null}>} Error if update failed
+	 *
+	 * @security
+	 * - Only call this after successfully decrypting all user data
+	 * - Must be followed by re-encryption with the new key
+	 * - If re-encryption fails, the old salt must be restored
+	 */
+	async updateSalt(userId: string, newSalt: Uint8Array): Promise<{ error: string | null }> {
+		try {
+			const { error } = await supabase
+				.from('user_salts')
+				.update({ salt: bufferToBase64(newSalt) })
+				.eq('user_id', userId);
+
+			if (error) {
+				return { error: error.message };
+			}
+
+			return { error: null };
+		} catch (err) {
+			const message = err instanceof Error ? err.message : 'Failed to update salt';
+			return { error: message };
+		}
 	}
 };

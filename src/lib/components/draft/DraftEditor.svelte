@@ -13,6 +13,7 @@
 		minRows?: number;
 		maxLength?: number;
 		autosaveDebounceMs?: number;
+		readonly?: boolean;
 		onSave?: () => void;
 		onSaveError?: (error: string) => void;
 	}
@@ -22,6 +23,7 @@
 		minRows = 8,
 		maxLength = 10000,
 		autosaveDebounceMs = 2000,
+		readonly = false,
 		onSave,
 		onSaveError
 	}: Props = $props();
@@ -79,15 +81,28 @@
 </script>
 
 <div class="draft-editor">
-	<Textarea
-		bind:value={content}
-		oninput={handleInput}
-		{placeholder}
-		rows={minRows}
-		{maxLength}
-		showCount
-		class="min-h-[200px] text-lg leading-relaxed"
-	/>
+	{#if readonly}
+		<!-- Preview mode - read-only styled text -->
+		<div
+			class="prose-lg prose max-w-none rounded-lg border border-base-content/10 bg-base-200/50 p-6 whitespace-pre-wrap text-base-content"
+		>
+			{#if content}
+				{content}
+			{:else}
+				<span class="text-base-content/40 italic">No content to preview</span>
+			{/if}
+		</div>
+	{:else}
+		<Textarea
+			bind:value={content}
+			oninput={handleInput}
+			{placeholder}
+			rows={minRows}
+			{maxLength}
+			showCount
+			class="min-h-[350px] text-lg leading-relaxed"
+		/>
+	{/if}
 </div>
 
 <style>

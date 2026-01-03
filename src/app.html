@@ -8,7 +8,13 @@
 			(function () {
 				const stored = localStorage.getItem('theme');
 				const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-				const theme = stored || (prefersDark ? 'dark' : 'light');
+				// Handle 'system' mode by checking OS preference
+				let theme;
+				if (stored === 'system' || !stored) {
+					theme = prefersDark ? 'dark' : 'light';
+				} else {
+					theme = stored;
+				}
 				document.documentElement.setAttribute('data-theme', theme);
 			})();
 		</script>

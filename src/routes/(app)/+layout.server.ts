@@ -13,12 +13,13 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
 		redirect(303, `/login?redirectTo=${redirectTo}`);
 	}
 
-	// Return user info for protected routes
+	// Return user info for protected routes (including metadata for avatar/name)
 	return {
 		user: {
 			id: locals.user.id,
 			email: locals.user.email!,
-			createdAt: locals.user.created_at
+			createdAt: locals.user.created_at,
+			user_metadata: locals.user.user_metadata
 		}
 	};
 };

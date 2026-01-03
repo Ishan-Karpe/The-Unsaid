@@ -39,6 +39,18 @@
 		{ href: resolve('/patterns'), label: 'Patterns', icon: 'patterns' },
 		{ href: resolve('/settings'), label: 'Settings', icon: 'settings' }
 	];
+
+	// Get user initials for avatar fallback
+	let userInitials = $derived.by(() => {
+		const metadata = user?.user_metadata;
+		if (metadata?.first_name && metadata?.last_name) {
+			return `${metadata.first_name.charAt(0)}${metadata.last_name.charAt(0)}`.toUpperCase();
+		}
+		return user?.email?.charAt(0).toUpperCase() ?? '?';
+	});
+
+	// Get avatar URL from user metadata
+	let avatarUrl = $derived(user?.user_metadata?.avatar_url ?? null);
 </script>
 
 <div class="min-h-screen bg-base-200">
@@ -66,9 +78,15 @@
 		<div class="hidden flex-none items-center gap-1 md:flex">
 			<ThemeToggle />
 			<div class="dropdown dropdown-end">
-				<div tabindex="0" role="button" class="placeholder btn avatar btn-circle btn-ghost">
-					<div class="w-10 rounded-full bg-primary text-primary-content">
-						<span class="text-sm">{user?.email?.charAt(0).toUpperCase() ?? '?'}</span>
+				<div tabindex="0" role="button" class="btn avatar btn-circle btn-ghost">
+					<div
+						class="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-content"
+					>
+						{#if avatarUrl}
+							<img src={avatarUrl} alt="Profile" class="h-full w-full rounded-full object-cover" />
+						{:else}
+							<span class="text-sm">{userInitials}</span>
+						{/if}
 					</div>
 				</div>
 				<ul

@@ -29,6 +29,9 @@ vi.mock('$lib/services', async () => {
 		authService: {},
 		aiService: {},
 		preferencesService: {},
+		insightsService: {},
+		exportService: {},
+		passwordChangeService: {},
 		supabase: {}
 	};
 });

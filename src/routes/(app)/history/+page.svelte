@@ -6,8 +6,9 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { draftService } from '$lib/services';
+	import { draftService, exportService } from '$lib/services';
 	import { draftStore } from '$lib/stores/draft.svelte';
+	import { toastStore } from '$lib/stores/toast.svelte';
 	import {
 		FilterPanel,
 		DraftPreview,
@@ -15,7 +16,7 @@
 		FirstUseWelcome,
 		ProgressBar
 	} from '$lib/components';
-	import type { Draft, DateRange } from '$lib/types';
+	import type { Draft, DateRange, ExportFormat } from '$lib/types';
 
 	// Animation states
 	let headerVisible = $state(false);
@@ -46,6 +47,10 @@
 	// Delete confirmation
 	let deletingId = $state<string | null>(null);
 	let confirmDeleteId = $state<string | null>(null);
+
+	// Export state
+	let exportingId = $state<string | null>(null);
+	let exportDropdownOpen = $state<string | null>(null);
 
 	// Computed values
 	let uniqueRecipients = $derived(
@@ -242,6 +247,37 @@
 		offset = 0;
 		drafts = [];
 		loadDrafts();
+	}
+
+	function handleExportDraft(draft: Draft, format: ExportFormat) {
+		if (!draft.id) return;
+
+		exportingId = draft.id;
+		exportDropdownOpen = null;
+
+		const { error } = exportService.exportSingleDraft(draft, {
+			format,
+			includeMetadata: true,
+			scope: 'selected'
+		});
+
+		if (error) {
+			toastStore.error(`Export failed: ${error}`);
+		} else {
+			toastStore.success(`Draft exported as ${format.toUpperCase()}`);
+		}
+
+		exportingId = null;
+	}
+
+	function handlePrintDraft(draft: Draft) {
+		exportDropdownOpen = null;
+		exportService.printDraft(draft);
+	}
+
+	function toggleExportDropdown(draftId: string | undefined) {
+		if (!draftId) return;
+		exportDropdownOpen = exportDropdownOpen === draftId ? null : draftId;
 	}
 </script>
 
@@ -468,6 +504,59 @@
 												/>
 											</svg>
 										</button>
+										<!-- Export Dropdown -->
+										<div class="dropdown dropdown-end">
+											<button
+												type="button"
+												class="btn btn-ghost transition-colors duration-200 btn-sm hover:bg-info/10 hover:text-info"
+												onclick={() => draft.id && toggleExportDropdown(draft.id)}
+												title="Export draft"
+												disabled={exportingId === draft.id}
+											>
+												{#if exportingId === draft.id}
+													<span class="loading loading-xs loading-spinner"></span>
+												{:else}
+													<svg
+														xmlns="http://www.w3.org/2000/svg"
+														class="h-4 w-4"
+														viewBox="0 0 20 20"
+														fill="currentColor"
+													>
+														<path
+															fill-rule="evenodd"
+															d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
+															clip-rule="evenodd"
+														/>
+													</svg>
+												{/if}
+											</button>
+											{#if exportDropdownOpen === draft.id}
+												<ul
+													class="dropdown-content menu z-[1] w-40 rounded-box border border-base-content/10 bg-base-100 p-2 shadow-lg"
+												>
+													<li>
+														<button type="button" onclick={() => handleExportDraft(draft, 'json')}>
+															JSON
+														</button>
+													</li>
+													<li>
+														<button type="button" onclick={() => handleExportDraft(draft, 'txt')}>
+															TXT
+														</button>
+													</li>
+													<li>
+														<button type="button" onclick={() => handleExportDraft(draft, 'md')}>
+															MD
+														</button>
+													</li>
+													<li class="mt-1 border-t border-base-content/10 pt-1">
+														<button type="button" onclick={() => handlePrintDraft(draft)}>
+															Print
+														</button>
+													</li>
+												</ul>
+											{/if}
+										</div>
 										<button
 											type="button"
 											class="btn btn-ghost transition-colors duration-200 btn-sm hover:bg-error/10 hover:text-error"
