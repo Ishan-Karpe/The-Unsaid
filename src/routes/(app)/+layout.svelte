@@ -28,7 +28,7 @@
 
 		await authService.logout();
 		await invalidateAll();
-		goto(resolve('/login'));
+		goto(resolve('/'));
 	}
 
 	// Navigation items with resolved hrefs
@@ -189,7 +189,7 @@
 	</nav>
 
 	<!-- Main Content -->
-	<main class="mx-auto w-full max-w-7xl px-4 py-6">
+	<main class="page-container py-6 md:py-8">
 		{@render children()}
 	</main>
 </div>

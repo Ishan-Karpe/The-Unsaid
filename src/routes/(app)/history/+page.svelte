@@ -285,13 +285,13 @@
 	<title>History | The Unsaid</title>
 </svelte:head>
 
-<div class="space-y-6">
+<div class="space-y-6 pb-8">
 	<!-- Header -->
 	<div class="fade-in {headerVisible ? 'visible' : ''}">
 		<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-			<div>
-				<h1 class="text-2xl font-bold text-base-content">Your Drafts</h1>
-				<p class="mt-1 text-sm text-base-content/60">
+			<div class="page-header mb-0">
+				<h1>Your Drafts</h1>
+				<p class="text-muted">
 					{#if loading}
 						Loading your drafts...
 					{:else if filteredDrafts.length === 0 && drafts.length > 0}
@@ -325,7 +325,7 @@
 				<button
 					type="button"
 					onclick={handleNewDraft}
-					class="btn gap-2 shadow-sm transition-all duration-200 btn-primary hover:shadow-md hover:shadow-primary/25"
+					class="btn btn-cta gap-2 shadow-sm transition-all duration-200 btn-primary hover:shadow-md hover:shadow-primary/25"
 				>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"

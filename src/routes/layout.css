@@ -152,10 +152,22 @@ textarea.textarea {
 	transform: translateY(-2px);
 }
 
+/* Smooth input focus transitions */
+.input,
+.textarea,
+.select {
+	transition:
+		border-color 0.2s ease,
+		box-shadow 0.2s ease,
+		background-color 0.2s ease;
+}
+
 /* Soft glow for focused inputs */
 .input:focus,
-.textarea:focus {
-	box-shadow: 0 0 0 3px oklch(55% 0.18 260 / 0.15);
+.textarea:focus,
+.select:focus {
+	outline: none;
+	box-shadow: 0 0 0 3px oklch(55% 0.18 260 / 0.2);
 }
 
 /* ===========================================
@@ -281,6 +293,410 @@ main:focus {
 
 	.card-body {
 		padding: 1rem;
+	}
+}
+
+/* ===========================================
+   STANDARDIZED SPACING & LAYOUT
+   =========================================== */
+
+/* Page container consistency */
+.page-container {
+	max-width: 80rem;
+	margin-inline: auto;
+	padding-inline: 1rem;
+}
+
+@media (min-width: 640px) {
+	.page-container {
+		padding-inline: 1.5rem;
+	}
+}
+
+@media (min-width: 1024px) {
+	.page-container {
+		padding-inline: 2rem;
+	}
+}
+
+/* Standardized page header */
+.page-header {
+	margin-bottom: 2rem;
+}
+
+.page-header h1 {
+	font-size: 1.875rem;
+	font-weight: 700;
+	line-height: 1.2;
+	letter-spacing: -0.025em;
+}
+
+@media (min-width: 768px) {
+	.page-header h1 {
+		font-size: 2.25rem;
+	}
+}
+
+.page-header p {
+	margin-top: 0.5rem;
+	color: oklch(var(--bc) / 0.6);
+}
+
+/* Standardized section spacing */
+.section-spacing {
+	margin-bottom: 1.5rem;
+}
+
+@media (min-width: 768px) {
+	.section-spacing {
+		margin-bottom: 2rem;
+	}
+}
+
+/* ===========================================
+   BUTTON STANDARDIZATION
+   =========================================== */
+
+/* Primary CTA buttons - consistent sizing */
+.btn-cta {
+	min-height: 3rem;
+	padding-inline: 1.5rem;
+	font-weight: 600;
+}
+
+.btn-cta-lg {
+	min-height: 3.5rem;
+	padding-inline: 2rem;
+	font-size: 1.125rem;
+}
+
+.btn-cta,
+.btn-cta-lg {
+	transition:
+		transform 0.2s ease,
+		box-shadow 0.2s ease,
+		background-color 0.2s ease;
+}
+
+.btn-cta:hover,
+.btn-cta-lg:hover {
+	transform: translateY(-1px);
+	box-shadow: 0 12px 24px -16px oklch(0% 0 0 / 0.35);
+}
+
+/* ===========================================
+   CARD CONSISTENCY
+   =========================================== */
+
+/* Ensure consistent card borders */
+.card-border {
+	border: 1px solid oklch(var(--bc) / 0.1);
+}
+
+/* Consistent card padding for different contexts */
+.card-compact .card-body {
+	padding: 1rem;
+}
+
+.card-standard .card-body {
+	padding: 1.5rem;
+}
+
+@media (min-width: 768px) {
+	.card-standard .card-body {
+		padding: 2rem;
+	}
+}
+
+/* ===========================================
+   TYPOGRAPHY HELPERS
+   =========================================== */
+
+/* Muted description text */
+.text-muted {
+	color: oklch(var(--bc) / 0.6);
+}
+
+.text-muted-subtle {
+	color: oklch(var(--bc) / 0.5);
+}
+
+/* Section titles */
+.section-title {
+	font-size: 0.75rem;
+	font-weight: 600;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+	color: oklch(var(--bc) / 0.7);
+}
+
+/* ===========================================
+   TOUCH TARGET IMPROVEMENTS
+   =========================================== */
+
+/* Ensure minimum touch target size */
+.touch-target {
+	min-height: 44px;
+	min-width: 44px;
+}
+
+/* Larger touch targets for mobile FABs */
+.touch-target-lg {
+	min-height: 56px;
+	min-width: 56px;
+}
+
+/* ===========================================
+   MICRO-INTERACTIONS & MOTION
+   =========================================== */
+
+/* Base button motion */
+.btn {
+	transition:
+		transform 0.2s ease,
+		box-shadow 0.2s ease,
+		background-color 0.2s ease,
+		border-color 0.2s ease,
+		color 0.2s ease;
+}
+
+.btn:focus-visible {
+	outline: none;
+	box-shadow:
+		0 0 0 2px oklch(var(--b1)),
+		0 0 0 4px oklch(55% 0.18 260 / 0.6);
+}
+
+/* Button press feedback - subtle scale on click */
+.btn:active:not(:disabled) {
+	transform: scale(0.97);
+}
+
+/* Enhanced card hover with lift effect */
+.card-interactive {
+	transition:
+		transform 0.2s ease-out,
+		box-shadow 0.2s ease-out,
+		border-color 0.2s ease-out;
+}
+
+.card-interactive:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 8px 24px -4px oklch(0% 0 0 / 0.12);
+}
+
+.card-interactive:active {
+	transform: translateY(0);
+}
+
+/* Badge hover effect */
+.badge-interactive {
+	transition:
+		background-color 0.15s ease,
+		transform 0.15s ease;
+}
+
+.badge-interactive:hover {
+	transform: scale(1.05);
+}
+
+/* Subtle link emphasis */
+.link {
+	transition:
+		color 0.2s ease,
+		text-decoration-color 0.2s ease;
+	text-underline-offset: 3px;
+}
+
+/* Link underline animation */
+.link-animated {
+	position: relative;
+	text-decoration: none;
+}
+
+.link-animated::after {
+	content: '';
+	position: absolute;
+	bottom: -1px;
+	left: 0;
+	width: 0;
+	height: 1px;
+	background-color: currentColor;
+	transition: width 0.2s ease-out;
+}
+
+.link-animated:hover::after {
+	width: 100%;
+}
+
+/* Icon button pulse on hover */
+.btn-icon-animated:hover svg {
+	animation: icon-pulse 0.3s ease-out;
+}
+
+@keyframes icon-pulse {
+	0% {
+		transform: scale(1);
+	}
+	50% {
+		transform: scale(1.15);
+	}
+	100% {
+		transform: scale(1);
+	}
+}
+
+/* Modal/dialog entrance animation */
+.modal-enter {
+	animation: modal-scale-in 0.2s ease-out;
+}
+
+.modal-open .modal-box {
+	animation: modal-scale-in 0.2s ease-out;
+}
+
+.modal-backdrop {
+	animation: modal-fade-in 0.2s ease-out;
+}
+
+@keyframes modal-scale-in {
+	from {
+		opacity: 0;
+		transform: scale(0.95);
+	}
+	to {
+		opacity: 1;
+		transform: scale(1);
+	}
+}
+
+@keyframes modal-fade-in {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+/* Slide up animation for toasts/notifications */
+.slide-up-enter {
+	animation: slide-up 0.3s ease-out;
+}
+
+@keyframes slide-up {
+	from {
+		opacity: 0;
+		transform: translateY(16px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+/* Drawer slide animation */
+.drawer-slide-in {
+	animation: drawer-in 0.25s ease-out;
+}
+
+@keyframes drawer-in {
+	from {
+		transform: translateX(100%);
+	}
+	to {
+		transform: translateX(0);
+	}
+}
+
+/* Fade in with slight scale for content reveals */
+.reveal-enter {
+	animation: reveal 0.4s ease-out;
+}
+
+@keyframes reveal {
+	from {
+		opacity: 0;
+		transform: scale(0.98);
+	}
+	to {
+		opacity: 1;
+		transform: scale(1);
+	}
+}
+
+/* Stagger delay utilities for list animations */
+.stagger-delay-1 {
+	animation-delay: 50ms;
+}
+.stagger-delay-2 {
+	animation-delay: 100ms;
+}
+.stagger-delay-3 {
+	animation-delay: 150ms;
+}
+.stagger-delay-4 {
+	animation-delay: 200ms;
+}
+.stagger-delay-5 {
+	animation-delay: 250ms;
+}
+
+/* Focus ring animation */
+.focus-ring-animated:focus-visible {
+	outline: none;
+	box-shadow:
+		0 0 0 2px oklch(var(--b1)),
+		0 0 0 4px oklch(55% 0.18 260);
+	animation: focus-ring-pulse 0.3s ease-out;
+}
+
+@keyframes focus-ring-pulse {
+	0% {
+		box-shadow:
+			0 0 0 2px oklch(var(--b1)),
+			0 0 0 2px oklch(55% 0.18 260);
+	}
+	100% {
+		box-shadow:
+			0 0 0 2px oklch(var(--b1)),
+			0 0 0 4px oklch(55% 0.18 260);
+	}
+}
+
+/* Skeleton loading pulse */
+.skeleton-pulse {
+	animation: skeleton-shimmer 1.5s infinite;
+	background: linear-gradient(
+		90deg,
+		oklch(var(--bc) / 0.06) 25%,
+		oklch(var(--bc) / 0.12) 50%,
+		oklch(var(--bc) / 0.06) 75%
+	);
+	background-size: 200% 100%;
+}
+
+@keyframes skeleton-shimmer {
+	0% {
+		background-position: 200% 0;
+	}
+	100% {
+		background-position: -200% 0;
+	}
+}
+
+/* ===========================================
+   REDUCED MOTION SUPPORT
+   =========================================== */
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+		scroll-behavior: auto !important;
 	}
 }
 

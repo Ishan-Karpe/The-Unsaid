@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { supabase } from '$lib/services/supabase';
 	import { keyDerivationService } from '$lib/services';
 	import { authStore } from '$lib/stores/auth.svelte';
@@ -83,9 +85,10 @@
 
 	function handlePasswordSuccess() {
 		needsPasswordPrompt = false;
-		// Don't reload - the key is now in memory and components will re-render
 		// Trigger a custom event so components know to refresh their data
 		window.dispatchEvent(new CustomEvent('encryption-key-restored'));
+		// Redirect to /write after successful unlock
+		goto(resolve('/write'));
 	}
 
 	function handlePasswordCancel() {

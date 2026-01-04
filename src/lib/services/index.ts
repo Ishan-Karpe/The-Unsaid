@@ -10,6 +10,7 @@ export { preferencesService } from './preferencesService';
 export { insightsService } from './insightsService';
 export { exportService } from './exportService';
 export { passwordChangeService } from './passwordChangeService';
+export { monitoringService } from './monitoring';
 export type { UserPreferences, PreferencesResult, AIPersonality } from './preferencesService';
 export type { InsightsResult } from './insightsService';
 export type { ExportResult, ExportPayload } from './exportService';

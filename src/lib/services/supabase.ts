@@ -2,12 +2,12 @@
 // THE UNSAID - Supabase Client
 // ===========================================
 import { createBrowserClient } from '@supabase/ssr';
-import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
+import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_PUBLISHABLE_KEY } from '$env/static/public';
 
 // Create Supabase client for browser with cookie-based session storage
 // This ensures session is shared with server-side auth checks
 // Configure for longer session persistence (7 days refresh, 30 days absolute)
-export const supabase = createBrowserClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
+export const supabase = createBrowserClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_PUBLISHABLE_KEY, {
 	auth: {
 		persistSession: true,
 		autoRefreshToken: true,

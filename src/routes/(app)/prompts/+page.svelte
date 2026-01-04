@@ -149,9 +149,11 @@
 <div class="space-y-8 pb-12">
 	<!-- Header Section -->
 	<div class="fade-in text-center {headerVisible ? 'visible' : ''}">
-		<h1 class="text-3xl font-bold text-base-content md:text-5xl">Phrase Library</h1>
-		<p class="mt-2 text-xl text-primary italic md:text-2xl">Words for every emotion</p>
-		<p class="mx-auto mt-4 max-w-2xl text-base-content/70">
+		<h1 class="text-3xl font-bold leading-tight tracking-tight text-base-content md:text-4xl">
+			Phrase Library
+		</h1>
+		<p class="mt-2 text-lg text-primary italic md:text-xl">Words for every emotion</p>
+		<p class="text-muted mx-auto mt-4 max-w-2xl">
 			A curated collection of expressions to help you communicate with clarity, depth, and
 			intention.
 		</p>

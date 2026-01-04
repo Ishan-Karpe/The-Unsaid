@@ -8,7 +8,7 @@ from supabase import Client, create_client
 
 # Initialize Supabase client
 supabase_url = os.getenv("SUPABASE_URL") or os.getenv("PUBLIC_SUPABASE_URL", "")
-supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
+supabase_key = os.getenv("PRIVATE_SUPABASE_SECRET_KEY", "")
 
 supabase: Client | None = None
 if supabase_url and supabase_key:

@@ -250,7 +250,7 @@
 	<title>Write | The Unsaid</title>
 </svelte:head>
 
-<div class="flex min-h-[calc(100vh-5rem)] flex-col gap-4">
+<div class="flex min-h-[calc(100vh-5rem)] flex-col gap-6 pb-8">
 	<!-- Onboarding Welcome Banner -->
 	{#if showOnboardingBanner}
 		<div

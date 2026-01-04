@@ -19,6 +19,7 @@
 	import { tick } from 'svelte';
 	import type { Snippet } from 'svelte';
 	import ErrorFallback from './ErrorFallback.svelte';
+	import { monitoringService } from '$lib/services/monitoring';
 
 	interface Props {
 		/** Content to render */
@@ -49,8 +50,8 @@
 	 * Logs to console (privacy-first, no external logging)
 	 */
 	function handleError(error: unknown) {
-		// Log error to console for debugging (privacy-first)
-		console.error('[ErrorBoundary] Caught error:', error);
+		// Report error to monitoring hook (Sentry-ready)
+		monitoringService.captureError(error, { source: 'ErrorBoundary' });
 
 		// Call optional error handler
 		if (onError && error instanceof Error) {

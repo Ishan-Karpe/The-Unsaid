@@ -5,6 +5,7 @@
 -->
 <script lang="ts">
 	import { aiStore } from '$lib/stores/ai.svelte';
+	import { networkStore } from '$lib/stores/network.svelte';
 	import { aiService } from '$lib/services/ai';
 	import { Alert } from '$lib/components';
 
@@ -24,6 +25,8 @@
 	let activeMode = $derived(aiStore.activeMode);
 	let originalValid = $derived(aiStore.originalValid);
 	let status = $derived(aiStore.status);
+	let canRetry = $derived(aiStore.canRetry);
+	let isOffline = $derived(!networkStore.isOnline);
 
 	// Get mode label and description
 	let modeLabel = $derived(activeMode ? aiService.getModeLabel(activeMode) : '');
@@ -40,6 +43,10 @@
 	function handleDismiss() {
 		onDismiss?.();
 		aiStore.dismissSuggestions();
+	}
+
+	async function handleRetry() {
+		await aiStore.retryLastRequest();
 	}
 </script>
 
@@ -121,9 +128,28 @@
 			{:else if error}
 				<div class="space-y-3">
 					<Alert type="error">
-						{error}
+						<div class="space-y-1 text-left">
+							<p class="font-medium">We couldn't generate suggestions.</p>
+							<p class="text-sm text-base-content/80">{error}</p>
+							{#if isOffline}
+								<p class="text-xs text-base-content/70">
+									You're offline. Reconnect to try again.
+								</p>
+							{/if}
+						</div>
 					</Alert>
 					<div class="flex justify-center gap-2">
+						<button
+							type="button"
+							class="btn gap-1 btn-primary btn-sm"
+							onclick={handleRetry}
+							disabled={!canRetry || isLoading}
+						>
+							{#if isLoading}
+								<span class="loading loading-xs loading-spinner"></span>
+							{/if}
+							Try Again
+						</button>
 						<button type="button" class="btn btn-ghost btn-sm" onclick={handleDismiss}>
 							Dismiss
 						</button>

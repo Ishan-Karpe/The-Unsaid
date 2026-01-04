@@ -8,7 +8,7 @@ import { json } from '@sveltejs/kit';
 import { createClient } from '@supabase/supabase-js';
 import { createSupabaseServerClient } from '$lib/server/supabase';
 import { PUBLIC_SUPABASE_URL } from '$env/static/public';
-import { SUPABASE_SERVICE_ROLE_KEY } from '$env/static/private';
+import { PRIVATE_SUPABASE_SECRET_KEY } from '$env/static/private';
 import type { RequestHandler } from './$types';
 
 /**
@@ -38,13 +38,13 @@ export const DELETE: RequestHandler = async (event) => {
 
 	const userId = user.id;
 
-	// Create admin client with service role key for admin operations
-	if (!SUPABASE_SERVICE_ROLE_KEY) {
-		console.error('SUPABASE_SERVICE_ROLE_KEY not configured');
+	// Create admin client with secret key for admin operations
+	if (!PRIVATE_SUPABASE_SECRET_KEY) {
+		console.error('PRIVATE_SUPABASE_SECRET_KEY not configured');
 		return json({ error: 'Server configuration error' }, { status: 500 });
 	}
 
-	const adminClient = createClient(PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+	const adminClient = createClient(PUBLIC_SUPABASE_URL, PRIVATE_SUPABASE_SECRET_KEY, {
 		auth: {
 			autoRefreshToken: false,
 			persistSession: false

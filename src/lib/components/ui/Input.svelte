@@ -80,7 +80,7 @@
 	<input
 		id={inputId}
 		bind:value
-		class="input {variantClasses[variant]} {sizeClasses[inputSize]} w-full {error
+		class="input {variantClasses[variant]} {sizeClasses[inputSize]} w-full transition-all duration-200 focus-visible:outline-none {error
 			? 'input-error'
 			: ''} {className}"
 		aria-invalid={error ? 'true' : undefined}
@@ -129,9 +129,4 @@
 		border: 0;
 	}
 
-	/* Enhanced focus visibility */
-	input:focus-visible {
-		outline: 2px solid oklch(var(--p));
-		outline-offset: 2px;
-	}
 </style>

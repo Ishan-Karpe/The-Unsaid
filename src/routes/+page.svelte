@@ -3,8 +3,10 @@
   Designed for emotional resonance, clear value proposition, and trust
 -->
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { onMount } from 'svelte';
+	import { supabase } from '$lib/services/supabase';
 	import ThemeToggle from '$lib/components/ui/ThemeToggle.svelte';
 
 	let heroVisible = $state(false);
@@ -19,7 +21,18 @@
 		"I was hurt when you didn't call. It felt like... you didn't care about my news.";
 	let typingComplete = $state(false);
 
-	onMount(() => {
+	onMount(async () => {
+		// Check if user has "remember me" enabled and is logged in
+		const rememberMe = localStorage.getItem('unsaid_remember_me') === 'true';
+		if (rememberMe) {
+			const { data: { user } } = await supabase.auth.getUser();
+			if (user) {
+				// User is logged in and wants to be remembered - redirect to /write
+				goto(resolve('/write'));
+				return;
+			}
+		}
+
 		heroVisible = true;
 
 		const observer = new IntersectionObserver(
@@ -109,13 +122,6 @@
 					class="link text-sm text-base-content/70 link-hover transition-colors hover:text-base-content"
 					>Privacy</a
 				>
-				<!-- eslint-disable svelte/no-navigation-without-resolve -- route not yet created -->
-				<a
-					href="/blog"
-					class="link text-sm text-base-content/70 link-hover transition-colors hover:text-base-content"
-					>Blog</a
-				>
-				<!-- eslint-enable svelte/no-navigation-without-resolve -->
 			</div>
 
 			<!-- Auth Buttons & Theme Toggle -->
@@ -186,7 +192,7 @@
 		<div class="fade-in stagger-3 mb-6 {heroVisible ? 'visible' : ''}">
 			<a
 				href={resolve('/signup')}
-				class="btn gap-2 shadow-lg shadow-primary/25 transition-all duration-300 btn-lg btn-primary hover:scale-105 hover:shadow-xl hover:shadow-primary/30"
+				class="btn btn-cta-lg gap-2 shadow-lg shadow-primary/25 transition-all duration-300 btn-lg btn-primary hover:shadow-xl hover:shadow-primary/30"
 			>
 				Draft Your Message
 			</a>
@@ -421,11 +427,6 @@
 				<div class="mockup-browser border border-base-content/10 bg-base-100 shadow-2xl">
 					<!-- Browser toolbar dots -->
 					<div class="mockup-browser-toolbar">
-						<div class="flex gap-2 pl-4">
-							<div class="h-3 w-3 rounded-full bg-error/60"></div>
-							<div class="h-3 w-3 rounded-full bg-warning/60"></div>
-							<div class="h-3 w-3 rounded-full bg-success/60"></div>
-						</div>
 					</div>
 
 					<!-- Demo Content -->
@@ -600,7 +601,7 @@
 			</p>
 			<a
 				href={resolve('/signup')}
-				class="btn shadow-lg shadow-primary/25 transition-all duration-300 btn-lg btn-primary hover:scale-105 hover:shadow-xl hover:shadow-primary/30"
+				class="btn btn-cta-lg shadow-lg shadow-primary/25 transition-all duration-300 btn-lg btn-primary hover:shadow-xl hover:shadow-primary/30"
 			>
 				Start Writing For Free
 			</a>
@@ -611,68 +612,92 @@
 <!-- Footer -->
 <footer class="border-t border-base-content/10 bg-base-300 py-8">
 	<div class="container mx-auto px-4">
-		<div class="flex flex-col items-center justify-between gap-6 md:flex-row">
+		<div class="grid gap-4 text-center md:grid-cols-3 md:items-center">
 			<!-- Logo and Copyright -->
-			<div class="flex items-center gap-2">
+			<div class="flex items-center justify-center gap-2 md:justify-self-start">
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
 					class="h-5 w-5 text-primary"
 					viewBox="0 0 24 24"
 					fill="currentColor"
+					aria-hidden="true"
 				>
 					<path
 						d="M12 2L9.19 8.63L2 9.24L7.46 13.97L5.82 21L12 17.27L18.18 21L16.54 13.97L22 9.24L14.81 8.63L12 2Z"
 					/>
 				</svg>
-				<span class="text-sm text-base-content/60">The Unsaid &copy; 2024</span>
+				<span class="text-sm text-base-content/60">The Unsaid &copy; 2026</span>
 			</div>
 
-			<!-- Footer Links -->
-			<!-- eslint-disable svelte/no-navigation-without-resolve -- routes not yet created -->
-			<nav class="flex flex-wrap justify-center gap-6">
-				<a
-					href="/about"
-					class="link text-sm text-base-content/60 link-hover transition-colors hover:text-base-content"
-					>About</a
-				>
-				<a
-					href="/privacy"
-					class="link text-sm text-base-content/60 link-hover transition-colors hover:text-base-content"
-					>Privacy Policy</a
-				>
-				<a
-					href="/terms"
-					class="link text-sm text-base-content/60 link-hover transition-colors hover:text-base-content"
-					>Terms of Service</a
-				>
-				<a
-					href="/contact"
-					class="link text-sm text-base-content/60 link-hover transition-colors hover:text-base-content"
-					>Contact</a
-				>
-			</nav>
-			<!-- eslint-enable svelte/no-navigation-without-resolve -->
+			<div class="text-center text-base-content/50">
+				<div class="text-sm">Built by Ishan Karpe</div>
+				<div class="text-xs">SvelteKit, Tailwind CSS, DaisyUI, Supabase, FastAPI</div>
+			</div>
 
 			<!-- Social Links -->
-			<a
-				href="https://twitter.com"
-				target="_blank"
-				rel="noopener noreferrer"
-				class="text-base-content/60 transition-colors hover:text-base-content"
-				aria-label="Twitter"
-			>
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					width="20"
-					height="20"
-					viewBox="0 0 24 24"
-					class="fill-current"
+			<div class="flex items-center justify-center gap-4 md:justify-self-end">
+				<a
+					href="https://www.linkedin.com/in/ishan-karpe"
+					target="_blank"
+					rel="noopener noreferrer"
+					class="text-base-content/60 transition-colors hover:text-base-content"
+					aria-label="LinkedIn"
 				>
-					<path
-						d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"
-					></path>
-				</svg>
-			</a>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						width="20"
+						height="20"
+						viewBox="0 0 24 24"
+						class="fill-current"
+					>
+						<path
+							d="M20.447 20.452h-3.554v-5.569c0-1.328-.024-3.036-1.85-3.036-1.85 0-2.134 1.445-2.134 2.939v5.666H9.356V9h3.414v1.561h.048c.477-.9 1.637-1.85 3.37-1.85 3.6 0 4.266 2.368 4.266 5.455v6.286zM5.337 7.433a2.062 2.062 0 11-.004-4.124 2.062 2.062 0 01.004 4.124zM7.119 20.452H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.225 0z"
+						></path>
+					</svg>
+				</a>
+				<a
+					href="https://github.com/Ishan-Karpe"
+					target="_blank"
+					rel="noopener noreferrer"
+					class="text-base-content/60 transition-colors hover:text-base-content"
+					aria-label="GitHub"
+				>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						width="20"
+						height="20"
+						viewBox="0 0 24 24"
+						class="fill-current"
+					>
+						<path
+							d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.44 9.8 8.21 11.38.6.11.82-.26.82-.58 0-.29-.01-1.05-.02-2.06-3.34.73-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.09-.75.08-.74.08-.74 1.2.08 1.83 1.23 1.83 1.23 1.07 1.83 2.81 1.3 3.49.99.11-.78.42-1.3.76-1.6-2.66-.3-5.46-1.33-5.46-5.93 0-1.31.47-2.38 1.24-3.22-.12-.3-.54-1.52.12-3.18 0 0 1.01-.32 3.3 1.23.96-.27 1.98-.4 3-.4 1.02 0 2.04.13 3 .4 2.28-1.55 3.29-1.23 3.29-1.23.66 1.66.24 2.88.12 3.18.77.84 1.24 1.91 1.24 3.22 0 4.61-2.8 5.62-5.47 5.92.43.37.81 1.1.81 2.22 0 1.6-.02 2.89-.02 3.29 0 .32.22.69.83.57C20.57 21.8 24 17.3 24 12 24 5.37 18.63 0 12 0z"
+						></path>
+					</svg>
+				</a>
+				<a
+					href="https://www.instagram.com/champconic.ishan"
+					target="_blank"
+					rel="noopener noreferrer"
+					class="text-base-content/60 transition-colors hover:text-base-content"
+					aria-label="Instagram"
+				>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						width="20"
+						height="20"
+						viewBox="0 0 24 24"
+						class="fill-current"
+					>
+						<path
+							d="M12 2.163c3.204 0 3.584.012 4.85.07 1.206.056 1.864.246 2.3.415a4.602 4.602 0 011.675 1.091 4.602 4.602 0 011.091 1.675c.169.436.359 1.094.415 2.3.058 1.266.07 1.646.07 4.85s-.012 3.584-.07 4.85c-.056 1.206-.246 1.864-.415 2.3a4.602 4.602 0 01-1.091 1.675 4.602 4.602 0 01-1.675 1.091c-.436.169-1.094.359-2.3.415-1.266.058-1.646.07-4.85.07s-3.584-.012-4.85-.07c-1.206-.056-1.864-.246-2.3-.415a4.602 4.602 0 01-1.675-1.091 4.602 4.602 0 01-1.091-1.675c-.169-.436-.359-1.094-.415-2.3C2.175 15.747 2.163 15.367 2.163 12s.012-3.584.07-4.85c.056-1.206.246-1.864.415-2.3a4.602 4.602 0 011.091-1.675A4.602 4.602 0 015.414 2.65c.436-.169 1.094-.359 2.3-.415C8.98 2.175 9.36 2.163 12 2.163m0-2.163C8.741 0 8.332.015 7.052.072 5.775.129 4.702.326 3.78.684c-.957.37-1.77.863-2.584 1.677C.863 3.175.37 3.988 0 4.945c-.358.922-.555 1.995-.612 3.272C-.015 8.332 0 8.741 0 12c0 3.259-.015 3.668.072 4.948.057 1.277.254 2.35.612 3.272.37.957.863 1.77 1.677 2.584.814.814 1.627 1.307 2.584 1.677.922.358 1.995.555 3.272.612C8.332 24.015 8.741 24 12 24c3.259 0 3.668.015 4.948-.072 1.277-.057 2.35-.254 3.272-.612.957-.37 1.77-.863 2.584-1.677.814-.814 1.307-1.627 1.677-2.584.358-.922.555-1.995.612-3.272.087-1.28.072-1.689.072-4.948 0-3.259.015-3.668-.072-4.948-.057-1.277-.254-2.35-.612-3.272-.37-.957-.863-1.77-1.677-2.584C21.77.863 20.957.37 20 .684c-.922-.358-1.995-.555-3.272-.612C15.668-.015 15.259 0 12 0z"
+						></path>
+						<path
+							d="M12 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zm0 10.162a4 4 0 110-8 4 4 0 010 8z"
+						></path>
+						<circle cx="18.406" cy="5.594" r="1.44"></circle>
+					</svg>
+				</a>
+			</div>
 		</div>
 	</div>
 </footer>

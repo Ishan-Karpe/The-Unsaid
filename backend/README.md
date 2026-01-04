@@ -35,7 +35,7 @@ uvicorn app.main:app --reload --port 8000
 ## Environment Variables
 
 - `SUPABASE_URL` - Supabase project URL
-- `SUPABASE_SERVICE_ROLE_KEY` - Supabase service role key
+- `PRIVATE_SUPABASE_SECRET_KEY` - Supabase secret key (replaces legacy service_role key)
 - `OPENROUTER_API_KEY` - OpenRouter API key
 - `OPENROUTER_DEFAULT_MODEL` - Default model (default: anthropic/claude-3-haiku)
 - `FRONTEND_URL` - Frontend URL for CORS (default: http://localhost:5173)

@@ -26,8 +26,8 @@
 		</div>
 
 		<!-- Auth Form Container -->
-		<div class="card bg-base-100 shadow-xl">
-			<div class="card-body">
+		<div class="card card-border bg-base-100 shadow-xl">
+			<div class="card-body p-6 sm:p-8">
 				{#if isNavigating}
 					<div class="flex flex-col items-center justify-center py-8">
 						<LoadingSpinner size="lg" />
@@ -40,8 +40,9 @@
 		</div>
 
 		<!-- Footer -->
-		<p class="mt-6 text-center text-sm text-base-content/50">
-			Your words are encrypted. We can't read them.
-		</p>
+		<div class="mt-6 text-center text-xs text-base-content/50">
+			<div>The Unsaid &copy; 2026 · Built by Ishan Karpe</div>
+			<div>SvelteKit, Tailwind CSS, DaisyUI, Supabase, FastAPI</div>
+		</div>
 	</div>
 </div>

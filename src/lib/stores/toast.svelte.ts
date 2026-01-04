@@ -13,6 +13,7 @@ export interface Toast {
 	type: ToastType;
 	message: string;
 	duration: number;
+	closing?: boolean;
 }
 
 // ------------------------------------------
@@ -20,6 +21,7 @@ export interface Toast {
 // ------------------------------------------
 let toasts = $state<Toast[]>([]);
 let counter = 0;
+const EXIT_ANIMATION_MS = 200;
 
 // Store timeout IDs for cleanup
 const timeoutIds = new SvelteMap<string, ReturnType<typeof setTimeout>>();
@@ -51,7 +53,7 @@ export const toastStore = {
 	 */
 	show(message: string, type: ToastType = 'info', duration: number = 3000): string {
 		const id = `toast-${++counter}-${Date.now()}`;
-		const toast: Toast = { id, type, message, duration };
+		const toast: Toast = { id, type, message, duration, closing: false };
 
 		toasts = [...toasts, toast];
 
@@ -89,6 +91,9 @@ export const toastStore = {
 	 * @param id - The toast ID to dismiss
 	 */
 	dismiss(id: string): void {
+		const toast = toasts.find((t) => t.id === id);
+		if (!toast || toast.closing) return;
+
 		// Clear the timeout if it exists
 		const timeoutId = timeoutIds.get(id);
 		if (timeoutId) {
@@ -96,7 +101,14 @@ export const toastStore = {
 			timeoutIds.delete(id);
 		}
 
-		toasts = toasts.filter((t) => t.id !== id);
+		toasts = toasts.map((t) => (t.id === id ? { ...t, closing: true } : t));
+
+		const removalId = setTimeout(() => {
+			toasts = toasts.filter((t) => t.id !== id);
+			timeoutIds.delete(id);
+		}, EXIT_ANIMATION_MS);
+
+		timeoutIds.set(id, removalId);
 	},
 
 	/**

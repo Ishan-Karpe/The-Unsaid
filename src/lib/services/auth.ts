@@ -79,6 +79,10 @@ export const authService = {
 	 * Log out current user
 	 */
 	async logout(): Promise<{ error: string | null }> {
+		// Clear "remember me" preference on logout
+		if (typeof localStorage !== 'undefined') {
+			localStorage.removeItem('unsaid_remember_me');
+		}
 		const { error } = await supabase.auth.signOut();
 		return { error: error?.message || null };
 	},

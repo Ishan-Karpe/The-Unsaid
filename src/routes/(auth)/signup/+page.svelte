@@ -72,7 +72,7 @@
 	</a>
 </div>
 
-<h2 class="mb-6 text-xl font-semibold">Create your account</h2>
+<h2 class="mb-6 text-2xl font-semibold tracking-tight">Create your account</h2>
 
 {#if error}
 	<Alert type="error" class="mb-4">
@@ -133,7 +133,7 @@
 		</div>
 	{/if}
 
-	<Button type="submit" class="w-full" disabled={!canSubmit} {loading}>
+<Button type="submit" class="w-full btn-cta" disabled={!canSubmit} {loading}>
 		{loading ? 'Creating account...' : 'Create account'}
 	</Button>
 </form>

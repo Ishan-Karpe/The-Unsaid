@@ -36,6 +36,13 @@ interface CacheEntry {
 	timestamp: number;
 }
 
+interface LastRequest {
+	mode: AIMode;
+	draftText: string;
+	recipient: string;
+	intent: string;
+}
+
 const responseCache = new SvelteMap<string, CacheEntry>();
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
@@ -67,6 +74,10 @@ function isCacheValid(entry: CacheEntry): boolean {
 	return Date.now() - entry.timestamp < CACHE_TTL_MS;
 }
 
+function sanitizeErrorMessage(message: string): string {
+	return message.replace(/\s+/g, ' ').trim().slice(0, 200);
+}
+
 // ------------------------------------------
 // Reactive State (Module-level)
 // ------------------------------------------
@@ -76,6 +87,7 @@ let suggestions = $state<AIOption[]>([]);
 let originalText = $state<string>('');
 let originalValid = $state<boolean>(true);
 let error = $state<string | null>(null);
+let lastRequest = $state<LastRequest | null>(null);
 
 // AbortController for request cancellation
 let abortController: AbortController | null = null;
@@ -109,6 +121,9 @@ export const aiStore = {
 	get hasSuggestions() {
 		return suggestions.length > 0;
 	},
+	get canRetry() {
+		return lastRequest !== null;
+	},
 
 	/**
 	 * Request AI suggestions for a draft
@@ -124,6 +139,16 @@ export const aiStore = {
 		recipient: string,
 		intent: string
 	): Promise<void> {
+		const normalizedRecipient = recipient || 'someone special';
+		const normalizedIntent = intent || 'express my feelings';
+
+		lastRequest = {
+			mode,
+			draftText,
+			recipient: normalizedRecipient,
+			intent: normalizedIntent
+		};
+
 		// Check cache first
 		const cacheKey = buildCacheKey(mode, draftText);
 		const cached = responseCache.get(cacheKey);
@@ -157,7 +182,7 @@ export const aiStore = {
 		try {
 			console.log('AI Store: Requesting suggestions...', {
 				mode,
-				draftText: draftText.slice(0, 50) + '...'
+				length: draftText.length
 			});
 			// Get auth token from Supabase (use getUser for security)
 			const {
@@ -185,8 +210,8 @@ export const aiStore = {
 				{
 					mode,
 					draft_text: draftText,
-					recipient: recipient || 'someone special',
-					intent: intent || 'express my feelings'
+					recipient: normalizedRecipient,
+					intent: normalizedIntent
 				},
 				token
 			);
@@ -220,7 +245,7 @@ export const aiStore = {
 			}
 
 			status = 'error';
-			error = err instanceof Error ? err.message : 'Failed to get AI suggestions';
+			error = err instanceof Error ? sanitizeErrorMessage(err.message) : 'Failed to get AI suggestions';
 			suggestions = [];
 		}
 	},
@@ -241,6 +266,20 @@ export const aiStore = {
 		originalText = '';
 		originalValid = true;
 		error = null;
+		lastRequest = null;
+	},
+
+	/**
+	 * Retry the last AI request (if available)
+	 */
+	async retryLastRequest(): Promise<void> {
+		if (!lastRequest) return;
+		await this.requestSuggestions(
+			lastRequest.mode,
+			lastRequest.draftText,
+			lastRequest.recipient,
+			lastRequest.intent
+		);
 	},
 
 	/**
@@ -276,6 +315,7 @@ export const aiStore = {
 		originalText = '';
 		originalValid = true;
 		error = null;
+		lastRequest = null;
 	},
 
 	/**

@@ -27,7 +27,9 @@
 {#if toasts.length > 0}
 	<div class="toast toast-end toast-top z-50" role="status" aria-live="polite">
 		{#each toasts as toast (toast.id)}
-			<div class="alert {typeClasses[toast.type]} animate-slideIn shadow-lg">
+			<div
+				class="alert {typeClasses[toast.type]} {toast.closing ? 'toast-exit' : 'toast-enter'} shadow-lg"
+			>
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
 					class="h-5 w-5 shrink-0"
@@ -70,7 +72,7 @@
 {/if}
 
 <style>
-	@keyframes slideIn {
+	@keyframes toast-in {
 		from {
 			opacity: 0;
 			transform: translateX(100%);
@@ -81,7 +83,22 @@
 		}
 	}
 
-	:global(.animate-slideIn) {
-		animation: slideIn 0.3s ease-out forwards;
+	@keyframes toast-out {
+		from {
+			opacity: 1;
+			transform: translateX(0);
+		}
+		to {
+			opacity: 0;
+			transform: translateX(12px);
+		}
+	}
+
+	:global(.toast-enter) {
+		animation: toast-in 0.25s ease-out forwards;
+	}
+
+	:global(.toast-exit) {
+		animation: toast-out 0.2s ease-in forwards;
 	}
 </style>

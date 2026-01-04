@@ -61,6 +61,7 @@
 	disabled={isDisabled}
 	aria-disabled={isDisabled}
 	aria-busy={loading}
+	data-loading={loading ? 'true' : undefined}
 	{...restProps}
 >
 	{#if loading}
@@ -73,8 +74,10 @@
 <style>
 	/* Ensure adequate focus visibility for keyboard navigation */
 	button:focus-visible {
-		outline: 2px solid currentColor;
-		outline-offset: 2px;
+		outline: none;
+		box-shadow:
+			0 0 0 2px oklch(var(--b1)),
+			0 0 0 4px oklch(55% 0.18 260 / 0.6);
 	}
 
 	/* Screen reader only class for loading announcement */

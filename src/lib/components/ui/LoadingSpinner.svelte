@@ -8,9 +8,14 @@
 	interface Props {
 		size?: SpinnerSize;
 		class?: string;
+		label?: string;
 	}
 
-	let { size = 'md', class: className = '' }: Props = $props();
+	let { size = 'md', class: className = '', label = 'Loading' }: Props = $props();
 </script>
 
-<span class="loading loading-spinner loading-{size} {className}"></span>
+<span
+	class="loading loading-spinner loading-{size} transition-opacity duration-200 {className}"
+	role="status"
+	aria-label={label}
+></span>

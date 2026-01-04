@@ -205,16 +205,16 @@
 	<title>Patterns | The Unsaid</title>
 </svelte:head>
 
-<div class="space-y-6">
+<div class="space-y-6 pb-8">
 	<!-- Header Section -->
 	<div
 		class="fade-in flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between {headerVisible
 			? 'visible'
 			: ''}"
 	>
-		<div>
+		<div class="page-header mb-0">
 			<div class="flex items-center gap-3">
-				<h1 class="text-3xl font-bold text-base-content md:text-4xl">Your Patterns</h1>
+				<h1>Your Patterns</h1>
 				<span class="badge gap-1 border-base-content/20 bg-base-content/5 text-xs">
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
@@ -231,7 +231,7 @@
 					CLIENT-SIDE ONLY
 				</span>
 			</div>
-			<p class="mt-1 text-base-content/60">
+			<p class="text-muted">
 				Insights generated privately on your device. No data leaves your browser.
 			</p>
 		</div>
@@ -630,7 +630,7 @@
 						{#each insights.topRecipients.slice(0, 3) as recipient (recipient.name)}
 							<div class="flex items-center gap-3">
 								<div class="placeholder avatar">
-									<div class="w-9 rounded-full bg-primary/10">
+									<div class="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10">
 										<span class="text-xs font-medium text-primary"
 											>{getInitial(recipient.name)}</span
 										>
@@ -653,7 +653,7 @@
 					{:else}
 						<div class="flex items-center gap-3">
 							<div class="placeholder avatar">
-								<div class="w-9 rounded-full bg-base-200">
+								<div class="flex h-9 w-9 items-center justify-center rounded-full bg-base-200">
 									<span class="text-xs text-base-content/30">?</span>
 								</div>
 							</div>

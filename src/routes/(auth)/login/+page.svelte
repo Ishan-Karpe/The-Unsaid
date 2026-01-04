@@ -54,6 +54,13 @@
 			return;
 		}
 
+		// Store "remember me" preference in localStorage
+		if (rememberMe) {
+			localStorage.setItem('unsaid_remember_me', 'true');
+		} else {
+			localStorage.removeItem('unsaid_remember_me');
+		}
+
 		authStore.setUser(result.user);
 		await invalidateAll();
 		// eslint-disable-next-line svelte/no-navigation-without-resolve -- redirectTo is a dynamic URL from query params
@@ -81,7 +88,7 @@
 	</a>
 </div>
 
-<h2 class="mb-6 text-xl font-semibold">Welcome back</h2>
+<h2 class="mb-6 text-2xl font-semibold tracking-tight">Welcome back</h2>
 
 {#if confirmed}
 	<Alert type="success" class="mb-4">Your email has been confirmed! You can now log in.</Alert>
@@ -120,7 +127,7 @@
 		<a href={resolve('/forgot-password')} class="link link-primary">Forgot password?</a>
 	</div>
 
-	<Button type="submit" class="w-full" disabled={!canSubmit} {loading}>
+<Button type="submit" class="w-full btn-cta" disabled={!canSubmit} {loading}>
 		{loading ? 'Logging in...' : 'Log in'}
 	</Button>
 </form>
