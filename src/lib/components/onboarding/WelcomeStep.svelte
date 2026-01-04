@@ -7,7 +7,7 @@
   - Warm, inviting design matching landing page gradients
 -->
 <script lang="ts">
-	// No props needed - this is purely presentational
+	import Logo from '$lib/components/ui/Logo.svelte';
 </script>
 
 <div class="space-y-6">
@@ -22,19 +22,8 @@
 
 		<div class="relative z-10">
 			<!-- Star Icon -->
-			<div
-				class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10"
-			>
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					class="h-8 w-8 text-primary"
-					viewBox="0 0 24 24"
-					fill="currentColor"
-				>
-					<path
-						d="M12 2L9.19 8.63L2 9.24L7.46 13.97L5.82 21L12 17.27L18.18 21L16.54 13.97L22 9.24L14.81 8.63L12 2Z"
-					/>
-				</svg>
+			<div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+				<Logo size="lg" />
 			</div>
 
 			<p class="text-lg font-medium text-base-content">Turn your feelings into words.</p>

@@ -26,6 +26,7 @@
 	} from '$lib/utils/theme';
 	import { toastStore } from '$lib/stores/toast.svelte';
 	import { supabase } from '$lib/services/supabase';
+	import Logo from '$lib/components/ui/Logo.svelte';
 
 	// Get user data from page store
 	let user = $derived($page.data.user);
@@ -1490,16 +1491,7 @@
 		class="flex flex-col items-center justify-between gap-4 text-sm text-base-content/50 sm:flex-row sm:text-left"
 	>
 		<div class="flex items-start gap-3 text-left">
-			<svg
-				xmlns="http://www.w3.org/2000/svg"
-				class="h-4 w-4 text-primary"
-				viewBox="0 0 24 24"
-				fill="currentColor"
-			>
-				<path
-					d="M12 2L9.19 8.63L2 9.24L7.46 13.97L5.82 21L12 17.27L18.18 21L16.54 13.97L22 9.24L14.81 8.63L12 2Z"
-				/>
-			</svg>
+			<Logo size="sm" />
 			<div>
 				<div>The Unsaid &copy; 2026</div>
 				<div class="text-xs text-base-content/50">

@@ -8,6 +8,7 @@
 	import { onMount } from 'svelte';
 	import { supabase } from '$lib/services/supabase';
 	import ThemeToggle from '$lib/components/ui/ThemeToggle.svelte';
+	import Logo from '$lib/components/ui/Logo.svelte';
 
 	let heroVisible = $state(false);
 	let coreValuesVisible = $state(false);
@@ -97,16 +98,7 @@
 		<div class="flex w-full items-center justify-between">
 			<!-- Logo -->
 			<a href={resolve('/')} class="flex items-center gap-2 text-xl font-bold">
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					class="h-6 w-6 text-primary"
-					viewBox="0 0 24 24"
-					fill="currentColor"
-				>
-					<path
-						d="M12 2L9.19 8.63L2 9.24L7.46 13.97L5.82 21L12 17.27L18.18 21L16.54 13.97L22 9.24L14.81 8.63L12 2Z"
-					/>
-				</svg>
+				<Logo size="md" />
 				<span class="text-base-content">The Unsaid</span>
 			</a>
 
@@ -258,16 +250,7 @@
 			>
 				<div class="card-body">
 					<div class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-purple-500/10">
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							class="h-6 w-6 text-purple-500"
-							viewBox="0 0 24 24"
-							fill="currentColor"
-						>
-							<path
-								d="M12 2L9.19 8.63L2 9.24L7.46 13.97L5.82 21L12 17.27L18.18 21L16.54 13.97L22 9.24L14.81 8.63L12 2Z"
-							/>
-						</svg>
+						<Logo size="lg" showGradient={false} class="text-purple-500" />
 					</div>
 					<h3 class="card-title text-lg">AI-Assisted Clarity</h3>
 					<p class="text-sm text-base-content/60">
@@ -472,16 +455,7 @@
 						{#if typingComplete}
 							<div class="animate-fadeIn rounded-lg border border-primary/20 bg-primary/5 p-4">
 								<div class="mb-2 flex items-center gap-2 text-sm font-medium text-primary">
-									<svg
-										xmlns="http://www.w3.org/2000/svg"
-										class="h-4 w-4"
-										viewBox="0 0 24 24"
-										fill="currentColor"
-									>
-										<path
-											d="M12 2L9.19 8.63L2 9.24L7.46 13.97L5.82 21L12 17.27L18.18 21L16.54 13.97L22 9.24L14.81 8.63L12 2Z"
-										/>
-									</svg>
+									<Logo size="sm" showGradient={false} class="text-primary" />
 									Softer phrasing suggestion:
 								</div>
 								<p class="text-sm text-base-content/70">
@@ -615,17 +589,7 @@
 		<div class="grid gap-4 text-center md:grid-cols-3 md:items-center">
 			<!-- Logo and Copyright -->
 			<div class="flex items-center justify-center gap-2 md:justify-self-start">
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					class="h-5 w-5 text-primary"
-					viewBox="0 0 24 24"
-					fill="currentColor"
-					aria-hidden="true"
-				>
-					<path
-						d="M12 2L9.19 8.63L2 9.24L7.46 13.97L5.82 21L12 17.27L18.18 21L16.54 13.97L22 9.24L14.81 8.63L12 2Z"
-					/>
-				</svg>
+				<Logo size="sm" />
 				<span class="text-sm text-base-content/60">The Unsaid &copy; 2026</span>
 			</div>
 
