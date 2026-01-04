@@ -22,7 +22,9 @@
 
 		<div class="relative z-10">
 			<!-- Star Icon -->
-			<div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+			<div
+				class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10"
+			>
 				<Logo size="lg" />
 			</div>
 

@@ -5,6 +5,7 @@
 -->
 <script lang="ts">
 	import { draftStore } from '$lib/stores/draft.svelte';
+	import { isE2E } from '$lib/services/e2eStorage';
 
 	const statusConfig = {
 		saved: { text: 'Saved', class: 'badge-ghost', icon: '✓' },
@@ -15,6 +16,7 @@
 
 	let config = $derived(statusConfig[draftStore.syncStatus.state]);
 	let showUnsaved = $derived(draftStore.isDirty && draftStore.syncStatus.state === 'saved');
+	let unsavedLabel = $derived(isE2E ? 'Unsynced' : 'Unsaved');
 
 	// Check if the error is due to missing encryption key
 	let isKeyError = $derived(
@@ -42,7 +44,7 @@
 	{#if showUnsaved}
 		<span class="badge badge-sm badge-warning">
 			<span class="mr-1">●</span>
-			Unsaved
+			{unsavedLabel}
 		</span>
 	{:else if draftStore.syncStatus.state === 'error'}
 		<div class="flex items-center gap-2">

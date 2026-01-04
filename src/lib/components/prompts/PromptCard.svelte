@@ -4,8 +4,14 @@
   Usage: <PromptCard {prompt} onUse={(id) => {}} showRelationship={true} />
 -->
 <script lang="ts">
+	import { onMount, onDestroy } from 'svelte';
 	import type { ConversationPrompt } from '$lib/types';
-	import { relationshipLabels, situationLabels } from '$lib/data/prompts';
+	import {
+		relationshipLabels,
+		situationLabels,
+		isPromptSaved,
+		toggleSavedPrompt
+	} from '$lib/data/prompts';
 
 	interface Props {
 		prompt: ConversationPrompt;
@@ -64,10 +70,47 @@
 	const situationStyle = $derived(
 		situationStyles[prompt.situation] || 'bg-base-content/10 text-base-content/70'
 	);
+	let isSaved = $state(false);
+	let savedListener: ((event: Event) => void) | null = null;
 
 	function handleUse() {
 		onUse(prompt.id);
 	}
+
+	function syncSavedState() {
+		isSaved = isPromptSaved(prompt.id);
+	}
+
+	function handleBookmarkClick(event: Event) {
+		event.stopPropagation();
+		isSaved = toggleSavedPrompt(prompt.id);
+
+		if (typeof window !== 'undefined') {
+			window.dispatchEvent(
+				new CustomEvent('prompt-saved', {
+					detail: { id: prompt.id, saved: isSaved }
+				})
+			);
+		}
+	}
+
+	onMount(() => {
+		syncSavedState();
+
+		if (typeof window === 'undefined') return;
+		savedListener = (event: Event) => {
+			const detail = (event as CustomEvent<{ id?: string; saved?: boolean }>).detail;
+			if (!detail || detail.id !== prompt.id) return;
+			isSaved = Boolean(detail.saved);
+		};
+		window.addEventListener('prompt-saved', savedListener);
+	});
+
+	onDestroy(() => {
+		if (typeof window !== 'undefined' && savedListener) {
+			window.removeEventListener('prompt-saved', savedListener);
+		}
+	});
 </script>
 
 <div
@@ -91,13 +134,18 @@
 			<!-- Bookmark icon -->
 			<button
 				type="button"
-				class="text-base-content/30 transition-colors hover:text-primary"
-				aria-label="Bookmark prompt"
+				class="transition-colors {isSaved
+					? 'text-primary'
+					: 'text-base-content/30 hover:text-primary'}"
+				aria-label={isSaved ? 'Remove bookmark' : 'Save prompt'}
+				aria-pressed={isSaved}
+				title={isSaved ? 'Saved' : 'Save'}
+				onclick={handleBookmarkClick}
 			>
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
 					class="h-5 w-5"
-					fill="none"
+					fill={isSaved ? 'currentColor' : 'none'}
 					viewBox="0 0 24 24"
 					stroke="currentColor"
 				>

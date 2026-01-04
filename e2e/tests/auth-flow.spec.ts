@@ -170,11 +170,13 @@ test.describe('Authentication Flow', () => {
 	test.describe('Form Validation', () => {
 		test('should require email and password', async ({ page }) => {
 			await page.goto('/login');
+			await page.waitForLoadState('networkidle');
 
-			// Try to submit empty form
-			await page.locator('button[type="submit"]').click();
+			// Check that the submit button is disabled when form is empty
+			const submitButton = page.locator('button[type="submit"]');
+			await expect(submitButton).toBeDisabled();
 
-			// Form should not submit (button disabled or validation message)
+			// Form should not submit (button is disabled)
 			await expect(page).toHaveURL(/\/login/);
 		});
 

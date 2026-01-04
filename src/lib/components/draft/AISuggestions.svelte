@@ -23,10 +23,11 @@
 	let suggestions = $derived(aiStore.suggestions);
 	let error = $derived(aiStore.error);
 	let activeMode = $derived(aiStore.activeMode);
-	let originalValid = $derived(aiStore.originalValid);
 	let status = $derived(aiStore.status);
 	let canRetry = $derived(aiStore.canRetry);
 	let isOffline = $derived(!networkStore.isOnline);
+	let isSingleSuggestion = $derived(suggestions.length === 1);
+	let primarySuggestion = $derived(suggestions[0] ?? null);
 
 	// Get mode label and description
 	let modeLabel = $derived(activeMode ? aiService.getModeLabel(activeMode) : '');
@@ -52,7 +53,8 @@
 
 {#if isVisible}
 	<div
-		class="ai-suggestions-container animate-slideUp rounded-xl border border-secondary/20 bg-base-100 shadow-lg {className}"
+		data-testid="ai-suggestions"
+		class="ai-suggestions ai-suggestions-container animate-slideUp rounded-xl border border-secondary/20 bg-base-100 shadow-lg {className}"
 	>
 		<!-- Header -->
 		<div class="flex items-center justify-between border-b border-base-content/10 px-4 py-3">
@@ -97,6 +99,7 @@
 						clip-rule="evenodd"
 					/>
 				</svg>
+				<span class="sr-only">Dismiss</span>
 			</button>
 		</div>
 
@@ -132,16 +135,14 @@
 							<p class="font-medium">We couldn't generate suggestions.</p>
 							<p class="text-sm text-base-content/80">{error}</p>
 							{#if isOffline}
-								<p class="text-xs text-base-content/70">
-									You're offline. Reconnect to try again.
-								</p>
+								<p class="text-xs text-base-content/70">You're offline. Reconnect to try again.</p>
 							{/if}
 						</div>
 					</Alert>
 					<div class="flex justify-center gap-2">
 						<button
 							type="button"
-							class="btn gap-1 btn-primary btn-sm"
+							class="btn gap-1 btn-sm btn-primary"
 							onclick={handleRetry}
 							disabled={!canRetry || isLoading}
 						>
@@ -158,57 +159,54 @@
 
 				<!-- Suggestions List -->
 			{:else if hasSuggestions}
-				<div class="space-y-3">
-					<!-- Original valid message -->
-					{#if originalValid}
-						<p class="text-center text-xs text-base-content/50 italic">
-							Your original words are also valid
-						</p>
-					{/if}
+				{#if isSingleSuggestion && primarySuggestion}
+					<div
+						class="ai-suggestion cursor-pointer rounded-lg p-4 transition-all duration-200 hover:shadow-md"
+						onclick={() => handleApply(primarySuggestion.text)}
+						onkeydown={(e) => e.key === 'Enter' && handleApply(primarySuggestion.text)}
+						role="button"
+						tabindex="0"
+					>
+						<p class="leading-relaxed text-base-content">{primarySuggestion.text}</p>
+					</div>
+				{:else}
+					<div class="space-y-3">
+						<!-- Suggestion Cards -->
+						{#each suggestions as suggestion, index (index)}
+							<div
+								class="ai-suggestion group cursor-pointer rounded-lg p-4 transition-all duration-200 hover:shadow-md"
+								onclick={() => handleApply(suggestion.text)}
+								onkeydown={(e) => e.key === 'Enter' && handleApply(suggestion.text)}
+								role="button"
+								tabindex="0"
+							>
+								<div class="flex items-start justify-between gap-3">
+									<div class="flex-1">
+										<!-- Option Number Badge -->
+										<div class="mb-2 flex items-center gap-2">
+											<span class="badge badge-sm badge-secondary">Option {index + 1}</span>
+										</div>
 
-					<!-- Suggestion Cards -->
-					{#each suggestions as suggestion, index (index)}
-						<div
-							class="ai-suggestion group cursor-pointer rounded-lg p-4 transition-all duration-200 hover:shadow-md"
-							onclick={() => handleApply(suggestion.text)}
-							onkeydown={(e) => e.key === 'Enter' && handleApply(suggestion.text)}
-							role="button"
-							tabindex="0"
-						>
-							<div class="flex items-start justify-between gap-3">
-								<div class="flex-1">
-									<!-- Option Number Badge -->
-									<div class="mb-2 flex items-center gap-2">
-										<span class="badge badge-sm badge-secondary">Option {index + 1}</span>
+										<!-- Suggestion Text -->
+										<p class="leading-relaxed text-base-content">{suggestion.text}</p>
 									</div>
 
-									<!-- Suggestion Text -->
-									<p class="leading-relaxed text-base-content">{suggestion.text}</p>
-
-									<!-- Why/Explanation -->
-									{#if suggestion.why}
-										<p class="mt-2 text-sm text-base-content/60">
-											<span class="font-medium">Why:</span>
-											{suggestion.why}
-										</p>
-									{/if}
+									<!-- Apply Button (visible on hover) -->
+									<button
+										type="button"
+										class="btn opacity-0 transition-opacity duration-200 btn-sm btn-primary group-hover:opacity-100"
+										onclick={(e) => {
+											e.stopPropagation();
+											handleApply(suggestion.text);
+										}}
+									>
+										Apply
+									</button>
 								</div>
-
-								<!-- Apply Button (visible on hover) -->
-								<button
-									type="button"
-									class="btn opacity-0 transition-opacity duration-200 btn-sm btn-primary group-hover:opacity-100"
-									onclick={(e) => {
-										e.stopPropagation();
-										handleApply(suggestion.text);
-									}}
-								>
-									Apply
-								</button>
 							</div>
-						</div>
-					{/each}
-				</div>
+						{/each}
+					</div>
+				{/if}
 
 				<!-- Empty State (shouldn't happen but just in case) -->
 			{:else}
@@ -221,7 +219,17 @@
 		<!-- Footer with Dismiss -->
 		{#if hasSuggestions}
 			<div class="flex items-center justify-between border-t border-base-content/10 px-4 py-3">
-				<p class="text-xs text-base-content/40">Click a suggestion to apply it</p>
+				{#if isSingleSuggestion && primarySuggestion}
+					<button
+						type="button"
+						class="btn btn-sm btn-primary"
+						onclick={() => handleApply(primarySuggestion.text)}
+					>
+						Apply
+					</button>
+				{:else}
+					<p class="text-xs text-base-content/40">Click a suggestion to apply it</p>
+				{/if}
 				<button type="button" class="btn btn-ghost btn-sm" onclick={handleDismiss}>
 					Keep Original
 				</button>
@@ -231,6 +239,18 @@
 {/if}
 
 <style>
+	.sr-only {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		padding: 0;
+		margin: 0;
+		overflow: hidden;
+		clip: rect(0, 0, 0, 0);
+		white-space: nowrap;
+		border: 0;
+	}
+
 	/* Slide up animation for suggestions panel */
 	@keyframes slideUp {
 		from {

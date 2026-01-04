@@ -81,6 +81,9 @@ Testing: quotes "here" and 'there', numbers 12345.`;
 			const testContent = generateTestContent('Key Persistence');
 			await writeDraft(page, testContent);
 
+			// Wait longer for the draft to be fully saved
+			await page.waitForTimeout(3000);
+
 			// Refresh the page (this will lose the in-memory encryption key)
 			await page.reload();
 			await page.waitForLoadState('networkidle');
@@ -88,6 +91,7 @@ Testing: quotes "here" and 'there', numbers 12345.`;
 			// Navigate to history where decryption is needed
 			await page.goto('/history');
 			await page.waitForLoadState('networkidle');
+			await page.waitForTimeout(2000);
 
 			// Check if key prompt appears
 			const promptVisible = await hasKeyPrompt(page);
@@ -97,15 +101,15 @@ Testing: quotes "here" and 'there', numbers 12345.`;
 				await enterPasswordForKey(page, TEST_USER.password);
 
 				// Wait for decryption
-				await page.waitForTimeout(2000);
+				await page.waitForTimeout(3000);
 
 				// Drafts should now be visible
 				await expect(page.locator(`text=/${testContent.substring(0, 15)}/i`).first()).toBeVisible({
-					timeout: 10000
+					timeout: 15000
 				});
 			} else {
 				// Key might have been restored automatically - just verify drafts are visible
-				await page.waitForTimeout(2000);
+				await page.waitForTimeout(3000);
 				// Page should show either drafts or empty state (not encrypted blobs)
 				const hasReadableContent = await page
 					.locator(`text=/${testContent.substring(0, 15)}/i`)
@@ -128,6 +132,9 @@ Testing: quotes "here" and 'there', numbers 12345.`;
 			// Write a draft
 			await writeDraft(page, generateTestContent('Logout Key Test'));
 
+			// Wait for draft to be saved
+			await page.waitForTimeout(2000);
+
 			// Go to settings and logout
 			await page.goto('/settings');
 			await page.waitForLoadState('networkidle');
@@ -136,13 +143,15 @@ Testing: quotes "here" and 'there', numbers 12345.`;
 			await signOutButton.click();
 
 			// Wait for redirect to login
-			await page.waitForURL('**/login', { timeout: 10000 });
+			await page.waitForURL('**/login', { timeout: 15000 });
 
 			// Login again
 			await login(page);
 
 			// Should be prompted for password since key was cleared
 			await page.goto('/history');
+			await page.waitForLoadState('networkidle');
+			await page.waitForTimeout(2000);
 
 			// Either shows key prompt or drafts (if key was re-derived during login)
 			const hasPrompt = await hasKeyPrompt(page);

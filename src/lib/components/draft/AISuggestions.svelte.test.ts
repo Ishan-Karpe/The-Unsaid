@@ -19,7 +19,7 @@ vi.mock('$lib/services/ai', () => ({
 				clarify: 'Clarity suggestions',
 				alternatives: 'Alternative phrasings',
 				tone: 'Tone adjustments',
-				expand: 'Expansion questions',
+				expand: 'Expanded draft',
 				opening: 'Opening suggestions'
 			};
 			return labels[mode] || '';
@@ -29,7 +29,7 @@ vi.mock('$lib/services/ai', () => ({
 				clarify: 'Simplify your message while preserving its meaning',
 				alternatives: 'Different ways to express the same sentiment',
 				tone: 'Adjust the emotional delivery of your message',
-				expand: 'Questions to help you go deeper',
+				expand: 'Expand your draft with more detail',
 				opening: 'Suggestions for how to start your message'
 			};
 			return descriptions[mode] || '';
@@ -170,9 +170,9 @@ describe('AISuggestions Component', () => {
 
 			render(AISuggestions);
 
-			// Find dismiss buttons (there are multiple)
-			const dismissButtons = page.getByText('Dismiss');
-			await expect.element(dismissButtons).toBeInTheDocument();
+			// Use getByRole to target the actual button, not screen-reader text
+			const dismissButton = page.getByRole('button', { name: 'Dismiss', exact: true });
+			await expect.element(dismissButton).toBeInTheDocument();
 		});
 	});
 
@@ -207,17 +207,7 @@ describe('AISuggestions Component', () => {
 			await expect.element(page.getByText('Option 2')).toBeInTheDocument();
 		});
 
-		it('should display why explanations', async () => {
-			aiStore._setStatus('success');
-			aiStore._setActiveMode('clarify');
-			aiStore._setSuggestions([{ text: 'Suggestion text', why: 'Because this is clearer' }]);
-
-			render(AISuggestions);
-
-			await expect.element(page.getByText('Because this is clearer')).toBeInTheDocument();
-		});
-
-		it('should show original valid message when original is valid', async () => {
+		it('should not show original valid message when original is valid', async () => {
 			aiStore._setStatus('success');
 			aiStore._setActiveMode('clarify');
 			aiStore._setSuggestions([{ text: 'Test', why: 'Why' }]);
@@ -227,7 +217,7 @@ describe('AISuggestions Component', () => {
 
 			await expect
 				.element(page.getByText('Your original words are also valid'))
-				.toBeInTheDocument();
+				.not.toBeInTheDocument();
 		});
 
 		it('should not show original valid message when original is not valid', async () => {
@@ -312,6 +302,16 @@ describe('AISuggestions Component', () => {
 			render(AISuggestions);
 
 			await expect.element(page.getByText('Keep Original')).toBeInTheDocument();
+		});
+
+		it('should show Apply button in footer for single suggestion', async () => {
+			aiStore._setStatus('success');
+			aiStore._setActiveMode('clarify');
+			aiStore._setSuggestions([{ text: 'Single', why: 'Why' }]);
+
+			render(AISuggestions);
+
+			await expect.element(page.getByText('Apply')).toBeInTheDocument();
 		});
 
 		it('should handle keyboard navigation (Enter to apply)', async () => {

@@ -26,7 +26,7 @@
 		</div>
 
 		<!-- Auth Form Container -->
-		<div class="card card-border bg-base-100 shadow-xl">
+		<div class="card bg-base-100 shadow-xl card-border">
 			<div class="card-body p-6 sm:p-8">
 				{#if isNavigating}
 					<div class="flex flex-col items-center justify-center py-8">

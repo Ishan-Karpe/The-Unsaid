@@ -21,6 +21,9 @@
 
 import { supabase } from './supabase';
 import { generateSalt, bufferToBase64, base64ToBuffer } from '$lib/crypto';
+import { isE2E, readStorage, writeStorage } from './e2eStorage';
+
+const E2E_SALT_KEY = 'e2e_salts';
 
 /**
  * Result type for salt retrieval/creation operations.
@@ -115,6 +118,24 @@ export const saltService = {
 	 */
 	async getOrCreateSalt(userId: string): Promise<SaltResult> {
 		try {
+			if (isE2E) {
+				const salts = readStorage<Record<string, string>>(E2E_SALT_KEY, {});
+				const existing = salts[userId];
+				if (existing) {
+					return {
+						salt: base64ToBuffer(existing),
+						isNewUser: false,
+						error: null
+					};
+				}
+
+				const newSalt = generateSalt();
+				salts[userId] = bufferToBase64(newSalt);
+				writeStorage(E2E_SALT_KEY, salts);
+
+				return { salt: newSalt, isNewUser: true, error: null };
+			}
+
 			// Try to fetch existing salt
 			const { data, error } = await supabase
 				.from('user_salts')
@@ -187,6 +208,15 @@ export const saltService = {
 	 */
 	async getSalt(userId: string): Promise<{ salt: Uint8Array | null; error: string | null }> {
 		try {
+			if (isE2E) {
+				const salts = readStorage<Record<string, string>>(E2E_SALT_KEY, {});
+				const existing = salts[userId];
+				if (!existing) {
+					return { salt: null, error: 'No salt found for user' };
+				}
+				return { salt: base64ToBuffer(existing), error: null };
+			}
+
 			const { data, error } = await supabase
 				.from('user_salts')
 				.select('salt')
@@ -231,6 +261,13 @@ export const saltService = {
 	 */
 	async updateSalt(userId: string, newSalt: Uint8Array): Promise<{ error: string | null }> {
 		try {
+			if (isE2E) {
+				const salts = readStorage<Record<string, string>>(E2E_SALT_KEY, {});
+				salts[userId] = bufferToBase64(newSalt);
+				writeStorage(E2E_SALT_KEY, salts);
+				return { error: null };
+			}
+
 			const { error } = await supabase
 				.from('user_salts')
 				.update({ salt: bufferToBase64(newSalt) })

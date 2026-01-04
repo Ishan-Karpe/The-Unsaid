@@ -6,6 +6,7 @@
 <script lang="ts">
 	import { Textarea } from '$lib/components';
 	import { draftStore } from '$lib/stores/draft.svelte';
+	import { isE2E } from '$lib/services/e2eStorage';
 	import { useAutosave, useKeyboardShortcuts, createCommonShortcuts } from '$lib/hooks';
 
 	interface Props {
@@ -62,6 +63,9 @@
 		if (content !== draftStore.draft.content) {
 			draftStore.setContent(content);
 			// Autosave will be triggered by the useAutosave hook watching isDirty
+			if (isE2E) {
+				autosave.saveNow();
+			}
 		}
 	}
 

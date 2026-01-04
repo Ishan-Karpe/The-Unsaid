@@ -9,7 +9,7 @@ class AIOption(BaseModel):
     """A single AI suggestion option"""
 
     text: str = Field(..., description="The suggested text")
-    why: str = Field(..., description="Explanation of why this works")
+    why: str = Field(..., description="Optional explanation (may be empty)")
 
 
 class AIResponse(BaseModel):

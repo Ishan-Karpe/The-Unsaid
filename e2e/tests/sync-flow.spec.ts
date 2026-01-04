@@ -103,13 +103,17 @@ test.describe('Sync Flow', () => {
 	test.describe('Content Persistence', () => {
 		test('should preserve content across navigation', async ({ page }) => {
 			await page.goto('/write');
+			await page.waitForLoadState('networkidle');
 			const testContent = generateTestContent('Navigation Persistence');
 
 			const editor = page.locator('textarea').first();
 			await editor.fill(testContent);
 
 			// Wait for save
-			await expect(page.locator('text=/saved/i')).toBeVisible({ timeout: 15000 });
+			await expect(page.locator('text=/saved/i')).toBeVisible({ timeout: 20000 });
+
+			// Wait extra time for save to complete
+			await page.waitForTimeout(2000);
 
 			// Navigate away
 			await page.goto('/history');
@@ -117,28 +121,32 @@ test.describe('Sync Flow', () => {
 
 			// Navigate back - content should be in history (for new drafts)
 			// Or if continuing same draft, it should be in editor
-			await page.waitForTimeout(2000);
+			await page.waitForTimeout(3000);
 
 			// Check that the draft exists in history
 			await expect(page.locator(`text=/${testContent.substring(0, 15)}/i`).first()).toBeVisible({
-				timeout: 10000
+				timeout: 15000
 			});
 		});
 
 		test('should persist content after closing and reopening draft', async ({ page }) => {
 			await page.goto('/write');
+			await page.waitForLoadState('networkidle');
 			const testContent = generateTestContent('Reopen Persistence');
 
 			const editor = page.locator('textarea').first();
 			await editor.fill(testContent);
 
 			// Wait for save
-			await expect(page.locator('text=/saved/i')).toBeVisible({ timeout: 15000 });
+			await expect(page.locator('text=/saved/i')).toBeVisible({ timeout: 20000 });
+
+			// Wait extra time for save to complete
+			await page.waitForTimeout(2000);
 
 			// Go to history
 			await page.goto('/history');
 			await page.waitForLoadState('networkidle');
-			await page.waitForTimeout(2000);
+			await page.waitForTimeout(3000);
 
 			// Find and click on the draft
 			await page
@@ -147,7 +155,7 @@ test.describe('Sync Flow', () => {
 				.click();
 
 			// Wait for draft to load
-			await page.waitForTimeout(1000);
+			await page.waitForTimeout(2000);
 
 			// Should show content (either in editor or expanded view)
 			const pageContent = await page.content();
@@ -190,36 +198,47 @@ test.describe('Sync Flow', () => {
 	test.describe('Draft Editing', () => {
 		test('should update existing draft on edit', async ({ page }) => {
 			await page.goto('/write');
+			await page.waitForLoadState('networkidle');
 
 			// Create initial draft
 			const initialContent = generateTestContent('Initial');
 			const editor = page.locator('textarea').first();
 			await editor.fill(initialContent);
-			await expect(page.locator('text=/saved/i')).toBeVisible({ timeout: 15000 });
+			await expect(page.locator('text=/saved/i')).toBeVisible({ timeout: 20000 });
+
+			// Wait for save to complete
+			await page.waitForTimeout(2000);
 
 			// Modify content
 			const updatedContent = initialContent + ' - UPDATED';
 			await editor.fill(updatedContent);
-			await expect(page.locator('text=/saved/i')).toBeVisible({ timeout: 15000 });
+			await expect(page.locator('text=/saved/i')).toBeVisible({ timeout: 20000 });
+
+			// Wait for save to complete
+			await page.waitForTimeout(2000);
 
 			// Go to history
 			await page.goto('/history');
 			await page.waitForLoadState('networkidle');
-			await page.waitForTimeout(2000);
+			await page.waitForTimeout(3000);
 
 			// Should show updated content
-			await expect(page.locator('text=/UPDATED/i').first()).toBeVisible({ timeout: 10000 });
+			await expect(page.locator('text=/UPDATED/i').first()).toBeVisible({ timeout: 15000 });
 		});
 
 		test('should preserve changes on accidental navigation', async ({ page }) => {
 			await page.goto('/write');
+			await page.waitForLoadState('networkidle');
 
 			const testContent = generateTestContent('Accidental Nav');
 			const editor = page.locator('textarea').first();
 			await editor.fill(testContent);
 
 			// Wait for autosave
-			await expect(page.locator('text=/saved/i')).toBeVisible({ timeout: 15000 });
+			await expect(page.locator('text=/saved/i')).toBeVisible({ timeout: 20000 });
+
+			// Wait extra time for save to complete
+			await page.waitForTimeout(2000);
 
 			// Simulate accidental navigation by clicking browser back
 			// Note: The app should have autosaved by now
@@ -227,12 +246,14 @@ test.describe('Sync Flow', () => {
 			await page.goBack();
 
 			// Give time for draft to load
-			await page.waitForTimeout(2000);
+			await page.waitForTimeout(3000);
 
 			// Draft should be in history
 			await page.goto('/history');
+			await page.waitForLoadState('networkidle');
+			await page.waitForTimeout(2000);
 			await expect(page.locator(`text=/${testContent.substring(0, 15)}/i`).first()).toBeVisible({
-				timeout: 10000
+				timeout: 15000
 			});
 		});
 	});

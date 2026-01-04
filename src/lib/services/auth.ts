@@ -2,6 +2,7 @@
 // THE UNSAID - Auth Service
 // ===========================================
 import { supabase } from './supabase';
+import { clearE2EPassword, isE2E } from './e2eStorage';
 import type { User } from '$lib/types';
 
 export interface SignUpData {
@@ -82,6 +83,9 @@ export const authService = {
 		// Clear "remember me" preference on logout
 		if (typeof localStorage !== 'undefined') {
 			localStorage.removeItem('unsaid_remember_me');
+		}
+		if (isE2E) {
+			clearE2EPassword();
 		}
 		const { error } = await supabase.auth.signOut();
 		return { error: error?.message || null };

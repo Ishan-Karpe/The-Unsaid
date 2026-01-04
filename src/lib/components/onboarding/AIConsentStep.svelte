@@ -14,7 +14,7 @@
 <div class="space-y-6">
 	<!-- AI Assistant Icon -->
 	<div
-		class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/10 via-purple-500/5 to-violet-500/5 p-6 text-center"
+		class="relative overflow-hidden rounded-2xl border border-base-content/10 bg-base-200 p-6 text-center"
 		role="presentation"
 	>
 		<!-- Decorative sparkle -->
@@ -140,7 +140,7 @@
 						/>
 					</svg>
 				</div>
-				<span class="text-sm text-base-content">Questions to help you go deeper</span>
+				<span class="text-sm text-base-content">Expand your draft with more detail</span>
 			</li>
 		</ul>
 	</div>

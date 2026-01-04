@@ -327,7 +327,7 @@ describe('AI Service', () => {
 			expect(aiService.getModeLabel('clarify')).toBe('Clarity suggestions');
 			expect(aiService.getModeLabel('alternatives')).toBe('Alternative phrasings');
 			expect(aiService.getModeLabel('tone')).toBe('Tone adjustments');
-			expect(aiService.getModeLabel('expand')).toBe('Expansion questions');
+			expect(aiService.getModeLabel('expand')).toBe('Expanded draft');
 			expect(aiService.getModeLabel('opening')).toBe('Opening suggestions');
 		});
 	});
@@ -343,7 +343,7 @@ describe('AI Service', () => {
 			expect(aiService.getModeDescription('tone')).toBe(
 				'Adjust the emotional delivery of your message'
 			);
-			expect(aiService.getModeDescription('expand')).toBe('Questions to help you go deeper');
+			expect(aiService.getModeDescription('expand')).toBe('Expand your draft with more detail');
 			expect(aiService.getModeDescription('opening')).toBe(
 				'Suggestions for how to start your message'
 			);

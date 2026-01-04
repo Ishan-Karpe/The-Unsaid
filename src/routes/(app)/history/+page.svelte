@@ -325,7 +325,7 @@
 				<button
 					type="button"
 					onclick={handleNewDraft}
-					class="btn btn-cta gap-2 shadow-sm transition-all duration-200 btn-primary hover:shadow-md hover:shadow-primary/25"
+					class="btn-cta btn gap-2 shadow-sm transition-all duration-200 btn-primary hover:shadow-md hover:shadow-primary/25"
 				>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"

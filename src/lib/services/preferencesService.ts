@@ -17,6 +17,7 @@
 // @see {@link Settings page} for UI integration
 
 import { supabase } from './supabase';
+import { isE2E, readStorage, writeStorage } from './e2eStorage';
 
 /**
  * AI personality options for response style
@@ -77,6 +78,32 @@ const DEFAULT_PREFERENCES: Omit<UserPreferences, 'user_id' | 'created_at' | 'upd
 	onboarding_skipped_at: null,
 	onboarding_version: 'v1'
 };
+
+const E2E_PREFERENCES_KEY = 'e2e_preferences';
+
+function readE2EPreferences(): Record<string, UserPreferences> {
+	return readStorage<Record<string, UserPreferences>>(E2E_PREFERENCES_KEY, {});
+}
+
+function writeE2EPreferences(preferences: Record<string, UserPreferences>): void {
+	writeStorage(E2E_PREFERENCES_KEY, preferences);
+}
+
+function getOrCreateE2EPreferences(userId: string): UserPreferences {
+	const preferences = readE2EPreferences();
+	if (!preferences[userId]) {
+		preferences[userId] = {
+			user_id: userId,
+			...DEFAULT_PREFERENCES,
+			ai_enabled: true,
+			ai_consent_date: new Date().toISOString(),
+			created_at: new Date().toISOString(),
+			updated_at: new Date().toISOString()
+		};
+		writeE2EPreferences(preferences);
+	}
+	return preferences[userId];
+}
 
 /**
  * Onboarding status result type
@@ -143,6 +170,11 @@ export const preferencesService = {
 	 */
 	async getPreferences(userId: string): Promise<PreferencesResult> {
 		try {
+			if (isE2E) {
+				const preferences = getOrCreateE2EPreferences(userId);
+				return { preferences, error: null };
+			}
+
 			const { data, error } = await supabase
 				.from('preferences')
 				.select('*')
@@ -180,6 +212,21 @@ export const preferencesService = {
 	 */
 	async createDefaultPreferences(userId: string): Promise<PreferencesResult> {
 		try {
+			if (isE2E) {
+				const preferences: UserPreferences = {
+					user_id: userId,
+					...DEFAULT_PREFERENCES,
+					ai_enabled: true,
+					ai_consent_date: new Date().toISOString(),
+					created_at: new Date().toISOString(),
+					updated_at: new Date().toISOString()
+				};
+				const all = readE2EPreferences();
+				all[userId] = preferences;
+				writeE2EPreferences(all);
+				return { preferences, error: null };
+			}
+
 			const { data, error } = await supabase
 				.from('preferences')
 				.insert({
@@ -230,6 +277,26 @@ export const preferencesService = {
 		updates: Partial<Omit<UserPreferences, 'user_id' | 'created_at' | 'updated_at'>>
 	): Promise<PreferencesResult> {
 		try {
+			if (isE2E) {
+				const all = readE2EPreferences();
+				const existing = all[userId] ?? {
+					user_id: userId,
+					...DEFAULT_PREFERENCES,
+					ai_enabled: true,
+					ai_consent_date: new Date().toISOString(),
+					created_at: new Date().toISOString(),
+					updated_at: new Date().toISOString()
+				};
+				const updated: UserPreferences = {
+					...existing,
+					...updates,
+					updated_at: new Date().toISOString()
+				};
+				all[userId] = updated;
+				writeE2EPreferences(all);
+				return { preferences: updated, error: null };
+			}
+
 			const { data, error } = await supabase
 				.from('preferences')
 				.update(updates)

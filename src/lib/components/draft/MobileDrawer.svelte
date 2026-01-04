@@ -55,6 +55,7 @@
 
 	<!-- Drawer -->
 	<div
+		data-testid="mobile-drawer"
 		class="animate-slideUp fixed inset-x-0 bottom-0 z-50 max-h-[85vh] overflow-y-auto rounded-t-2xl bg-base-100 shadow-2xl"
 	>
 		<!-- Handle -->

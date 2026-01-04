@@ -23,7 +23,11 @@ export default defineConfig({
 					},
 
 					include: ['src/**/*.svelte.{test,spec}.{js,ts}'],
-					exclude: ['src/lib/server/**']
+					exclude: ['src/lib/server/**'],
+					alias: {
+						'$env/static/public': new URL('./src/tests/mocks/env-static-public.ts', import.meta.url)
+							.pathname
+					}
 				}
 			},
 
@@ -34,7 +38,11 @@ export default defineConfig({
 					name: 'server',
 					environment: 'node',
 					include: ['src/**/*.{test,spec}.{js,ts}'],
-					exclude: ['src/**/*.svelte.{test,spec}.{js,ts}']
+					exclude: ['src/**/*.svelte.{test,spec}.{js,ts}'],
+					alias: {
+						'$env/static/public': new URL('./src/tests/mocks/env-static-public.ts', import.meta.url)
+							.pathname
+					}
 				}
 			}
 		]

@@ -20,8 +20,7 @@ class TestClarifyEndpoint:
         """Should return AI suggestions for clarifying text"""
         mock_response = AIResponse(
             options=[
-                AIOption(text="I felt hurt when you said that", why="This is clearer"),
-                AIOption(text="Your words caused me pain", why="More direct"),
+                AIOption(text="I felt hurt when you said that", why=""),
             ],
             original_valid=True,
         )
@@ -38,7 +37,7 @@ class TestClarifyEndpoint:
             assert response.status_code == status.HTTP_200_OK
             data = response.json()
             assert "options" in data
-            assert len(data["options"]) == 2
+            assert len(data["options"]) == 1
             assert data["original_valid"] is True
 
     def test_clarify_missing_auth(self, client, sample_clarify_request):
@@ -86,8 +85,7 @@ class TestToneEndpoint:
         """Should return tone analysis suggestions"""
         mock_response = AIResponse(
             options=[
-                AIOption(text="I notice this happens often", why="Softer delivery"),
-                AIOption(text="When this happens, I feel frustrated", why="More vulnerable"),
+                AIOption(text="I notice this happens often", why=""),
             ],
             original_valid=True,
         )
@@ -116,8 +114,7 @@ class TestAlternativesEndpoint:
         """Should return alternative phrasings"""
         mock_response = AIResponse(
             options=[
-                AIOption(text="I want to share something with you", why="Warmer approach"),
-                AIOption(text="Can we talk about how I'm doing?", why="Invites dialogue"),
+                AIOption(text="I want to share something with you", why=""),
             ],
             original_valid=True,
         )
@@ -147,10 +144,7 @@ class TestExpandEndpoint:
         """Should return expanded versions of brief text"""
         mock_response = AIResponse(
             options=[
-                AIOption(
-                    text="What specifically triggered this feeling?", why="Explores the cause"
-                ),
-                AIOption(text="When did you first notice feeling this way?", why="Adds context"),
+                AIOption(text="What specifically triggered this feeling?", why=""),
             ],
             original_valid=True,
         )
@@ -184,8 +178,7 @@ class TestOpeningEndpoint:
 
         mock_response = AIResponse(
             options=[
-                AIOption(text="There's something I've been meaning to share", why="Gentle opening"),
-                AIOption(text="I wanted to talk to you about something", why="Direct approach"),
+                AIOption(text="There's something I've been meaning to share", why=""),
             ],
             original_valid=True,
         )

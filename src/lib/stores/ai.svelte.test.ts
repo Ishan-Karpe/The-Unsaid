@@ -203,7 +203,7 @@ describe('AI Store', () => {
 			await aiStore.requestSuggestions('clarify', 'test content', 'Mom', 'express love');
 
 			expect(aiStore.status).toBe('success');
-			expect(aiStore.suggestions).toEqual(mockSuggestions);
+			expect(aiStore.suggestions).toEqual([mockSuggestions[0]]);
 			expect(aiStore.hasSuggestions).toBe(true);
 			expect(aiStore.originalValid).toBe(true);
 			expect(aiStore.error).toBeNull();

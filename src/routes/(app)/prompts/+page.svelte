@@ -4,7 +4,7 @@
   Matches the landing page design language with DaisyUI and Tailwind CSS
 -->
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import type { RelationshipCategory, ConversationPrompt } from '$lib/types';
@@ -12,6 +12,7 @@
 		getAllPrompts,
 		getPromptsByRelationship,
 		markPromptAsUsed,
+		getSavedPrompts,
 		relationshipLabels,
 		relationshipDescriptions
 	} from '$lib/data/prompts';
@@ -29,6 +30,7 @@
 	let searchVisible = $state(false);
 	let filtersVisible = $state(false);
 	let cardsVisible = $state(false);
+	let savedVisible = $state(false);
 
 	// Filter state
 	let searchQuery = $state('');
@@ -36,6 +38,8 @@
 
 	// Form state
 	let showSuggestForm = $state(false);
+	let savedPrompts = $state<ConversationPrompt[]>([]);
+	let isMounted = $state(false);
 
 	// Filtered prompts based on category and search
 	let filteredPrompts = $derived.by(() => {
@@ -96,11 +100,24 @@
 	];
 
 	onMount(() => {
+		isMounted = true;
+		refreshSaved();
 		// Staggered entrance animations
 		setTimeout(() => (headerVisible = true), 100);
 		setTimeout(() => (searchVisible = true), 200);
 		setTimeout(() => (filtersVisible = true), 300);
 		setTimeout(() => (cardsVisible = true), 400);
+		setTimeout(() => (savedVisible = true), 350);
+
+		if (typeof window !== 'undefined') {
+			window.addEventListener('prompt-saved', handleSavedEvent);
+		}
+	});
+
+	onDestroy(() => {
+		if (typeof window !== 'undefined') {
+			window.removeEventListener('prompt-saved', handleSavedEvent);
+		}
 	});
 
 	function handleSearch(query: string) {
@@ -109,6 +126,15 @@
 
 	function handleCategorySelect(category: RelationshipCategory | 'all') {
 		selectedCategory = category;
+	}
+
+	function refreshSaved() {
+		if (!isMounted) return;
+		savedPrompts = getSavedPrompts();
+	}
+
+	function handleSavedEvent() {
+		refreshSaved();
 	}
 
 	function handleUsePrompt(promptId: string) {
@@ -149,7 +175,7 @@
 <div class="space-y-8 pb-12">
 	<!-- Header Section -->
 	<div class="fade-in text-center {headerVisible ? 'visible' : ''}">
-		<h1 class="text-3xl font-bold leading-tight tracking-tight text-base-content md:text-4xl">
+		<h1 class="text-3xl leading-tight font-bold tracking-tight text-base-content md:text-4xl">
 			Phrase Library
 		</h1>
 		<p class="mt-2 text-lg text-primary italic md:text-xl">Words for every emotion</p>
@@ -173,6 +199,28 @@
 
 	<!-- Recently Used Section (only when not filtering) -->
 	{#if !searchQuery && selectedCategory === 'all'}
+		{#if savedPrompts.length > 0}
+			<div class="fade-in {savedVisible ? 'visible' : ''}">
+				<div class="mb-4 flex items-center gap-2">
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						class="h-5 w-5 text-primary"
+						viewBox="0 0 20 20"
+						fill="currentColor"
+					>
+						<path d="M5 3a2 2 0 012-2h6a2 2 0 012 2v16l-5-2.5L5 19V3z" />
+					</svg>
+					<h2 class="text-lg font-semibold text-base-content">Saved</h2>
+					<span class="badge badge-ghost badge-sm">{savedPrompts.length}</span>
+				</div>
+
+				<div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+					{#each savedPrompts as prompt (prompt.id)}
+						<PromptCard {prompt} onUse={handleUsePrompt} showRelationship={true} />
+					{/each}
+				</div>
+			</div>
+		{/if}
 		<RecentlyUsed onUse={handleUsePrompt} />
 	{/if}
 

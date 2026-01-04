@@ -33,7 +33,7 @@
 			mode: 'expand',
 			label: 'Go Deeper',
 			shortLabel: 'Deep',
-			description: 'Questions to explore further'
+			description: 'Expand with more detail'
 		},
 		{
 			mode: 'opening',

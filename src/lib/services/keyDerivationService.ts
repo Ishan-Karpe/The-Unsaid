@@ -26,6 +26,7 @@
 
 import { deriveKey, setKey, clearKey, hasKey, getKey, generateSalt } from '$lib/crypto';
 import { saltService } from './saltService';
+import { isE2E, setE2EPassword } from './e2eStorage';
 
 /**
  * Result type for key derivation operations.
@@ -153,6 +154,10 @@ export const keyDerivationService = {
 
 			// Store key in memory (never persisted to disk or server)
 			setKey(key, salt);
+
+			if (isE2E) {
+				setE2EPassword(password);
+			}
 
 			return { success: true, isNewUser, error: null };
 		} catch (err) {

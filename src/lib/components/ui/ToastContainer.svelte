@@ -28,7 +28,9 @@
 	<div class="toast toast-end toast-top z-50" role="status" aria-live="polite">
 		{#each toasts as toast (toast.id)}
 			<div
-				class="alert {typeClasses[toast.type]} {toast.closing ? 'toast-exit' : 'toast-enter'} shadow-lg"
+				class="alert {typeClasses[toast.type]} {toast.closing
+					? 'toast-exit'
+					: 'toast-enter'} shadow-lg"
 			>
 				<svg
 					xmlns="http://www.w3.org/2000/svg"

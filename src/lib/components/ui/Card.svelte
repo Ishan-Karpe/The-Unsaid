@@ -29,7 +29,9 @@
 	const surfaceClass = $derived(bordered ? 'card-border' : 'shadow-md');
 </script>
 
-<div class="card bg-base-100 {surfaceClass} {paddingClass} transition-shadow duration-200 {className}">
+<div
+	class="card bg-base-100 {surfaceClass} {paddingClass} transition-shadow duration-200 {className}"
+>
 	<div class="card-body">
 		{#if title}
 			<h2 class="card-title">{title}</h2>

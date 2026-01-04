@@ -347,6 +347,8 @@ export function getSituationsForRelationship(
 
 const RECENTLY_USED_KEY = 'unsaid-recently-used-prompts';
 const MAX_RECENTLY_USED = 5;
+const SAVED_PROMPTS_KEY = 'unsaid-saved-prompts';
+const MAX_SAVED_PROMPTS = 100;
 
 /**
  * Get recently used prompt IDs from localStorage
@@ -395,6 +397,77 @@ export function clearRecentlyUsed(): void {
 	} catch {
 		// Ignore localStorage errors
 	}
+}
+
+// ------------------------------------------
+// Saved Prompts (localStorage)
+// ------------------------------------------
+
+/**
+ * Get saved prompt IDs from localStorage
+ */
+export function getSavedPromptIds(): string[] {
+	if (typeof window === 'undefined') return [];
+	try {
+		const stored = localStorage.getItem(SAVED_PROMPTS_KEY);
+		return stored ? JSON.parse(stored) : [];
+	} catch {
+		return [];
+	}
+}
+
+function setSavedPromptIds(ids: string[]): void {
+	if (typeof window === 'undefined') return;
+	try {
+		localStorage.setItem(SAVED_PROMPTS_KEY, JSON.stringify(ids.slice(0, MAX_SAVED_PROMPTS)));
+	} catch {
+		// Ignore localStorage errors
+	}
+}
+
+/**
+ * Check if a prompt is saved
+ */
+export function isPromptSaved(promptId: string): boolean {
+	return getSavedPromptIds().includes(promptId);
+}
+
+/**
+ * Save a prompt
+ */
+export function savePrompt(promptId: string): void {
+	const ids = getSavedPromptIds();
+	if (ids.includes(promptId)) return;
+	setSavedPromptIds([promptId, ...ids]);
+}
+
+/**
+ * Remove a saved prompt
+ */
+export function unsavePrompt(promptId: string): void {
+	const ids = getSavedPromptIds();
+	setSavedPromptIds(ids.filter((id) => id !== promptId));
+}
+
+/**
+ * Toggle saved status
+ * @returns true if saved after toggle
+ */
+export function toggleSavedPrompt(promptId: string): boolean {
+	if (isPromptSaved(promptId)) {
+		unsavePrompt(promptId);
+		return false;
+	}
+	savePrompt(promptId);
+	return true;
+}
+
+/**
+ * Get saved prompts
+ */
+export function getSavedPrompts(): ConversationPrompt[] {
+	const ids = getSavedPromptIds();
+	return ids.map((id) => getPromptById(id)).filter((p): p is ConversationPrompt => p !== undefined);
 }
 
 // ------------------------------------------

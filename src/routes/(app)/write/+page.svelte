@@ -47,6 +47,8 @@
 	let aiEnabled = $state(false);
 	let showConsentModal = $state(false);
 	let pendingAIMode = $state<AIMode | null>(null);
+	let isMounted = $state(false);
+	let lastConsentCheckUserId = $state<string | null>(null);
 
 	// Duplicate request prevention
 	let lastRequestKey = $state<string>('');
@@ -87,7 +89,7 @@
 			mode: 'expand',
 			label: 'Go Deeper',
 			icon: 'expand',
-			description: 'Questions to explore further'
+			description: 'Expand with more detail'
 		},
 		{
 			mode: 'opening',
@@ -112,17 +114,26 @@
 		setTimeout(() => (editorVisible = true), 200);
 
 		// Check if coming from onboarding
-		const isFromOnboarding = $page.url.searchParams.get('onboarding') === '1';
+		const isFromOnboardingState = $page.state?.onboarding === '1';
+		const isFromOnboardingQuery = $page.url.searchParams.get('onboarding') === '1';
+		const isFromOnboarding = isFromOnboardingState || isFromOnboardingQuery;
 		if (isFromOnboarding) {
 			showOnboardingBanner = true;
 			// Auto-dismiss after 8 seconds
 			setTimeout(() => {
 				showOnboardingBanner = false;
 			}, 8000);
-			// Clear the URL parameter
-			const url = new URL(window.location.href);
-			url.searchParams.delete('onboarding');
-			window.history.replaceState({}, '', url.toString());
+			if (isFromOnboardingQuery) {
+				// Clear the URL parameter
+				const url = new URL(window.location.href);
+				url.searchParams.delete('onboarding');
+				window.history.replaceState({}, '', url.toString());
+			}
+			if (isFromOnboardingState) {
+				const nextState = { ...(history.state ?? {}) };
+				delete nextState.onboarding;
+				window.history.replaceState(nextState, '', window.location.href);
+			}
 		}
 
 		// Check if coming from prompts page with a prompt ID
@@ -141,13 +152,17 @@
 				window.history.replaceState({}, '', url.toString());
 			}
 		}
+
+		isMounted = true;
 	});
 
 	// Check AI consent when user is available
 	$effect(() => {
-		if (authStore.user?.id) {
-			checkAIConsent();
-		}
+		if (!isMounted) return;
+		const userId = authStore.user?.id ?? null;
+		if (!userId || userId === lastConsentCheckUserId) return;
+		lastConsentCheckUserId = userId;
+		checkAIConsent();
 	});
 
 	async function checkAIConsent() {

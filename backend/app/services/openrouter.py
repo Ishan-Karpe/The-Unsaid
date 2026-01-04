@@ -3,6 +3,7 @@
 # ===========================================
 import logging
 import os
+import re
 
 import httpx
 
@@ -94,7 +95,7 @@ class OpenRouterService:
                     headers={
                         "Authorization": f"Bearer {self.api_key}",
                         "Content-Type": "application/json",
-                        "HTTP-Referer": os.getenv("FRONTEND_URL", "http://localhost:5173"),
+                        "HTTP-Referer": os.getenv("PUBLIC_APP_URL") or os.getenv("FRONTEND_URL", "http://localhost:5173"),
                         "X-Title": "The Unsaid",
                     },
                     json={
@@ -169,33 +170,34 @@ class OpenRouterService:
     def _parse_options(self, response_text: str) -> list[AIOption]:
         """Parse LLM response into structured options"""
         options = []
-        lines = response_text.strip().split("\n")
+        lines = [line.strip() for line in response_text.strip().split("\n") if line.strip()]
+        option_pattern = re.compile(r"^(?:Option\s*\d+:|\d+[.)])\s*(.+)$", re.IGNORECASE)
 
         current_text = ""
-        current_why = ""
 
         for line in lines:
-            line = line.strip()
-            if line.startswith(("Option 1:", "Option 2:", "Option 3:", "1.", "2.", "3.")):
+            if line.lower().startswith("why:"):
+                continue
+            match = option_pattern.match(line)
+            if match:
                 if current_text:
-                    options.append(
-                        AIOption(text=current_text, why=current_why or "A valid alternative")
-                    )
-                # Extract text after the label
-                current_text = line.split(":", 1)[-1].strip() if ":" in line else line[2:].strip()
-                current_why = ""
-            elif line.lower().startswith("why:"):
-                current_why = line[4:].strip()
+                    options.append(AIOption(text=current_text.strip(), why=""))
+                current_text = match.group(1).strip()
+                continue
+            if current_text:
+                current_text = f"{current_text}\n{line}"
 
         # Add last option
         if current_text:
-            options.append(AIOption(text=current_text, why=current_why or "A valid alternative"))
+            options.append(AIOption(text=current_text.strip(), why=""))
 
-        # Fallback if parsing failed
-        if not options:
-            options = [AIOption(text=response_text[:500], why="AI suggestion")]
+        if options:
+            return options[:1]
 
-        return options[:3]  # Max 3 options
+        # Fallback to raw response text
+        cleaned_text = "\n".join([line for line in lines if not line.lower().startswith("why:")]).strip()
+        text = cleaned_text or response_text.strip()
+        return [AIOption(text=text[:500], why="")]
 
     async def clarify(self, draft_text: str, recipient: str, intent: str) -> AIResponse:
         """Get clarity suggestions"""

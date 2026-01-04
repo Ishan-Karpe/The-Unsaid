@@ -176,14 +176,14 @@ textarea.textarea {
 
 /* AI suggestion cards */
 .ai-suggestion {
-	background: linear-gradient(135deg, oklch(96% 0.02 300) 0%, oklch(98% 0.01 260) 100%);
-	border-left: 3px solid oklch(60% 0.15 300);
+	background: linear-gradient(135deg, var(--color-base-200) 0%, var(--color-base-100) 100%);
+	border-left: 3px solid var(--color-secondary);
 }
 
 /* AI mode buttons - active state */
 .ai-mode-active {
-	background: oklch(60% 0.15 300);
-	color: oklch(98% 0.01 300);
+	background: var(--color-secondary);
+	color: var(--color-secondary-content);
 }
 
 /* ===========================================

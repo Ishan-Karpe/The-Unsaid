@@ -28,6 +28,8 @@
 		showActions = false,
 		class: className = ''
 	}: Props = $props();
+
+	let lineIndexes = $derived(Array.from({ length: Math.max(0, lines - 1) }, (_, index) => index));
 </script>
 
 <div
@@ -44,7 +46,7 @@
 		<Skeleton class="h-4 w-3/4" />
 
 		<!-- Content lines -->
-		{#each { length: lines - 1 } as _, i (i)}
+		{#each lineIndexes as i (i)}
 			<Skeleton class="h-3" style="width: {Math.max(40, 100 - (i + 1) * 15)}%" />
 		{/each}
 

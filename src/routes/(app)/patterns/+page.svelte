@@ -26,6 +26,7 @@
 
 	// Time period filter
 	let selectedPeriod = $state<InsightPeriod>('7days');
+	let isMounted = $state(false);
 
 	// Pre-resolve paths
 	const writePath = resolve('/write');
@@ -161,9 +162,7 @@
 		setTimeout(() => (gridVisible = true), 400);
 		setTimeout(() => (recipientsVisible = true), 500);
 		setTimeout(() => (landscapeVisible = true), 600);
-
-		// Load initial insights
-		loadInsights(selectedPeriod);
+		isMounted = true;
 
 		// Listen for encryption key restoration
 		const handleKeyRestored = () => {
@@ -178,9 +177,8 @@
 
 	// Effect to reload insights when period changes
 	$effect(() => {
-		if (!loading) {
-			loadInsights(selectedPeriod);
-		}
+		if (!isMounted) return;
+		loadInsights(selectedPeriod);
 	});
 
 	async function loadInsights(period: InsightPeriod) {

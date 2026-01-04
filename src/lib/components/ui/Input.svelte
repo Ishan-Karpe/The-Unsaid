@@ -80,7 +80,9 @@
 	<input
 		id={inputId}
 		bind:value
-		class="input {variantClasses[variant]} {sizeClasses[inputSize]} w-full transition-all duration-200 focus-visible:outline-none {error
+		class="input {variantClasses[variant]} {sizeClasses[
+			inputSize
+		]} w-full transition-all duration-200 focus-visible:outline-none {error
 			? 'input-error'
 			: ''} {className}"
 		aria-invalid={error ? 'true' : undefined}
@@ -128,5 +130,4 @@
 		white-space: nowrap;
 		border: 0;
 	}
-
 </style>

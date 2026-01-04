@@ -25,17 +25,23 @@ export async function login(
 	await page.goto('/login');
 	await page.waitForLoadState('networkidle');
 
+	// Wait for the form to be ready
+	await page.locator('input[type="email"]').waitFor({ state: 'visible', timeout: 10000 });
+
 	// Fill email input
 	await page.locator('input[type="email"]').fill(email);
 
 	// Fill password input
 	await page.locator('input[type="password"]').fill(password);
 
+	// Wait a bit for the button to be enabled
+	await page.waitForTimeout(300);
+
 	// Click submit button
 	await page.locator('button[type="submit"]').click();
 
 	// Wait for redirect to /write (successful login)
-	await page.waitForURL('**/write', { timeout: 15000 });
+	await page.waitForURL('**/write', { timeout: 20000 });
 }
 
 /**
@@ -85,6 +91,9 @@ export async function writeDraft(page: Page, content: string, recipient?: string
 	await page.goto('/write');
 	await page.waitForLoadState('networkidle');
 
+	// Wait for editor to be ready
+	await page.locator('textarea').first().waitFor({ state: 'visible', timeout: 10000 });
+
 	// Fill content in the editor textarea
 	const editor = page.locator('textarea').first();
 	await editor.fill(content);
@@ -100,7 +109,7 @@ export async function writeDraft(page: Page, content: string, recipient?: string
 	}
 
 	// Wait for autosave indicator to show saved state
-	await expect(page.locator('text=/saved/i').first()).toBeVisible({ timeout: 15000 });
+	await expect(page.locator('text=/saved/i').first()).toBeVisible({ timeout: 20000 });
 }
 
 /**
@@ -111,11 +120,11 @@ export async function verifyDraftInHistory(page: Page, contentSnippet: string): 
 	await page.waitForLoadState('networkidle');
 
 	// Wait for drafts to load (give time for decryption)
-	await page.waitForTimeout(2000);
+	await page.waitForTimeout(3000);
 
 	// Verify content is visible - escape special regex characters
 	const escapedSnippet = contentSnippet.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-	await expect(page.locator(`text=/${escapedSnippet}/i`).first()).toBeVisible({ timeout: 10000 });
+	await expect(page.locator(`text=/${escapedSnippet}/i`).first()).toBeVisible({ timeout: 15000 });
 }
 
 /**

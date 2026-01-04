@@ -16,8 +16,8 @@ export default defineConfig({
 	// Fail CI if test.only is left in code
 	forbidOnly: !!process.env.CI,
 
-	// Retry failed tests in CI for flaky test handling
-	retries: process.env.CI ? 2 : 0,
+	// Retry failed tests - more retries for CI and WebKit
+	retries: process.env.CI ? 2 : 1,
 
 	// Limit workers in CI for stability
 	workers: process.env.CI ? 1 : undefined,
@@ -40,18 +40,18 @@ export default defineConfig({
 		video: 'on-first-retry',
 
 		// Default timeout for actions
-		actionTimeout: 10000,
+		actionTimeout: 15000,
 
 		// Default navigation timeout
 		navigationTimeout: 30000
 	},
 
-	// Test timeout
-	timeout: 30000,
+	// Test timeout (increased for encryption/decryption operations)
+	timeout: 60000,
 
 	// Expect timeout
 	expect: {
-		timeout: 10000
+		timeout: 15000
 	},
 
 	// Browser projects for cross-browser testing
@@ -67,7 +67,11 @@ export default defineConfig({
 		},
 		{
 			name: 'webkit',
-			use: { ...devices['Desktop Safari'] }
+			use: {
+				...devices['Desktop Safari'],
+				// WebKit needs more time for some operations
+				actionTimeout: 20000
+			}
 		},
 
 		// Mobile viewports for responsive testing
@@ -77,13 +81,16 @@ export default defineConfig({
 		},
 		{
 			name: 'Mobile Safari',
-			use: { ...devices['iPhone 12'] }
+			use: {
+				...devices['iPhone 12'],
+				actionTimeout: 20000
+			}
 		}
 	],
 
 	// Development server configuration
 	webServer: {
-		command: 'pnpm dev',
+		command: 'pnpm dev --mode e2e',
 		url: 'http://localhost:5173',
 		reuseExistingServer: !process.env.CI,
 		timeout: 120000

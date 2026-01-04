@@ -22,49 +22,57 @@
 		"I was hurt when you didn't call. It felt like... you didn't care about my news.";
 	let typingComplete = $state(false);
 
-	onMount(async () => {
-		// Check if user has "remember me" enabled and is logged in
-		const rememberMe = localStorage.getItem('unsaid_remember_me') === 'true';
-		if (rememberMe) {
-			const { data: { user } } = await supabase.auth.getUser();
-			if (user) {
-				// User is logged in and wants to be remembered - redirect to /write
-				goto(resolve('/write'));
-				return;
+	onMount(() => {
+		let observer: IntersectionObserver | null = null;
+
+		const init = async () => {
+			// Check if user has "remember me" enabled and is logged in
+			const rememberMe = localStorage.getItem('unsaid_remember_me') === 'true';
+			if (rememberMe) {
+				const {
+					data: { user }
+				} = await supabase.auth.getUser();
+				if (user) {
+					// User is logged in and wants to be remembered - redirect to /write
+					goto(resolve('/write'));
+					return;
+				}
 			}
-		}
 
-		heroVisible = true;
+			heroVisible = true;
 
-		const observer = new IntersectionObserver(
-			(entries) => {
-				entries.forEach((entry) => {
-					if (entry.isIntersecting) {
-						if (entry.target.id === 'core-values-section') {
-							coreValuesVisible = true;
-						} else if (entry.target.id === 'demo-section') {
-							demoVisible = true;
-							// Start typing animation when demo section is visible
-							startTypingAnimation();
-						} else if (entry.target.id === 'trust-section') {
-							trustVisible = true;
-						} else if (entry.target.id === 'cta-section') {
-							ctaVisible = true;
+			observer = new IntersectionObserver(
+				(entries) => {
+					entries.forEach((entry) => {
+						if (entry.isIntersecting) {
+							if (entry.target.id === 'core-values-section') {
+								coreValuesVisible = true;
+							} else if (entry.target.id === 'demo-section') {
+								demoVisible = true;
+								// Start typing animation when demo section is visible
+								startTypingAnimation();
+							} else if (entry.target.id === 'trust-section') {
+								trustVisible = true;
+							} else if (entry.target.id === 'cta-section') {
+								ctaVisible = true;
+							}
 						}
-					}
-				});
-			},
-			{ threshold: 0.15 }
-		);
+					});
+				},
+				{ threshold: 0.15 }
+			);
 
-		const sections = ['core-values-section', 'demo-section', 'trust-section', 'cta-section'];
+			const sections = ['core-values-section', 'demo-section', 'trust-section', 'cta-section'];
 
-		sections.forEach((id) => {
-			const el = document.getElementById(id);
-			if (el) observer.observe(el);
-		});
+			sections.forEach((id) => {
+				const el = document.getElementById(id);
+				if (el) observer?.observe(el);
+			});
+		};
 
-		return () => observer.disconnect();
+		void init();
+
+		return () => observer?.disconnect();
 	});
 
 	function startTypingAnimation() {
@@ -184,7 +192,7 @@
 		<div class="fade-in stagger-3 mb-6 {heroVisible ? 'visible' : ''}">
 			<a
 				href={resolve('/signup')}
-				class="btn btn-cta-lg gap-2 shadow-lg shadow-primary/25 transition-all duration-300 btn-lg btn-primary hover:shadow-xl hover:shadow-primary/30"
+				class="btn-cta-lg btn gap-2 shadow-lg shadow-primary/25 transition-all duration-300 btn-lg btn-primary hover:shadow-xl hover:shadow-primary/30"
 			>
 				Draft Your Message
 			</a>
@@ -409,8 +417,7 @@
 			<div class="fade-in stagger-2 {demoVisible ? 'visible' : ''}">
 				<div class="mockup-browser border border-base-content/10 bg-base-100 shadow-2xl">
 					<!-- Browser toolbar dots -->
-					<div class="mockup-browser-toolbar">
-					</div>
+					<div class="mockup-browser-toolbar"></div>
 
 					<!-- Demo Content -->
 					<div class="bg-base-200 p-6">
@@ -575,7 +582,7 @@
 			</p>
 			<a
 				href={resolve('/signup')}
-				class="btn btn-cta-lg shadow-lg shadow-primary/25 transition-all duration-300 btn-lg btn-primary hover:shadow-xl hover:shadow-primary/30"
+				class="btn-cta-lg btn shadow-lg shadow-primary/25 transition-all duration-300 btn-lg btn-primary hover:shadow-xl hover:shadow-primary/30"
 			>
 				Start Writing For Free
 			</a>

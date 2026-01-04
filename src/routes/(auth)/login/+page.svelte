@@ -127,7 +127,7 @@
 		<a href={resolve('/forgot-password')} class="link link-primary">Forgot password?</a>
 	</div>
 
-<Button type="submit" class="w-full btn-cta" disabled={!canSubmit} {loading}>
+	<Button type="submit" class="btn-cta w-full" disabled={!canSubmit} {loading}>
 		{loading ? 'Logging in...' : 'Log in'}
 	</Button>
 </form>

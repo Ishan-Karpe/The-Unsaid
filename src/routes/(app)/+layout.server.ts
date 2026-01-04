@@ -4,6 +4,7 @@
  * Redirects new users to onboarding if not completed/skipped
  */
 import { redirect } from '@sveltejs/kit';
+import { env } from '$env/dynamic/public';
 import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = async ({ locals, url }) => {
@@ -12,6 +13,17 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
 		// Redirect to login with the intended destination
 		const redirectTo = encodeURIComponent(url.pathname + url.search);
 		redirect(303, `/login?redirectTo=${redirectTo}`);
+	}
+
+	if (env.PUBLIC_E2E === 'true') {
+		return {
+			user: {
+				id: locals.user.id,
+				email: locals.user.email!,
+				createdAt: locals.user.created_at,
+				user_metadata: locals.user.user_metadata
+			}
+		};
 	}
 
 	// Check onboarding status (skip if already on /onboarding route)

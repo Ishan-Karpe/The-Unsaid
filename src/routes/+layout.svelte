@@ -4,6 +4,7 @@
 	import { resolve } from '$app/paths';
 	import { supabase } from '$lib/services/supabase';
 	import { keyDerivationService } from '$lib/services';
+	import { getE2EPassword, isE2E } from '$lib/services/e2eStorage';
 	import { authStore } from '$lib/stores/auth.svelte';
 	import {
 		PasswordPrompt,
@@ -20,6 +21,20 @@
 	let needsPasswordPrompt = $state(false);
 	// Track if we've already checked initial state to prevent re-checking
 	let initialCheckDone = $state(false);
+	let restoringKey = $state(false);
+
+	async function restoreKeyForUser(userId: string) {
+		if (restoringKey) return;
+		const storedPassword = getE2EPassword();
+		if (!storedPassword) return;
+		restoringKey = true;
+		const result = await keyDerivationService.deriveAndStoreKey(userId, storedPassword);
+		restoringKey = false;
+		if (result.success) {
+			needsPasswordPrompt = false;
+			window.dispatchEvent(new CustomEvent('encryption-key-restored'));
+		}
+	}
 
 	// Initialize auth state and handle session changes
 	onMount(() => {
@@ -40,8 +55,15 @@
 				authStore.setUser(user);
 
 				if (!keyDerivationService.isKeyReady()) {
-					// Session exists but no encryption key - need password to restore
-					needsPasswordPrompt = true;
+					if (isE2E) {
+						await restoreKeyForUser(user.id);
+						if (!keyDerivationService.isKeyReady()) {
+							needsPasswordPrompt = true;
+						}
+					} else {
+						// Session exists but no encryption key - need password to restore
+						needsPasswordPrompt = true;
+					}
 				}
 			} else {
 				authStore.setUser(null);
@@ -73,7 +95,16 @@
 				// If not, prompt for password to restore access
 				const hasKey = keyDerivationService.isKeyReady();
 				if (!hasKey && !needsPasswordPrompt) {
-					needsPasswordPrompt = true;
+					if (isE2E) {
+						if (session?.user) {
+							await restoreKeyForUser(session.user.id);
+						}
+						if (!keyDerivationService.isKeyReady()) {
+							needsPasswordPrompt = true;
+						}
+					} else {
+						needsPasswordPrompt = true;
+					}
 				}
 			}
 		});

@@ -311,7 +311,7 @@ export const aiService = {
 			clarify: 'Clarity suggestions',
 			alternatives: 'Alternative phrasings',
 			tone: 'Tone adjustments',
-			expand: 'Expansion questions',
+			expand: 'Expanded draft',
 			opening: 'Opening suggestions'
 		};
 		return labels[mode];
@@ -325,7 +325,7 @@ export const aiService = {
 			clarify: 'Simplify your message while preserving its meaning',
 			alternatives: 'Different ways to express the same sentiment',
 			tone: 'Adjust the emotional delivery of your message',
-			expand: 'Questions to help you go deeper',
+			expand: 'Expand your draft with more detail',
 			opening: 'Suggestions for how to start your message'
 		};
 		return descriptions[mode];

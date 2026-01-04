@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-load_dotenv(Path(__file__).parent.parent.parent / ".env")
+load_dotenv(Path(__file__).parent.parent.parent / ".env", override=True)
 
 from app.middleware.rate_limit import RateLimitMiddleware
 from app.routers import ai
@@ -37,14 +37,26 @@ app = FastAPI(
 app.add_middleware(RateLimitMiddleware)
 
 # CORS configuration
-frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
-allow_origins = [frontend_url]
+# Check PUBLIC_APP_URL first (aligned with frontend), fall back to FRONTEND_URL for backward compatibility
+def normalize_origin(origin: str) -> str:
+    return origin.strip().rstrip("/")
+
+
+def parse_origins(value: str | None) -> list[str]:
+    if not value:
+        return []
+    return [normalize_origin(origin) for origin in value.split(",") if origin.strip()]
+
+
+frontend_origins = parse_origins(os.getenv("PUBLIC_APP_URL"))
+frontend_origins.extend(parse_origins(os.getenv("FRONTEND_URL")))
+allow_origins = frontend_origins or ["http://localhost:5173"]
 
 # Add localhost variants if in development
 if os.getenv("NODE_ENV", "development") == "development":
     allow_origins.extend(["http://localhost:5173", "http://127.0.0.1:5173", "http://0.0.0.0:5173"])
     # Deduplicate
-    allow_origins = list(set(allow_origins))
+    allow_origins = list({normalize_origin(origin) for origin in allow_origins if origin})
 
 print(f"CORS Allowed Origins: {allow_origins}")
 

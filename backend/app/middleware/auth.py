@@ -7,7 +7,8 @@ from fastapi import Header, HTTPException
 from supabase import Client, create_client
 
 # Initialize Supabase client
-supabase_url = os.getenv("SUPABASE_URL") or os.getenv("PUBLIC_SUPABASE_URL", "")
+# Check PUBLIC_SUPABASE_URL first (aligned with frontend), fall back to SUPABASE_URL for backward compatibility
+supabase_url = os.getenv("PUBLIC_SUPABASE_URL") or os.getenv("SUPABASE_URL", "")
 supabase_key = os.getenv("PRIVATE_SUPABASE_SECRET_KEY", "")
 
 supabase: Client | None = None

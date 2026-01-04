@@ -133,7 +133,7 @@
 		</div>
 	{/if}
 
-<Button type="submit" class="w-full btn-cta" disabled={!canSubmit} {loading}>
+	<Button type="submit" class="btn-cta w-full" disabled={!canSubmit} {loading}>
 		{loading ? 'Creating account...' : 'Create account'}
 	</Button>
 </form>

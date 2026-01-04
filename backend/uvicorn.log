@@ -1,0 +1,13 @@
+INFO:     Will watch for changes in these directories: ['/home/ishan/The-Unsaid/backend']
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [785192] using WatchFiles
+INFO:     Started server process [785199]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+CORS Allowed Origins: ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://0.0.0.0:5173']
+🚀 The Unsaid API starting...
+INFO:     127.0.0.1:60944 - "OPTIONS /api/ai/clarify HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60944 - "POST /api/ai/clarify HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34010 - "OPTIONS /api/ai/expand HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34010 - "POST /api/ai/expand HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34010 - "POST /api/ai/expand HTTP/1.1" 200 OK

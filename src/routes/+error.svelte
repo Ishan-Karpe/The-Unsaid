@@ -1,8 +1,10 @@
 <script lang="ts">
+	import { page } from '$app/stores';
 	import { resolve } from '$app/paths';
 	import { networkStore } from '$lib/stores/network.svelte';
 
-	let { error, status } = $props();
+	let status = $derived($page.status);
+	let error = $derived($page.error);
 
 	let isOffline = $derived(!networkStore.isOnline);
 	let statusLabel = $derived(status ? `Error ${status}` : 'Something went wrong');
@@ -14,7 +16,7 @@
 
 <section class="page-container py-12">
 	<div class="mx-auto max-w-2xl">
-		<div class="card card-border bg-base-100 shadow-lg">
+		<div class="card bg-base-100 shadow-lg card-border">
 			<div class="card-body items-center gap-4 text-center">
 				<div class="flex h-14 w-14 items-center justify-center rounded-full bg-error/10">
 					<svg
@@ -41,17 +43,19 @@
 				</div>
 
 				{#if isOffline}
-					<div class="alert alert-warning text-sm">
+					<div class="alert text-sm alert-warning">
 						<span>You're offline. Reconnect to continue.</span>
 					</div>
 				{/if}
 
 				{#if showDetails && errorMessage}
-					<details class="w-full rounded-lg border border-base-content/10 bg-base-200/40 p-3 text-left">
+					<details
+						class="w-full rounded-lg border border-base-content/10 bg-base-200/40 p-3 text-left"
+					>
 						<summary class="cursor-pointer text-sm font-medium text-base-content/70">
 							Error details
 						</summary>
-						<code class="mt-2 block break-words text-xs text-base-content/70">{errorMessage}</code>
+						<code class="mt-2 block text-xs break-words text-base-content/70">{errorMessage}</code>
 					</details>
 				{/if}
 
@@ -59,7 +63,7 @@
 					<button type="button" class="btn btn-ghost" onclick={() => history.back()}>
 						Go Back
 					</button>
-					<a href={resolve('/')} class="btn btn-cta btn-primary">Go Home</a>
+					<a href={resolve('/')} class="btn-cta btn btn-primary">Go Home</a>
 					<button type="button" class="btn btn-outline" onclick={() => window.location.reload()}>
 						Reload
 					</button>

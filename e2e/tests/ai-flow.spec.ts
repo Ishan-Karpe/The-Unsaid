@@ -512,8 +512,10 @@ test.describe('AI Flow', () => {
 			await page.goto('/settings');
 			await page.waitForLoadState('networkidle');
 
-			// Find AI-related toggle
-			const aiToggle = page.locator('label').filter({ hasText: /ai|assistant|suggestions/i });
+			// Find AI-related toggle - look for "Enable AI Features" label
+			const aiToggle = page
+				.locator('label')
+				.filter({ hasText: /enable ai|ai feature|ai assistance/i });
 
 			if (await aiToggle.first().isVisible()) {
 				const checkbox = aiToggle.locator('input[type="checkbox"]').first();
@@ -537,10 +539,10 @@ test.describe('AI Flow', () => {
 			await page.goto('/settings');
 			await page.waitForLoadState('networkidle');
 
-			// Find and record AI toggle state
+			// Find and record AI toggle state - look for "Enable AI Features" label
 			const aiToggle = page
 				.locator('label')
-				.filter({ hasText: /ai|assistant|suggestions/i })
+				.filter({ hasText: /enable ai|ai feature|ai assistance/i })
 				.first();
 
 			if (await aiToggle.isVisible()) {
@@ -557,7 +559,7 @@ test.describe('AI Flow', () => {
 				// Find toggle again
 				const aiToggleAfter = page
 					.locator('label')
-					.filter({ hasText: /ai|assistant|suggestions/i })
+					.filter({ hasText: /enable ai|ai feature|ai assistance/i })
 					.first();
 				const checkboxAfter = aiToggleAfter.locator('input[type="checkbox"]').first();
 

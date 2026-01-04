@@ -226,13 +226,14 @@ export const aiStore = {
 			}
 
 			if (result.data) {
+				const trimmedOptions = result.data.options.slice(0, 1);
 				status = 'success';
-				suggestions = result.data.options;
+				suggestions = trimmedOptions;
 				originalValid = result.data.original_valid;
 
 				// Cache the response for future use
 				responseCache.set(cacheKey, {
-					options: result.data.options,
+					options: trimmedOptions,
 					originalValid: result.data.original_valid,
 					timestamp: Date.now()
 				});
@@ -245,7 +246,8 @@ export const aiStore = {
 			}
 
 			status = 'error';
-			error = err instanceof Error ? sanitizeErrorMessage(err.message) : 'Failed to get AI suggestions';
+			error =
+				err instanceof Error ? sanitizeErrorMessage(err.message) : 'Failed to get AI suggestions';
 			suggestions = [];
 		}
 	},

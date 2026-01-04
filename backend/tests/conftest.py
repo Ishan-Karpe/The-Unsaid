@@ -11,10 +11,11 @@ import pytest
 from fastapi.testclient import TestClient
 
 # Set test environment variables BEFORE importing app
+# Use aligned variable names (PUBLIC_* prefix matches frontend convention)
 os.environ["OPENROUTER_API_KEY"] = "test-api-key"
-os.environ["SUPABASE_URL"] = "https://test.supabase.co"
+os.environ["PUBLIC_SUPABASE_URL"] = "https://test.supabase.co"
 os.environ["PRIVATE_SUPABASE_SECRET_KEY"] = "test-secret-key"
-os.environ["FRONTEND_URL"] = "http://localhost:5173"
+os.environ["PUBLIC_APP_URL"] = "http://localhost:5173"
 os.environ["AI_RATE_LIMIT_PER_HOUR"] = "1000"  # High limit for tests
 
 from app.main import app

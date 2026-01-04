@@ -150,7 +150,7 @@
 			}
 
 			// Navigate to write page with onboarding flag
-			goto(`${resolve('/write')}?onboarding=1`);
+			goto(resolve('/write'), { state: { onboarding: '1' } });
 		} catch (err) {
 			const message = err instanceof Error ? err.message : 'An error occurred';
 			toastStore.error(message);

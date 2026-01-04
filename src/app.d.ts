@@ -15,7 +15,9 @@ declare global {
 		interface PageData {
 			user: User | null;
 		}
-		// interface PageState {}
+		interface PageState {
+			onboarding?: string;
+		}
 		// interface Platform {}
 	}
 }

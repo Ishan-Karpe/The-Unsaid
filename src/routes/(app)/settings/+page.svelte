@@ -557,9 +557,7 @@
 	<div class="section-spacing flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
 		<div class="fade-in page-header {sectionsVisible ? 'visible' : ''}">
 			<h1>Account Settings</h1>
-			<p class="text-muted">
-				Manage your profile details, security preferences, and data privacy.
-			</p>
+			<p class="text-muted">Manage your profile details, security preferences, and data privacy.</p>
 		</div>
 		<button
 			onclick={handleLogout}
@@ -722,7 +720,7 @@
 						<button
 							onclick={saveProfile}
 							disabled={savingProfile}
-							class="btn btn-cta transition-all duration-300 btn-primary hover:shadow-lg hover:shadow-primary/25"
+							class="btn-cta btn transition-all duration-300 btn-primary hover:shadow-lg hover:shadow-primary/25"
 						>
 							{savingProfile ? 'Saving...' : 'Save Changes'}
 						</button>
@@ -1250,7 +1248,7 @@
 
 					<!-- AI Consent Toggle (Master Switch) -->
 					<div class="mb-4 rounded-lg border border-primary/20 bg-primary/5 p-3">
-						<div class="flex items-center justify-between">
+						<label class="flex cursor-pointer items-center justify-between">
 							<div>
 								<h3 class="font-medium">Enable AI Features</h3>
 								<p class="text-xs text-base-content/50">
@@ -1264,7 +1262,7 @@
 								disabled={preferencesLoading}
 								class="toggle transition-all toggle-primary"
 							/>
-						</div>
+						</label>
 						{#if aiConsentDate}
 							<p class="mt-2 text-xs text-base-content/40">
 								Consent granted on {formatConsentDate(aiConsentDate)}
@@ -1362,61 +1360,6 @@
 							</div>
 						</div>
 					{/if}
-				</div>
-			</div>
-
-			<!-- Privacy First Card -->
-			<div
-				class="fade-in stagger-1 card overflow-hidden border border-secondary/20 bg-base-100 shadow-lg {rightColumnVisible
-					? 'visible'
-					: ''}"
-			>
-				<div class="card-body">
-					<div class="mb-2 flex items-center gap-2">
-						<div class="flex h-10 w-10 items-center justify-center rounded-full bg-secondary/10">
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								class="h-5 w-5 text-secondary"
-								fill="none"
-								viewBox="0 0 24 24"
-								stroke="currentColor"
-							>
-								<path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="2"
-									d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-								/>
-							</svg>
-						</div>
-						<h2 class="card-title text-lg">Privacy First</h2>
-					</div>
-
-					<p class="text-sm text-base-content/60">
-						"The Unsaid" is designed with your privacy at its core. Your emotional data is encrypted
-						end-to-end and never shared with third parties.
-					</p>
-
-					<a
-						href="#privacy"
-						class="mt-4 inline-flex items-center gap-1 text-sm font-medium text-primary transition-colors hover:text-primary/80"
-					>
-						Read Privacy Policy
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							class="h-4 w-4"
-							fill="none"
-							viewBox="0 0 24 24"
-							stroke="currentColor"
-						>
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								stroke-width="2"
-								d="M14 5l7 7m0 0l-7 7m7-7H3"
-							/>
-						</svg>
-					</a>
 				</div>
 			</div>
 

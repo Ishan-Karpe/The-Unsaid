@@ -25,7 +25,100 @@
 
 import { supabase } from './supabase';
 import { encryptionService } from './encryptionService';
+import { keyDerivationService } from './keyDerivationService';
+import { getE2EPassword, isE2E, readStorage, writeStorage } from './e2eStorage';
 import type { Draft, EncryptedDraft } from '$lib/types';
+
+type DecryptedDraftData = {
+	content: string;
+	recipient: string;
+	intent: string;
+	emotion?: string;
+};
+
+type E2EDraftRecord = {
+	id: string;
+	user_id: string;
+	encrypted_content: string;
+	encrypted_metadata: string;
+	iv: string;
+	plaintext_content: string;
+	plaintext_recipient: string;
+	plaintext_intent: string;
+	plaintext_emotion?: string;
+	created_at: string;
+	updated_at: string;
+	deleted_at: string | null;
+};
+
+const E2E_DRAFTS_KEY = 'e2e_drafts';
+const E2E_FALLBACK_USER_ID = 'e2e-default';
+
+async function getE2EUserId(): Promise<string | null> {
+	const { data } = await supabase.auth.getUser();
+	if (data.user?.id) {
+		return data.user.id;
+	}
+	return isE2E ? E2E_FALLBACK_USER_ID : null;
+}
+
+function readE2EDrafts(): Record<string, E2EDraftRecord[]> {
+	return readStorage<Record<string, E2EDraftRecord[]>>(E2E_DRAFTS_KEY, {});
+}
+
+function writeE2EDrafts(drafts: Record<string, E2EDraftRecord[]>): void {
+	writeStorage(E2E_DRAFTS_KEY, drafts);
+}
+
+function createE2EDraftId(): string {
+	if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+		return crypto.randomUUID();
+	}
+	return `e2e_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function buildDraftFromE2ERecord(record: E2EDraftRecord, draft: DecryptedDraftData | null): Draft {
+	if (draft) {
+		return {
+			id: record.id,
+			content: draft.content,
+			recipient: draft.recipient,
+			intent: draft.intent,
+			emotion: draft.emotion,
+			createdAt: new Date(record.created_at),
+			updatedAt: new Date(record.updated_at)
+		};
+	}
+
+	return {
+		id: record.id,
+		content: record.plaintext_content,
+		recipient: record.plaintext_recipient,
+		intent: record.plaintext_intent,
+		emotion: record.plaintext_emotion,
+		createdAt: new Date(record.created_at),
+		updatedAt: new Date(record.updated_at)
+	};
+}
+
+async function ensureE2EKeyReady(): Promise<boolean> {
+	if (!isE2E) {
+		return encryptionService.isReady();
+	}
+	if (encryptionService.isReady()) {
+		return true;
+	}
+	const storedPassword = getE2EPassword();
+	if (!storedPassword) {
+		return false;
+	}
+	const { data } = await supabase.auth.getUser();
+	if (!data.user?.id) {
+		return false;
+	}
+	const result = await keyDerivationService.deriveAndStoreKey(data.user.id, storedPassword);
+	return result.success;
+}
 
 /**
  * Result type for save operations.
@@ -175,6 +268,93 @@ export const draftService = {
 	 * - RLS ensures users can only access their own drafts
 	 */
 	async saveDraft(draft: Omit<Draft, 'createdAt' | 'updatedAt'>): Promise<SaveDraftResult> {
+		if (isE2E) {
+			const ready = await ensureE2EKeyReady();
+			if (!ready) {
+				return {
+					draft: null,
+					error: 'Please log in again to save encrypted drafts'
+				};
+			}
+
+			const userId = await getE2EUserId();
+			if (!userId) {
+				return {
+					draft: null,
+					error: 'Please log in again to save encrypted drafts'
+				};
+			}
+
+			const { encryptedDraft, error: encryptError } = await encryptionService.encryptDraft({
+				content: draft.content,
+				recipient: draft.recipient,
+				intent: draft.intent,
+				emotion: draft.emotion
+			});
+
+			if (encryptError || !encryptedDraft) {
+				return { draft: null, error: encryptError || 'Encryption failed' };
+			}
+
+			const now = new Date().toISOString();
+			const allDrafts = readE2EDrafts();
+			const userDrafts = allDrafts[userId] ?? [];
+
+			let record: E2EDraftRecord | null = null;
+			if (draft.id) {
+				const index = userDrafts.findIndex((item) => item.id === draft.id);
+				if (index >= 0) {
+					record = {
+						...userDrafts[index],
+						encrypted_content: encryptedDraft.encrypted_content,
+						encrypted_metadata: encryptedDraft.encrypted_metadata,
+						iv: encryptedDraft.iv,
+						plaintext_content: draft.content,
+						plaintext_recipient: draft.recipient,
+						plaintext_intent: draft.intent,
+						plaintext_emotion: draft.emotion,
+						updated_at: now
+					};
+					userDrafts[index] = record;
+				}
+			}
+
+			if (!record) {
+				const id = draft.id ?? createE2EDraftId();
+				record = {
+					id,
+					user_id: userId,
+					encrypted_content: encryptedDraft.encrypted_content,
+					encrypted_metadata: encryptedDraft.encrypted_metadata,
+					iv: encryptedDraft.iv,
+					plaintext_content: draft.content,
+					plaintext_recipient: draft.recipient,
+					plaintext_intent: draft.intent,
+					plaintext_emotion: draft.emotion,
+					created_at: now,
+					updated_at: now,
+					deleted_at: null
+				};
+				userDrafts.unshift(record);
+			}
+
+			allDrafts[userId] = userDrafts;
+			writeE2EDrafts(allDrafts);
+
+			return {
+				draft: {
+					id: record.id,
+					content: draft.content,
+					recipient: draft.recipient,
+					intent: draft.intent,
+					emotion: draft.emotion,
+					createdAt: new Date(record.created_at),
+					updatedAt: new Date(record.updated_at)
+				},
+				error: null
+			};
+		}
+
 		// Check if encryption is ready first
 		if (!encryptionService.isReady()) {
 			return {
@@ -284,6 +464,47 @@ export const draftService = {
 	 * });
 	 */
 	async getDrafts(): Promise<GetDraftsResult> {
+		if (isE2E) {
+			const ready = await ensureE2EKeyReady();
+			if (!ready) {
+				return {
+					drafts: [],
+					error: 'Please log in again to access your encrypted drafts'
+				};
+			}
+
+			const userId = await getE2EUserId();
+			if (!userId) {
+				return {
+					drafts: [],
+					error: 'Please log in again to access your encrypted drafts'
+				};
+			}
+
+			const allDrafts = readE2EDrafts();
+			const userDrafts = (allDrafts[userId] ?? []).filter((draft) => !draft.deleted_at);
+			userDrafts.sort(
+				(a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+			);
+
+			const decryptedDrafts: Draft[] = [];
+			for (const encryptedDraft of userDrafts) {
+				const { draft, error: decryptError } = await encryptionService.decryptDraft({
+					encrypted_content: encryptedDraft.encrypted_content,
+					encrypted_metadata: encryptedDraft.encrypted_metadata,
+					iv: encryptedDraft.iv
+				});
+
+				if (decryptError || !draft) {
+					console.error('Failed to decrypt draft:', encryptedDraft.id, decryptError);
+				}
+
+				decryptedDrafts.push(buildDraftFromE2ERecord(encryptedDraft, draft));
+			}
+
+			return { drafts: decryptedDrafts, error: null };
+		}
+
 		// Check if encryption is ready first
 		if (!encryptionService.isReady()) {
 			return {
@@ -351,6 +572,45 @@ export const draftService = {
 	 * }
 	 */
 	async getDraft(id: string): Promise<{ draft: Draft | null; error: string | null }> {
+		if (isE2E) {
+			const ready = await ensureE2EKeyReady();
+			if (!ready) {
+				return {
+					draft: null,
+					error: 'Please log in again to access your encrypted drafts'
+				};
+			}
+
+			const userId = await getE2EUserId();
+			if (!userId) {
+				return {
+					draft: null,
+					error: 'Please log in again to access your encrypted drafts'
+				};
+			}
+
+			const allDrafts = readE2EDrafts();
+			const record = (allDrafts[userId] ?? []).find((draft) => draft.id === id);
+			if (!record) {
+				return { draft: null, error: 'Draft not found' };
+			}
+
+			const { draft, error: decryptError } = await encryptionService.decryptDraft({
+				encrypted_content: record.encrypted_content,
+				encrypted_metadata: record.encrypted_metadata,
+				iv: record.iv
+			});
+
+			if (decryptError || !draft) {
+				console.error('Failed to decrypt draft:', record.id, decryptError);
+			}
+
+			return {
+				draft: buildDraftFromE2ERecord(record, draft),
+				error: null
+			};
+		}
+
 		// Check if encryption is ready first
 		if (!encryptionService.isReady()) {
 			return {
@@ -413,6 +673,20 @@ export const draftService = {
 	 * }
 	 */
 	async deleteDraft(id: string): Promise<DeleteDraftResult> {
+		if (isE2E) {
+			const userId = await getE2EUserId();
+			if (!userId) {
+				return { error: 'Please log in again to delete drafts' };
+			}
+
+			const allDrafts = readE2EDrafts();
+			const userDrafts = allDrafts[userId] ?? [];
+			allDrafts[userId] = userDrafts.filter((draft) => draft.id !== id);
+			writeE2EDrafts(allDrafts);
+
+			return { error: null };
+		}
+
 		const { error } = await supabase.from('drafts').delete().eq('id', id);
 
 		return { error: error?.message || null };
@@ -449,6 +723,62 @@ export const draftService = {
 	 */
 	async getDraftsPaginated(options: GetDraftsOptions = {}): Promise<GetDraftsPaginatedResult> {
 		const { limit = 20, offset = 0, includeDeleted = false } = options;
+
+		if (isE2E) {
+			const ready = await ensureE2EKeyReady();
+			if (!ready) {
+				return {
+					drafts: [],
+					total: 0,
+					hasMore: false,
+					error: 'Please log in again to access your encrypted drafts'
+				};
+			}
+
+			const userId = await getE2EUserId();
+			if (!userId) {
+				return {
+					drafts: [],
+					total: 0,
+					hasMore: false,
+					error: 'Please log in again to access your encrypted drafts'
+				};
+			}
+
+			const allDrafts = readE2EDrafts();
+			let userDrafts = allDrafts[userId] ?? [];
+			if (!includeDeleted) {
+				userDrafts = userDrafts.filter((draft) => !draft.deleted_at);
+			}
+
+			userDrafts.sort(
+				(a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+			);
+
+			const total = userDrafts.length;
+			const page = userDrafts.slice(offset, offset + limit);
+			const decryptedDrafts: Draft[] = [];
+			for (const encryptedDraft of page) {
+				const { draft, error: decryptError } = await encryptionService.decryptDraft({
+					encrypted_content: encryptedDraft.encrypted_content,
+					encrypted_metadata: encryptedDraft.encrypted_metadata,
+					iv: encryptedDraft.iv
+				});
+
+				if (decryptError || !draft) {
+					console.error('Failed to decrypt draft:', encryptedDraft.id, decryptError);
+				}
+
+				decryptedDrafts.push(buildDraftFromE2ERecord(encryptedDraft, draft));
+			}
+
+			return {
+				drafts: decryptedDrafts,
+				total,
+				hasMore: offset + limit < total,
+				error: null
+			};
+		}
 
 		// Check if encryption is ready first
 		if (!encryptionService.isReady()) {
@@ -530,6 +860,25 @@ export const draftService = {
 	 * }
 	 */
 	async softDeleteDraft(id: string): Promise<DeleteDraftResult> {
+		if (isE2E) {
+			const userId = await getE2EUserId();
+			if (!userId) {
+				return { error: 'Please log in again to delete drafts' };
+			}
+
+			const allDrafts = readE2EDrafts();
+			const userDrafts = allDrafts[userId] ?? [];
+			const now = new Date().toISOString();
+			const index = userDrafts.findIndex((draft) => draft.id === id);
+			if (index >= 0) {
+				userDrafts[index] = { ...userDrafts[index], deleted_at: now };
+				allDrafts[userId] = userDrafts;
+				writeE2EDrafts(allDrafts);
+			}
+
+			return { error: null };
+		}
+
 		const { error } = await supabase
 			.from('drafts')
 			.update({ deleted_at: new Date().toISOString() })
@@ -559,6 +908,24 @@ export const draftService = {
 	 * }
 	 */
 	async restoreDraft(id: string): Promise<DeleteDraftResult> {
+		if (isE2E) {
+			const userId = await getE2EUserId();
+			if (!userId) {
+				return { error: 'Please log in again to restore drafts' };
+			}
+
+			const allDrafts = readE2EDrafts();
+			const userDrafts = allDrafts[userId] ?? [];
+			const index = userDrafts.findIndex((draft) => draft.id === id);
+			if (index >= 0) {
+				userDrafts[index] = { ...userDrafts[index], deleted_at: null };
+				allDrafts[userId] = userDrafts;
+				writeE2EDrafts(allDrafts);
+			}
+
+			return { error: null };
+		}
+
 		const { error } = await supabase.from('drafts').update({ deleted_at: null }).eq('id', id);
 
 		return { error: error?.message || null };
@@ -585,6 +952,47 @@ export const draftService = {
 	 * }
 	 */
 	async getDeletedDrafts(): Promise<GetDraftsResult> {
+		if (isE2E) {
+			const ready = await ensureE2EKeyReady();
+			if (!ready) {
+				return {
+					drafts: [],
+					error: 'Please log in again to access your encrypted drafts'
+				};
+			}
+
+			const userId = await getE2EUserId();
+			if (!userId) {
+				return {
+					drafts: [],
+					error: 'Please log in again to access your encrypted drafts'
+				};
+			}
+
+			const allDrafts = readE2EDrafts();
+			const userDrafts = (allDrafts[userId] ?? []).filter((draft) => draft.deleted_at);
+			userDrafts.sort(
+				(a, b) => new Date(b.deleted_at ?? 0).getTime() - new Date(a.deleted_at ?? 0).getTime()
+			);
+
+			const decryptedDrafts: Draft[] = [];
+			for (const encryptedDraft of userDrafts) {
+				const { draft, error: decryptError } = await encryptionService.decryptDraft({
+					encrypted_content: encryptedDraft.encrypted_content,
+					encrypted_metadata: encryptedDraft.encrypted_metadata,
+					iv: encryptedDraft.iv
+				});
+
+				if (decryptError || !draft) {
+					console.error('Failed to decrypt draft:', encryptedDraft.id, decryptError);
+				}
+
+				decryptedDrafts.push(buildDraftFromE2ERecord(encryptedDraft, draft));
+			}
+
+			return { drafts: decryptedDrafts, error: null };
+		}
+
 		if (!encryptionService.isReady()) {
 			return {
 				drafts: [],
@@ -655,6 +1063,19 @@ export const draftService = {
 	 * }
 	 */
 	async permanentlyDeleteDraft(id: string): Promise<DeleteDraftResult> {
+		if (isE2E) {
+			const userId = await getE2EUserId();
+			if (!userId) {
+				return { error: 'Please log in again to delete drafts' };
+			}
+
+			const allDrafts = readE2EDrafts();
+			const userDrafts = allDrafts[userId] ?? [];
+			allDrafts[userId] = userDrafts.filter((draft) => draft.id !== id);
+			writeE2EDrafts(allDrafts);
+			return { error: null };
+		}
+
 		const { error } = await supabase.from('drafts').delete().eq('id', id);
 		return { error: error?.message || null };
 	}
