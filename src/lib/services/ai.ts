@@ -6,6 +6,9 @@
 import { PUBLIC_API_URL } from '$env/static/public';
 import type { AIMode, AIRequest, AIResponse, AIOption } from '$lib/types';
 
+// Normalize API URL by removing trailing slash
+const API_BASE_URL = PUBLIC_API_URL?.replace(/\/+$/, '') || '';
+
 // ------------------------------------------
 // Constants
 // ------------------------------------------
@@ -199,7 +202,7 @@ export const aiService = {
 					? AbortSignal.any([signal, timeoutController.signal])
 					: timeoutController.signal;
 
-				const response = await fetch(`${PUBLIC_API_URL}${endpoint}`, {
+				const response = await fetch(`${API_BASE_URL}${endpoint}`, {
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json',
@@ -294,7 +297,7 @@ export const aiService = {
 	 */
 	async healthCheck(): Promise<boolean> {
 		try {
-			const response = await fetch(`${PUBLIC_API_URL}/health`, {
+			const response = await fetch(`${API_BASE_URL}/health`, {
 				signal: AbortSignal.timeout(5000)
 			});
 			return response.ok;

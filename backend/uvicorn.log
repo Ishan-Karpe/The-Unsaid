@@ -11,3 +11,8 @@ INFO:     127.0.0.1:60944 - "POST /api/ai/clarify HTTP/1.1" 200 OK
 INFO:     127.0.0.1:34010 - "OPTIONS /api/ai/expand HTTP/1.1" 200 OK
 INFO:     127.0.0.1:34010 - "POST /api/ai/expand HTTP/1.1" 200 OK
 INFO:     127.0.0.1:34010 - "POST /api/ai/expand HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [785199]
+INFO:     Stopping reloader process [785192]
