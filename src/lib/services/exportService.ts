@@ -59,7 +59,7 @@ function toExportedDraft(draft: Draft): ExportedDraft {
  * @param includeMetadata - Whether to include recipient, intent, dates
  * @returns Formatted text string
  */
-export function formatDraftTxt(draft: Draft, includeMetadata: boolean): string {
+function formatDraftTxt(draft: Draft, includeMetadata: boolean): string {
 	const lines: string[] = [];
 
 	if (includeMetadata) {
@@ -95,7 +95,7 @@ export function formatDraftTxt(draft: Draft, includeMetadata: boolean): string {
  * @param includeMetadata - Whether to include recipient, intent, dates
  * @returns Formatted markdown string
  */
-export function formatDraftMd(draft: Draft, includeMetadata: boolean): string {
+function formatDraftMd(draft: Draft, includeMetadata: boolean): string {
 	const lines: string[] = [];
 
 	// Title with recipient if available
@@ -142,7 +142,7 @@ export function formatDraftMd(draft: Draft, includeMetadata: boolean): string {
  * @param options - Export options
  * @returns Export payload object
  */
-export function buildExportPayload(drafts: Draft[], options: ExportOptions): ExportPayload {
+function buildExportPayload(drafts: Draft[], options: ExportOptions): ExportPayload {
 	return {
 		version: '1.0',
 		exportedAt: new Date().toISOString(),
@@ -158,7 +158,7 @@ export function buildExportPayload(drafts: Draft[], options: ExportOptions): Exp
  * @param filename - Name for the downloaded file
  * @param mime - MIME type for the file
  */
-export function downloadFile(contents: string, filename: string, mime: string): void {
+function downloadFile(contents: string, filename: string, mime: string): void {
 	if (!browser) return;
 
 	const blob = new Blob([contents], { type: mime });

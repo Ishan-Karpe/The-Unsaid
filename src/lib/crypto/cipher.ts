@@ -7,8 +7,19 @@
 const ALGORITHM = 'AES-GCM';
 const KEY_LENGTH = 256;
 const IV_LENGTH = 12; // 96 bits for GCM
-const PBKDF2_ITERATIONS = 100000;
 const SALT_LENGTH = 16;
+
+/**
+ * Current PBKDF2 iteration count (OWASP recommends >= 600,000 for SHA-256).
+ *
+ * Existing users may have keys derived with an older, lower count; their
+ * per-user count lives in `user_salts.kdf_iterations` and is migrated to
+ * the current value on login (see kdfMigrationService).
+ */
+export const CURRENT_PBKDF2_ITERATIONS = 600000;
+
+/** Iteration count used before versioned KDF was introduced. */
+export const LEGACY_PBKDF2_ITERATIONS = 100000;
 
 /**
  * Generate a cryptographically secure salt
@@ -26,8 +37,15 @@ export function generateIV(): Uint8Array {
 
 /**
  * Derive an encryption key from a password using PBKDF2
+ *
+ * @param iterations - PBKDF2 iteration count; pass the user's stored
+ *   `kdf_iterations` for existing users, defaults to the current standard
  */
-export async function deriveKey(password: string, salt: Uint8Array): Promise<CryptoKey> {
+export async function deriveKey(
+	password: string,
+	salt: Uint8Array,
+	iterations: number = CURRENT_PBKDF2_ITERATIONS
+): Promise<CryptoKey> {
 	const encoder = new TextEncoder();
 	const keyMaterial = await crypto.subtle.importKey(
 		'raw',
@@ -41,7 +59,7 @@ export async function deriveKey(password: string, salt: Uint8Array): Promise<Cry
 		{
 			name: 'PBKDF2',
 			salt: salt as BufferSource,
-			iterations: PBKDF2_ITERATIONS,
+			iterations,
 			hash: 'SHA-256'
 		},
 		keyMaterial,

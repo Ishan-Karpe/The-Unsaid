@@ -174,25 +174,29 @@ class OpenRouterService:
         option_pattern = re.compile(r"^(?:Option\s*\d+:|\d+[.)])\s*(.+)$", re.IGNORECASE)
 
         current_text = ""
+        current_why = ""
 
         for line in lines:
             if line.lower().startswith("why:"):
+                if current_text:
+                    current_why = line[4:].strip()
                 continue
             match = option_pattern.match(line)
             if match:
                 if current_text:
-                    options.append(AIOption(text=current_text.strip(), why=""))
+                    options.append(AIOption(text=current_text.strip(), why=current_why))
                 current_text = match.group(1).strip()
+                current_why = ""
                 continue
-            if current_text:
+            if current_text and not current_why:
                 current_text = f"{current_text}\n{line}"
 
         # Add last option
         if current_text:
-            options.append(AIOption(text=current_text.strip(), why=""))
+            options.append(AIOption(text=current_text.strip(), why=current_why))
 
         if options:
-            return options[:1]
+            return options[:3]
 
         # Fallback to raw response text
         cleaned_text = "\n".join([line for line in lines if not line.lower().startswith("why:")]).strip()

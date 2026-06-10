@@ -10,4 +10,3 @@ export {
 	type KeyboardShortcut,
 	type KeyboardShortcutsOptions
 } from './useKeyboardShortcuts.svelte';
-export { useBeforeUnload, type BeforeUnloadOptions } from './useBeforeUnload.svelte';

@@ -12,7 +12,8 @@ import {
 	encrypt,
 	decrypt,
 	bufferToBase64,
-	base64ToBuffer
+	base64ToBuffer,
+	CURRENT_PBKDF2_ITERATIONS
 } from './cipher';
 
 describe('Crypto Cipher Module', () => {
@@ -254,6 +255,31 @@ describe('Crypto Cipher Module', () => {
 
 			// GCM adds 16-byte auth tag, plus padding for base64
 			expect(ciphertextBytes.length).toBeGreaterThan(plaintext.length);
+		});
+	});
+
+	describe('versioned KDF (iteration counts)', () => {
+		it('should pin CURRENT_PBKDF2_ITERATIONS to the OWASP-recommended 600,000', () => {
+			expect(CURRENT_PBKDF2_ITERATIONS).toBe(600000);
+		});
+
+		it('should derive incompatible keys for different iteration counts', async () => {
+			const salt = generateSalt();
+			const password = 'same-password';
+
+			// Small counts keep the test fast; only the count differs
+			const key1000 = await deriveKey(password, salt, 1000);
+			const key2000 = await deriveKey(password, salt, 2000);
+
+			const encrypted = await encrypt('iteration-versioned secret', key1000, generateIV());
+
+			// Same password + salt but different iterations must NOT decrypt
+			await expect(decrypt(encrypted.ciphertext, encrypted.iv, key2000)).rejects.toThrow();
+
+			// Sanity: the matching key still round-trips
+			expect(await decrypt(encrypted.ciphertext, encrypted.iv, key1000)).toBe(
+				'iteration-versioned secret'
+			);
 		});
 	});
 });

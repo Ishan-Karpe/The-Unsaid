@@ -8,15 +8,14 @@ import type {
 	ConversationPrompt,
 	RelationshipCategory,
 	PromptSituation,
-	PromptCategory,
-	EmotionCategory
+	PromptCategory
 } from '$lib/types';
 
 // ------------------------------------------
 // Prompt Data - 30+ Curated Prompts
 // ------------------------------------------
 
-export const prompts: ConversationPrompt[] = [
+const prompts: ConversationPrompt[] = [
 	// ==========================================
 	// PARENTS (6 prompts)
 	// ==========================================
@@ -302,43 +301,10 @@ export function getPromptsByRelationship(relationship: RelationshipCategory): Co
 }
 
 /**
- * Get prompts by situation
- */
-export function getPromptsBySituation(situation: PromptSituation): ConversationPrompt[] {
-	return prompts.filter((p) => p.situation === situation);
-}
-
-/**
  * Get a specific prompt by ID
  */
 export function getPromptById(id: string): ConversationPrompt | undefined {
 	return prompts.find((p) => p.id === id);
-}
-
-/**
- * Search prompts by keyword
- */
-export function searchPrompts(query: string): ConversationPrompt[] {
-	const normalizedQuery = query.toLowerCase().trim();
-	if (!normalizedQuery) return prompts;
-
-	return prompts.filter(
-		(p) =>
-			p.text.toLowerCase().includes(normalizedQuery) ||
-			p.relationship.toLowerCase().includes(normalizedQuery) ||
-			p.situation.toLowerCase().includes(normalizedQuery) ||
-			(p.emotion && p.emotion.toLowerCase().includes(normalizedQuery))
-	);
-}
-
-/**
- * Get unique situations for a relationship category
- */
-export function getSituationsForRelationship(
-	relationship: RelationshipCategory
-): PromptSituation[] {
-	const situations = prompts.filter((p) => p.relationship === relationship).map((p) => p.situation);
-	return [...new Set(situations)];
 }
 
 // ------------------------------------------
@@ -353,7 +319,7 @@ const MAX_SAVED_PROMPTS = 100;
 /**
  * Get recently used prompt IDs from localStorage
  */
-export function getRecentlyUsedIds(): string[] {
+function getRecentlyUsedIds(): string[] {
 	if (typeof window === 'undefined') return [];
 	try {
 		const stored = localStorage.getItem(RECENTLY_USED_KEY);
@@ -387,18 +353,6 @@ export function markPromptAsUsed(promptId: string): void {
 	}
 }
 
-/**
- * Clear recently used prompts
- */
-export function clearRecentlyUsed(): void {
-	if (typeof window === 'undefined') return;
-	try {
-		localStorage.removeItem(RECENTLY_USED_KEY);
-	} catch {
-		// Ignore localStorage errors
-	}
-}
-
 // ------------------------------------------
 // Saved Prompts (localStorage)
 // ------------------------------------------
@@ -406,7 +360,7 @@ export function clearRecentlyUsed(): void {
 /**
  * Get saved prompt IDs from localStorage
  */
-export function getSavedPromptIds(): string[] {
+function getSavedPromptIds(): string[] {
 	if (typeof window === 'undefined') return [];
 	try {
 		const stored = localStorage.getItem(SAVED_PROMPTS_KEY);
@@ -435,7 +389,7 @@ export function isPromptSaved(promptId: string): boolean {
 /**
  * Save a prompt
  */
-export function savePrompt(promptId: string): void {
+function savePrompt(promptId: string): void {
 	const ids = getSavedPromptIds();
 	if (ids.includes(promptId)) return;
 	setSavedPromptIds([promptId, ...ids]);
@@ -444,7 +398,7 @@ export function savePrompt(promptId: string): void {
 /**
  * Remove a saved prompt
  */
-export function unsavePrompt(promptId: string): void {
+function unsavePrompt(promptId: string): void {
 	const ids = getSavedPromptIds();
 	setSavedPromptIds(ids.filter((id) => id !== promptId));
 }
@@ -494,36 +448,3 @@ export const conversationPrompts: Record<PromptCategory, ConversationPrompt[]> =
 	boundaries: prompts.filter((p) => p.emotion === 'boundaries'),
 	'self-love': prompts.filter((p) => p.emotion === 'self-love')
 };
-
-/**
- * Legacy getPromptsByCategory function for backward compatibility
- */
-export function getPromptsByCategory(category: PromptCategory): ConversationPrompt[] {
-	return conversationPrompts[category];
-}
-
-/** Legacy PhrasePrompt interface for compatibility */
-export interface PhrasePrompt {
-	id: string;
-	title: string;
-	text: string;
-	category: EmotionCategory;
-	uses: number;
-}
-
-/** Legacy phrasePrompts array - maps to new prompts for backward compatibility */
-export const phrasePrompts: PhrasePrompt[] = prompts.slice(0, 5).map((p) => ({
-	id: p.id,
-	title: situationLabels[p.situation],
-	text: p.text,
-	category: p.emotion || 'gratitude',
-	uses: Math.floor(Math.random() * 2000) + 300
-}));
-
-/** Legacy formatUses helper */
-export function formatUses(uses: number): string {
-	if (uses >= 1000) {
-		return `${(uses / 1000).toFixed(1)}k uses`;
-	}
-	return `${uses} uses`;
-}

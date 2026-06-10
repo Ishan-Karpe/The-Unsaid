@@ -1,5 +1,7 @@
 // Crypto module barrel export
 export {
+	CURRENT_PBKDF2_ITERATIONS,
+	LEGACY_PBKDF2_ITERATIONS,
 	deriveKey,
 	encrypt,
 	decrypt,
@@ -8,4 +10,4 @@ export {
 	bufferToBase64,
 	base64ToBuffer
 } from './cipher';
-export { setKey, getKey, getSalt, hasKey, clearKey } from './keyStore';
+export { setKey, getKey, hasKey, clearKey } from './keyStore';

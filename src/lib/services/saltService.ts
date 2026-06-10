@@ -20,10 +20,32 @@
 // @see {@link keyDerivationService} for key derivation flow
 
 import { supabase } from './supabase';
-import { generateSalt, bufferToBase64, base64ToBuffer } from '$lib/crypto';
+import {
+	generateSalt,
+	bufferToBase64,
+	base64ToBuffer,
+	CURRENT_PBKDF2_ITERATIONS,
+	LEGACY_PBKDF2_ITERATIONS
+} from '$lib/crypto';
 import { isE2E, readStorage, writeStorage } from './e2eStorage';
 
 const E2E_SALT_KEY = 'e2e_salts';
+
+interface E2ESaltRecord {
+	salt: string;
+	iterations: number;
+}
+
+function readE2ESalts(): Record<string, E2ESaltRecord> {
+	// Tolerate the legacy plain-string format from older E2E storage
+	const raw = readStorage<Record<string, E2ESaltRecord | string>>(E2E_SALT_KEY, {});
+	const salts: Record<string, E2ESaltRecord> = {};
+	for (const [userId, value] of Object.entries(raw)) {
+		salts[userId] =
+			typeof value === 'string' ? { salt: value, iterations: LEGACY_PBKDF2_ITERATIONS } : value;
+	}
+	return salts;
+}
 
 /**
  * Result type for salt retrieval/creation operations.
@@ -48,6 +70,8 @@ const E2E_SALT_KEY = 'e2e_salts';
 export interface SaltResult {
 	salt: Uint8Array | null;
 	isNewUser: boolean;
+	/** PBKDF2 iteration count the user's key was derived with */
+	kdfIterations: number;
 	error: string | null;
 }
 
@@ -119,59 +143,90 @@ export const saltService = {
 	async getOrCreateSalt(userId: string): Promise<SaltResult> {
 		try {
 			if (isE2E) {
-				const salts = readStorage<Record<string, string>>(E2E_SALT_KEY, {});
+				const salts = readE2ESalts();
 				const existing = salts[userId];
 				if (existing) {
 					return {
-						salt: base64ToBuffer(existing),
+						salt: base64ToBuffer(existing.salt),
 						isNewUser: false,
+						kdfIterations: existing.iterations,
 						error: null
 					};
 				}
 
 				const newSalt = generateSalt();
-				salts[userId] = bufferToBase64(newSalt);
+				salts[userId] = {
+					salt: bufferToBase64(newSalt),
+					iterations: CURRENT_PBKDF2_ITERATIONS
+				};
 				writeStorage(E2E_SALT_KEY, salts);
 
-				return { salt: newSalt, isNewUser: true, error: null };
+				return {
+					salt: newSalt,
+					isNewUser: true,
+					kdfIterations: CURRENT_PBKDF2_ITERATIONS,
+					error: null
+				};
 			}
 
 			// Try to fetch existing salt
 			const { data, error } = await supabase
 				.from('user_salts')
-				.select('salt')
+				.select('salt, kdf_iterations')
 				.eq('user_id', userId)
 				.single();
 
 			if (error && error.code !== 'PGRST116') {
 				// PGRST116 = no rows returned (new user), any other error is unexpected
-				return { salt: null, isNewUser: false, error: error.message };
+				return {
+					salt: null,
+					isNewUser: false,
+					kdfIterations: LEGACY_PBKDF2_ITERATIONS,
+					error: error.message
+				};
 			}
 
 			if (data?.salt) {
-				// Existing user - return their salt
+				// Existing user - return their salt and stored iteration count
 				return {
 					salt: base64ToBuffer(data.salt),
 					isNewUser: false,
+					kdfIterations: data.kdf_iterations ?? LEGACY_PBKDF2_ITERATIONS,
 					error: null
 				};
 			}
 
-			// New user - generate and store salt
+			// New user - generate and store salt with the current KDF version
 			const newSalt = generateSalt();
 			const { error: insertError } = await supabase.from('user_salts').insert({
 				user_id: userId,
-				salt: bufferToBase64(newSalt)
+				salt: bufferToBase64(newSalt),
+				kdf_iterations: CURRENT_PBKDF2_ITERATIONS
 			});
 
 			if (insertError) {
-				return { salt: null, isNewUser: true, error: insertError.message };
+				return {
+					salt: null,
+					isNewUser: true,
+					kdfIterations: CURRENT_PBKDF2_ITERATIONS,
+					error: insertError.message
+				};
 			}
 
-			return { salt: newSalt, isNewUser: true, error: null };
+			return {
+				salt: newSalt,
+				isNewUser: true,
+				kdfIterations: CURRENT_PBKDF2_ITERATIONS,
+				error: null
+			};
 		} catch (err) {
 			const message = err instanceof Error ? err.message : 'Failed to get or create salt';
-			return { salt: null, isNewUser: false, error: message };
+			return {
+				salt: null,
+				isNewUser: false,
+				kdfIterations: LEGACY_PBKDF2_ITERATIONS,
+				error: message
+			};
 		}
 	},
 
@@ -206,37 +261,52 @@ export const saltService = {
 	 *   return salt !== null;
 	 * }
 	 */
-	async getSalt(userId: string): Promise<{ salt: Uint8Array | null; error: string | null }> {
+	async getSalt(
+		userId: string
+	): Promise<{ salt: Uint8Array | null; kdfIterations: number; error: string | null }> {
 		try {
 			if (isE2E) {
-				const salts = readStorage<Record<string, string>>(E2E_SALT_KEY, {});
+				const salts = readE2ESalts();
 				const existing = salts[userId];
 				if (!existing) {
-					return { salt: null, error: 'No salt found for user' };
+					return {
+						salt: null,
+						kdfIterations: LEGACY_PBKDF2_ITERATIONS,
+						error: 'No salt found for user'
+					};
 				}
-				return { salt: base64ToBuffer(existing), error: null };
+				return {
+					salt: base64ToBuffer(existing.salt),
+					kdfIterations: existing.iterations,
+					error: null
+				};
 			}
 
 			const { data, error } = await supabase
 				.from('user_salts')
-				.select('salt')
+				.select('salt, kdf_iterations')
 				.eq('user_id', userId)
 				.single();
 
 			if (error) {
 				if (error.code === 'PGRST116') {
-					return { salt: null, error: 'No salt found for user' };
+					return {
+						salt: null,
+						kdfIterations: LEGACY_PBKDF2_ITERATIONS,
+						error: 'No salt found for user'
+					};
 				}
-				return { salt: null, error: error.message };
+				return { salt: null, kdfIterations: LEGACY_PBKDF2_ITERATIONS, error: error.message };
 			}
 
 			return {
 				salt: base64ToBuffer(data.salt),
+				kdfIterations: data.kdf_iterations ?? LEGACY_PBKDF2_ITERATIONS,
 				error: null
 			};
 		} catch (err) {
 			const message = err instanceof Error ? err.message : 'Failed to get salt';
-			return { salt: null, error: message };
+			return { salt: null, kdfIterations: LEGACY_PBKDF2_ITERATIONS, error: message };
 		}
 	},
 
@@ -262,15 +332,23 @@ export const saltService = {
 	async updateSalt(userId: string, newSalt: Uint8Array): Promise<{ error: string | null }> {
 		try {
 			if (isE2E) {
-				const salts = readStorage<Record<string, string>>(E2E_SALT_KEY, {});
-				salts[userId] = bufferToBase64(newSalt);
+				const salts = readE2ESalts();
+				salts[userId] = {
+					salt: bufferToBase64(newSalt),
+					iterations: CURRENT_PBKDF2_ITERATIONS
+				};
 				writeStorage(E2E_SALT_KEY, salts);
 				return { error: null };
 			}
 
+			// A new salt always means a freshly derived key, so it is stored
+			// with the current iteration count (see keyDerivationService.deriveNewKey)
 			const { error } = await supabase
 				.from('user_salts')
-				.update({ salt: bufferToBase64(newSalt) })
+				.update({
+					salt: bufferToBase64(newSalt),
+					kdf_iterations: CURRENT_PBKDF2_ITERATIONS
+				})
 				.eq('user_id', userId);
 
 			if (error) {
@@ -280,6 +358,35 @@ export const saltService = {
 			return { error: null };
 		} catch (err) {
 			const message = err instanceof Error ? err.message : 'Failed to update salt';
+			return { error: message };
+		}
+	},
+
+	/**
+	 * Record the PBKDF2 iteration count the user's data is encrypted under.
+	 *
+	 * Called as the FINAL step of a KDF migration, only after every draft
+	 * has been successfully re-encrypted with the new key.
+	 */
+	async updateKdfIterations(userId: string, iterations: number): Promise<{ error: string | null }> {
+		try {
+			if (isE2E) {
+				const salts = readE2ESalts();
+				if (salts[userId]) {
+					salts[userId].iterations = iterations;
+					writeStorage(E2E_SALT_KEY, salts);
+				}
+				return { error: null };
+			}
+
+			const { error } = await supabase
+				.from('user_salts')
+				.update({ kdf_iterations: iterations })
+				.eq('user_id', userId);
+
+			return { error: error ? error.message : null };
+		} catch (err) {
+			const message = err instanceof Error ? err.message : 'Failed to update KDF iterations';
 			return { error: message };
 		}
 	}

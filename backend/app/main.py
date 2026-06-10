@@ -1,6 +1,7 @@
 # ===========================================
 # THE UNSAID - FastAPI Backend
 # ===========================================
+import logging
 import os
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -15,15 +16,18 @@ load_dotenv(Path(__file__).parent.parent.parent / ".env", override=True)
 from app.middleware.rate_limit import RateLimitMiddleware
 from app.routers import ai
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Startup and shutdown events"""
     # Startup
-    print("🚀 The Unsaid API starting...")
+    logger.info("The Unsaid API starting...")
     yield
     # Shutdown
-    print("👋 The Unsaid API shutting down...")
+    logger.info("The Unsaid API shutting down...")
 
 
 app = FastAPI(
@@ -58,14 +62,14 @@ if os.getenv("NODE_ENV", "development") == "development":
     # Deduplicate
     allow_origins = list({normalize_origin(origin) for origin in allow_origins if origin})
 
-print(f"CORS Allowed Origins: {allow_origins}")
+logger.info("CORS allowed origins: %s", allow_origins)
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allow_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 
 # Include routers

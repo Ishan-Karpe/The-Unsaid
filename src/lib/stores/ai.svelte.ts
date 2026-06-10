@@ -161,7 +161,6 @@ export const aiStore = {
 			suggestions = cached.options;
 			originalValid = cached.originalValid;
 			error = null;
-			console.log('AI Store: Using cached response for', mode);
 			return;
 		}
 
@@ -180,10 +179,6 @@ export const aiStore = {
 		originalValid = true;
 
 		try {
-			console.log('AI Store: Requesting suggestions...', {
-				mode,
-				length: draftText.length
-			});
 			// Get auth token from Supabase (use getUser for security)
 			const {
 				data: { user },
@@ -237,7 +232,6 @@ export const aiStore = {
 					originalValid: result.data.original_valid,
 					timestamp: Date.now()
 				});
-				console.log('AI Store: Cached response for', mode);
 			}
 		} catch (err) {
 			// Don't update state if request was aborted
@@ -326,7 +320,6 @@ export const aiStore = {
 	 */
 	clearCache() {
 		responseCache.clear();
-		console.log('AI Store: Cache cleared');
 	},
 
 	/**

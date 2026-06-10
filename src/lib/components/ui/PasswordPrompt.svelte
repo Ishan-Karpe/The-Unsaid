@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { keyDerivationService } from '$lib/services';
+	import { keyDerivationService, kdfMigrationService } from '$lib/services';
 	import { supabase } from '$lib/services/supabase';
 
 	interface Props {
@@ -44,6 +44,15 @@
 				error = result.error || 'Failed to restore encryption key';
 				isProcessing = false;
 				return;
+			}
+
+			// Upgrade legacy KDF users while the password is available.
+			// Non-fatal on failure: the migration resumes on the next login.
+			if (result.needsKdfMigration) {
+				const migration = await kdfMigrationService.migrateKdf(user.id, password);
+				if (!migration.success) {
+					console.error('KDF migration incomplete, will retry next login:', migration.error);
+				}
 			}
 
 			// Success - encryption key is now available

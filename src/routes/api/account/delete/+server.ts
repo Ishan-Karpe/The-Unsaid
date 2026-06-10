@@ -87,18 +87,12 @@ export const DELETE: RequestHandler = async (event) => {
 
 		if (deleteUserError) {
 			console.error('Error deleting user account:', deleteUserError);
-			return json(
-				{ error: 'Failed to delete account: ' + deleteUserError.message },
-				{ status: 500 }
-			);
+			return json({ error: 'Failed to delete account' }, { status: 500 });
 		}
 
 		return json({ success: true, message: 'Account deleted successfully' });
 	} catch (err) {
 		console.error('Account deletion error:', err);
-		return json(
-			{ error: err instanceof Error ? err.message : 'Failed to delete account' },
-			{ status: 500 }
-		);
+		return json({ error: 'Failed to delete account' }, { status: 500 });
 	}
 };

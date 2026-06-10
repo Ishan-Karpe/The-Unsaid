@@ -6,7 +6,7 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/stores';
 	import { Button, Input, Alert } from '$lib/components';
-	import { authService, keyDerivationService } from '$lib/services';
+	import { authService, keyDerivationService, kdfMigrationService } from '$lib/services';
 	import { authStore } from '$lib/stores/auth.svelte';
 
 	let email = $state('');
@@ -52,6 +52,16 @@
 			await authService.logout();
 			loading = false;
 			return;
+		}
+
+		// Upgrade users on a legacy KDF iteration count while the password
+		// is available. Failure is non-fatal: the migration is resumable
+		// and will retry on the next login.
+		if (keyResult.needsKdfMigration) {
+			const migration = await kdfMigrationService.migrateKdf(result.user!.id, password);
+			if (!migration.success) {
+				console.error('KDF migration incomplete, will retry next login:', migration.error);
+			}
 		}
 
 		// Store "remember me" preference in localStorage

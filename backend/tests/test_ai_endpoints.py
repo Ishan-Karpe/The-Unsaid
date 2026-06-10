@@ -86,6 +86,7 @@ class TestToneEndpoint:
         mock_response = AIResponse(
             options=[
                 AIOption(text="I notice this happens often", why=""),
+                AIOption(text="This pattern keeps coming up for me", why=""),
             ],
             original_valid=True,
         )

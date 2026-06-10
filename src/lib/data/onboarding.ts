@@ -53,24 +53,3 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
  * Get the total number of steps
  */
 export const TOTAL_STEPS = ONBOARDING_STEPS.length;
-
-/**
- * Get step by index
- */
-export function getStep(index: number): OnboardingStep | undefined {
-	return ONBOARDING_STEPS[index];
-}
-
-/**
- * Get step by id
- */
-export function getStepById(id: string): OnboardingStep | undefined {
-	return ONBOARDING_STEPS.find((step) => step.id === id);
-}
-
-/**
- * Get step index by id
- */
-export function getStepIndex(id: string): number {
-	return ONBOARDING_STEPS.findIndex((step) => step.id === id);
-}

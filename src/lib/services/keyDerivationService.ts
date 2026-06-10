@@ -7,7 +7,8 @@
 // 3. Store key in memory (never persisted)
 //
 // SECURITY ARCHITECTURE:
-// - Uses PBKDF2-SHA-256 with 100,000 iterations
+// - Uses PBKDF2-SHA-256 with a versioned iteration count (currently 600,000;
+//   per-user kdf_iterations stored in user_salts, legacy users lazily migrated)
 // - Salt is 16 bytes (128 bits) from crypto.getRandomValues()
 // - Derived key is 256 bits (AES-256)
 // - Key exists ONLY in memory - never written to disk or sent to server
@@ -24,7 +25,15 @@
 // @see {@link saltService} for salt management
 // @see {@link $lib/crypto/cipher} for PBKDF2 implementation
 
-import { deriveKey, setKey, clearKey, hasKey, getKey, generateSalt } from '$lib/crypto';
+import {
+	deriveKey,
+	setKey,
+	clearKey,
+	hasKey,
+	getKey,
+	generateSalt,
+	CURRENT_PBKDF2_ITERATIONS
+} from '$lib/crypto';
 import { saltService } from './saltService';
 import { isE2E, setE2EPassword } from './e2eStorage';
 
@@ -51,6 +60,11 @@ import { isE2E, setE2EPassword } from './e2eStorage';
 export interface KeyDerivationResult {
 	success: boolean;
 	isNewUser: boolean;
+	/**
+	 * True when the user's key was derived with an outdated iteration count
+	 * and their drafts should be re-encrypted (see kdfMigrationService).
+	 */
+	needsKdfMigration: boolean;
 	error: string | null;
 }
 
@@ -92,7 +106,7 @@ export const keyDerivationService = {
 	 *
 	 * This is called after successful authentication. It:
 	 * 1. Fetches the user's salt from the database (or creates one for new users)
-	 * 2. Derives an AES-256 key using PBKDF2 with 100,000 iterations
+	 * 2. Derives an AES-256 key using PBKDF2 with the user's stored (versioned) iteration count
 	 * 3. Stores the key in memory for use by the encryption service
 	 *
 	 * The password is used only for derivation and is NOT stored anywhere.
@@ -138,19 +152,20 @@ export const keyDerivationService = {
 	async deriveAndStoreKey(userId: string, password: string): Promise<KeyDerivationResult> {
 		try {
 			// Get or create salt for this user
-			const { salt, isNewUser, error } = await saltService.getOrCreateSalt(userId);
+			const { salt, isNewUser, kdfIterations, error } = await saltService.getOrCreateSalt(userId);
 
 			if (error || !salt) {
 				return {
 					success: false,
 					isNewUser: false,
+					needsKdfMigration: false,
 					error: error || 'Failed to get salt'
 				};
 			}
 
-			// Derive the encryption key from password + salt
-			// Uses PBKDF2 with 100,000 iterations (see cipher.ts)
-			const key = await deriveKey(password, salt);
+			// Derive the encryption key from password + salt using the
+			// iteration count the user's data was encrypted under
+			const key = await deriveKey(password, salt, kdfIterations);
 
 			// Store key in memory (never persisted to disk or server)
 			setKey(key, salt);
@@ -159,10 +174,15 @@ export const keyDerivationService = {
 				setE2EPassword(password);
 			}
 
-			return { success: true, isNewUser, error: null };
+			return {
+				success: true,
+				isNewUser,
+				needsKdfMigration: !isNewUser && kdfIterations < CURRENT_PBKDF2_ITERATIONS,
+				error: null
+			};
 		} catch (err) {
 			const message = err instanceof Error ? err.message : 'Key derivation failed';
-			return { success: false, isNewUser: false, error: message };
+			return { success: false, isNewUser: false, needsKdfMigration: false, error: message };
 		}
 	},
 
@@ -274,8 +294,8 @@ export const keyDerivationService = {
 		error: string | null;
 	}> {
 		try {
-			// Get the existing salt
-			const { salt, error } = await saltService.getSalt(userId);
+			// Get the existing salt and the iteration count it was used with
+			const { salt, kdfIterations, error } = await saltService.getSalt(userId);
 
 			if (error || !salt) {
 				return {
@@ -286,8 +306,8 @@ export const keyDerivationService = {
 				};
 			}
 
-			// Derive key from password + salt
-			const derivedKey = await deriveKey(password, salt);
+			// Derive key from password + salt with the user's stored iterations
+			const derivedKey = await deriveKey(password, salt, kdfIterations);
 
 			// For now, we consider the password valid if we could derive a key
 			// In production, you might want to test decryption of a known value

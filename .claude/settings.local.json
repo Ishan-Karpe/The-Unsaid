@@ -1,7 +1,14 @@
 {
-	"enableAllProjectMcpServers": true,
-	"enabledMcpjsonServers": ["svelte"],
 	"permissions": {
-		"allow": ["Bash(find:*)"]
-	}
+		"allow": [
+			"Bash(find:*)",
+			"Bash(pnpm test *)",
+			"Bash(pnpm check *)",
+			"Bash(pnpm lint *)",
+			"Bash(ruff check *)",
+			"Bash(uv run *)"
+		]
+	},
+	"enableAllProjectMcpServers": true,
+	"enabledMcpjsonServers": ["svelte"]
 }

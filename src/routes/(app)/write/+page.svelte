@@ -221,7 +221,6 @@
 
 		// Skip if same request as last time (user double-clicked)
 		if (requestKey === lastRequestKey && aiStore.isLoading) {
-			console.log('Skipping duplicate AI request');
 			return;
 		}
 

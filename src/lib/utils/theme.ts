@@ -51,7 +51,7 @@ export function getStoredTheme(): ThemeMode {
  * setStoredTheme('dark');
  * // User preference is now saved
  */
-export function setStoredTheme(mode: ThemeMode): void {
+function setStoredTheme(mode: ThemeMode): void {
 	if (!browser) return;
 	localStorage.setItem(STORAGE_KEY, mode);
 }
@@ -67,7 +67,7 @@ export function setStoredTheme(mode: ThemeMode): void {
  * const effectiveTheme = getEffectiveTheme('system');
  * // Returns 'dark' if OS is in dark mode
  */
-export function getEffectiveTheme(mode: ThemeMode): 'light' | 'dark' {
+function getEffectiveTheme(mode: ThemeMode): 'light' | 'dark' {
 	if (!browser) return 'light';
 
 	if (mode === 'system') {

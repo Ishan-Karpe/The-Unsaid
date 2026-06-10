@@ -55,7 +55,7 @@ pytest                               # Run tests
 - **Frontend**: SvelteKit (Svelte 5 with runes), TypeScript, Tailwind CSS v4 + DaisyUI v5
 - **Backend**: FastAPI (Python 3.11+), Pydantic, OpenRouter API
 - **Database**: Supabase (PostgreSQL + Auth via `@supabase/ssr`)
-- **Encryption**: AES-256-GCM with PBKDF2 key derivation (100,000 iterations)
+- **Encryption**: AES-256-GCM with versioned PBKDF2 key derivation (600,000 iterations current; per-user `kdf_iterations` with lazy migration on login)
 - **Testing**: Vitest (dual client/server projects), Playwright E2E, pytest
 
 ## Architecture
@@ -64,7 +64,7 @@ pytest                               # Run tests
 
 The core security feature. All draft content is encrypted in the browser before transmission:
 
-1. **Key Derivation** (`src/lib/services/keyDerivationService.ts`): PBKDF2 derives a key from user password + salt (stored in `user_salts` table)
+1. **Key Derivation** (`src/lib/services/keyDerivationService.ts`): PBKDF2 derives a key from user password + salt. Iteration counts are versioned per user (`user_salts.kdf_iterations`, currently 600,000); users on older counts are lazily migrated on login via `kdfMigrationService.ts`
 2. **Cipher** (`src/lib/crypto/cipher.ts`): AES-256-GCM with unique 96-bit IV per draft
 3. **Key Storage** (`src/lib/crypto/keyStore.ts`): Keys exist only in memory, never persisted
 
@@ -88,8 +88,9 @@ All business logic lives in `src/lib/services/`:
 
 - `draftService.ts` — CRUD for drafts, calls encryption service automatically
 - `encryptionService.ts` — Encrypts/decrypts draft content and metadata
-- `keyDerivationService.ts` — PBKDF2 key derivation from password
-- `saltService.ts` — Manages per-user salts in database
+- `keyDerivationService.ts` — Versioned PBKDF2 key derivation from password
+- `saltService.ts` — Manages per-user salts and `kdf_iterations` in database
+- `kdfMigrationService.ts` — Re-encrypts drafts when a user's KDF iteration count is outdated (lazy migration on login)
 - `ai.ts` — AI suggestions with exponential backoff retry, timeout, cancellation
 
 All services follow the `{ data, error }` result pattern - they never throw exceptions.
@@ -101,7 +102,6 @@ Stores in `src/lib/stores/` use Svelte 5 runes (`$state`, `$derived`):
 - `draft.svelte.ts` — Current draft content, metadata, dirty state
 - `ai.svelte.ts` — AI request states, suggestions, active modes
 - `auth.svelte.ts` — User session state
-- `crypto.svelte.ts` — Encryption key availability
 
 ### Backend Structure
 
@@ -150,7 +150,7 @@ Encryption edge cases are tested in `src/lib/crypto/cipher.edge-cases.svelte.tes
 ## Database Tables
 
 - `drafts` — Encrypted user content (`encrypted_content`, `encrypted_metadata`, `iv`, `deleted_at`)
-- `user_salts` — Per-user encryption salts (`user_id`, `salt`)
+- `user_salts` — Per-user encryption salts (`user_id`, `salt`, `kdf_iterations`)
 - `auth.users` — Managed by Supabase Auth
 
 ## Key Patterns
@@ -186,7 +186,6 @@ The app follows WCAG 2.1 AA guidelines:
 
 ### Mobile Responsiveness
 
-- Responsive utilities in `src/lib/utils/responsive.ts`
 - Breakpoints: `sm` (640px), `md` (768px), `lg` (1024px), `xl` (1280px)
 - Mobile drawer for AI suggestions on small screens
 - Touch-friendly tap targets (56px FAB button)

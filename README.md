@@ -1,5 +1,6 @@
 # The Unsaid
 
+<<<<<<< HEAD
 **[Try The Unsaid →](https://theunsaid.vercel.app)**
 
 [![License](https://img.shields.io/badge/license-MIT-blue?style=for-the-badge)](LICENSE)
@@ -316,3 +317,84 @@ This isn't a startup. It's not a resume project. It's a tool I wish existed when
 <p align="center">
   <sub>Made with ❤️ by Ishan Karpe</sub>
 </p>
+=======
+A privacy-focused AI articulation assistant with zero-knowledge encryption — your drafts are encrypted in the browser before they ever leave it, so the server never sees plaintext.
+
+## Features
+
+- **Zero-knowledge encryption** — all draft content is encrypted client-side with AES-256-GCM; the server only stores ciphertext.
+- **Versioned key derivation** — PBKDF2-SHA-256 at 600,000 iterations for new users, with a per-user `kdf_iterations` version and lazy migration that re-encrypts legacy (100k-iteration) users' data on login.
+- **AI writing modes** — Tone Check, Expand Thought, Rewrite, Alternative Phrasings, and Opening Suggestions, powered by OpenRouter via a FastAPI backend (only text you explicitly submit is sent for suggestions).
+- **Soft-delete trash** — drafts move to trash and can be restored or permanently deleted.
+- **Accessibility** — built to WCAG 2.1 AA: skip links, ARIA attributes, focus management, screen-reader announcements, 44px+ touch targets.
+
+## Architecture
+
+### Zero-knowledge flow
+
+1. On login, the user's password plus a per-user random salt (stored in the `user_salts` table) is run through PBKDF2 to derive an AES-256 key.
+2. The key lives **only in memory** (`src/lib/crypto/keyStore.ts`) — never persisted, never transmitted. It is cleared on logout; after a page refresh the user re-enters their password.
+3. Each draft is encrypted with AES-256-GCM using a unique 96-bit IV (`src/lib/crypto/cipher.ts`).
+4. `user_salts.kdf_iterations` records which iteration count each user's key was derived with. When a user logs in with an outdated count, `kdfMigrationService.ts` re-encrypts their drafts under the current 600,000 iterations.
+
+### Tech stack
+
+| Layer    | Technology                                                           |
+| -------- | -------------------------------------------------------------------- |
+| Frontend | SvelteKit (Svelte 5 runes), TypeScript, Tailwind CSS v4 + DaisyUI v5 |
+| Backend  | FastAPI (Python 3.11+), Pydantic, OpenRouter API                     |
+| Database | Supabase (PostgreSQL + Auth via `@supabase/ssr`)                     |
+| Crypto   | Web Crypto API: AES-256-GCM, PBKDF2-SHA-256                          |
+| Testing  | Vitest (browser + node projects), Playwright E2E, pytest             |
+
+Business logic lives in `src/lib/services/` (draft CRUD, encryption, key derivation, salts, KDF migration, AI). All services return `{ data, error }` objects rather than throwing.
+
+## Getting started
+
+### Prerequisites
+
+- Node.js + [pnpm](https://pnpm.io)
+- Python 3.11+ and [uv](https://docs.astral.sh/uv/)
+- A [Supabase](https://supabase.com) project
+
+### Setup
+
+```bash
+# 1. Environment
+cp .env.example .env   # fill in Supabase + OpenRouter keys
+
+# 2. Database — apply migrations in supabase/migrations/
+#    (via the Supabase SQL editor or `supabase db push`)
+
+# 3. Frontend
+pnpm install
+pnpm dev               # http://localhost:5173
+
+# 4. Backend
+cd backend
+uv sync
+uvicorn app.main:app --reload   # http://localhost:8000
+```
+
+## Testing
+
+```bash
+pnpm test        # Vitest unit tests (browser + node projects)
+pnpm test:e2e    # Playwright E2E (auth, encryption, sync flows)
+pnpm check       # svelte-check / TypeScript
+pnpm lint        # Prettier + ESLint
+
+cd backend && uv run pytest   # backend tests
+```
+
+## Deployment
+
+- **Frontend**: Vercel (`@sveltejs/adapter-vercel`)
+- **Backend**: Railway (FastAPI + uvicorn)
+
+Set the environment variables listed in `.env.example` in each platform's dashboard.
+
+## License
+
+Personal project — all rights reserved.
+>>>>>>> c2d8d4b ( implement versioned PBKDF2 iteration (600) support with auto-migration, update encryption configuration, and perform site-wide codebase cleanup.)

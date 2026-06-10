@@ -32,6 +32,7 @@ vi.mock('$lib/services', async () => {
 		insightsService: {},
 		exportService: {},
 		passwordChangeService: {},
+		kdfMigrationService: {},
 		supabase: {}
 	};
 });

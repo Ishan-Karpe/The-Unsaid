@@ -45,29 +45,6 @@ export async function login(
 }
 
 /**
- * Sign up a new test user
- * Creates a new account and waits for redirect
- */
-export async function signup(page: Page, email: string, password: string): Promise<void> {
-	await page.goto('/signup');
-	await page.waitForLoadState('networkidle');
-
-	// Fill email
-	await page.locator('input[type="email"]').fill(email);
-
-	// Fill password fields (password and confirmation)
-	const passwordInputs = page.locator('input[type="password"]');
-	await passwordInputs.nth(0).fill(password);
-	await passwordInputs.nth(1).fill(password); // Confirm password
-
-	// Submit form
-	await page.locator('button[type="submit"]').click();
-
-	// Wait for redirect to write page
-	await page.waitForURL('**/write', { timeout: 20000 });
-}
-
-/**
  * Log out the current user
  * Navigates to settings and clicks sign out
  */
@@ -156,55 +133,9 @@ export async function enterPasswordForKey(page: Page, password: string): Promise
 }
 
 /**
- * Check if user is logged in by verifying navigation
- */
-export async function isLoggedIn(page: Page): Promise<boolean> {
-	await page.goto('/write');
-	await page.waitForLoadState('networkidle');
-
-	// If redirected to login, user is not logged in
-	return !page.url().includes('/login');
-}
-
-/**
- * Clear all drafts for a test user (cleanup utility)
- */
-export async function clearDrafts(page: Page): Promise<void> {
-	await page.goto('/history');
-	await page.waitForLoadState('networkidle');
-
-	// Look for delete all or trash button if available
-	const deleteButton = page.locator('button').filter({ hasText: /delete|trash|clear/i });
-	if (await deleteButton.first().isVisible()) {
-		await deleteButton.first().click();
-
-		// Confirm if there's a confirmation dialog
-		const confirmButton = page.locator('button').filter({ hasText: /confirm|yes|delete/i });
-		if (await confirmButton.first().isVisible({ timeout: 1000 })) {
-			await confirmButton.first().click();
-		}
-	}
-}
-
-/**
  * Generate a unique test content string
  * Useful for creating distinct drafts in tests
  */
 export function generateTestContent(prefix: string = 'E2E Test'): string {
 	return `${prefix} - ${Date.now()} - ${Math.random().toString(36).substring(7)}`;
-}
-
-/**
- * Wait for network to be idle with a custom timeout
- */
-export async function waitForNetworkIdle(page: Page, timeout: number = 5000): Promise<void> {
-	await page.waitForLoadState('networkidle', { timeout });
-}
-
-/**
- * Take a screenshot with a descriptive name
- * Useful for debugging failed tests
- */
-export async function takeDebugScreenshot(page: Page, name: string): Promise<void> {
-	await page.screenshot({ path: `e2e/screenshots/${name}-${Date.now()}.png` });
 }
