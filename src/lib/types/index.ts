@@ -41,6 +41,27 @@ export interface EncryptedDraft {
 	deleted_at: string | null; // For soft delete
 }
 
+// Ciphertext snapshot of a draft, taken before autosave overwrites it
+export interface EncryptedDraftVersion {
+	id: string;
+	draft_id: string;
+	user_id: string;
+	encrypted_content: string;
+	encrypted_metadata: string;
+	iv: string;
+	created_at: string;
+}
+
+// Decrypted draft version for display in the history drawer
+export interface DraftVersion {
+	id: string;
+	content: string;
+	recipient: string;
+	intent: string;
+	emotion?: string;
+	createdAt: Date;
+}
+
 // ------------------------------------------
 // Auth Types
 // ------------------------------------------

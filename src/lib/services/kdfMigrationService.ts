@@ -28,7 +28,77 @@ import {
 	setKey,
 	CURRENT_PBKDF2_ITERATIONS
 } from '$lib/crypto';
-import type { EncryptedDraft } from '$lib/types';
+import type { EncryptedDraft, EncryptedDraftVersion } from '$lib/types';
+
+/**
+ * Re-encrypt a table's ciphertext rows from `legacyKey` to `newKey`.
+ *
+ * Rows already readable with the new key are skipped, which is what makes
+ * an interrupted migration resumable. Stops at the first failure so
+ * `kdf_iterations` is never advanced past unmigrated data.
+ */
+async function migrateRows(
+	table: 'drafts' | 'draft_versions',
+	rows: Array<
+		Pick<
+			EncryptedDraft | EncryptedDraftVersion,
+			'id' | 'encrypted_content' | 'encrypted_metadata' | 'iv'
+		>
+	>,
+	legacyKey: CryptoKey,
+	newKey: CryptoKey
+): Promise<{ migrated: number; error: string | null }> {
+	let migrated = 0;
+
+	for (const row of rows) {
+		// New key first: succeeds for rows a previous (interrupted)
+		// run already migrated, which need no further work.
+		try {
+			await decrypt(row.encrypted_content, row.iv, newKey);
+			continue;
+		} catch {
+			// Not yet migrated — fall through to the legacy key
+		}
+
+		let content: string;
+		let metadataJson: string;
+		try {
+			content = await decrypt(row.encrypted_content, row.iv, legacyKey);
+			metadataJson = await decrypt(row.encrypted_metadata, row.iv, legacyKey);
+		} catch {
+			return {
+				migrated,
+				error: `Failed to decrypt ${table} row ${row.id} during KDF migration`
+			};
+		}
+
+		const iv = generateIV();
+		const { ciphertext: encryptedContent, iv: ivBase64 } = await encrypt(content, newKey, iv);
+		const { ciphertext: encryptedMetadata } = await encrypt(metadataJson, newKey, iv);
+
+		const { error: updateError } = await supabase
+			.from(table)
+			.update({
+				encrypted_content: encryptedContent,
+				encrypted_metadata: encryptedMetadata,
+				iv: ivBase64
+			})
+			.eq('id', row.id);
+
+		if (updateError) {
+			// Abort without touching kdf_iterations: next login re-derives
+			// the legacy key and this migration resumes where it stopped.
+			return {
+				migrated,
+				error: `Failed to update ${table} row ${row.id}: ${updateError.message}`
+			};
+		}
+
+		migrated++;
+	}
+
+	return { migrated, error: null };
+}
 
 export interface KdfMigrationResult {
 	success: boolean;
@@ -77,55 +147,41 @@ export const kdfMigrationService = {
 				};
 			}
 
-			let migrated = 0;
+			const draftsResult = await migrateRows(
+				'drafts',
+				(encryptedDrafts || []) as EncryptedDraft[],
+				legacyKey,
+				newKey
+			);
+			if (draftsResult.error) {
+				return { success: false, draftsMigrated: draftsResult.migrated, error: draftsResult.error };
+			}
+			let migrated = draftsResult.migrated;
 
-			for (const draft of (encryptedDrafts || []) as EncryptedDraft[]) {
-				// New key first: succeeds for drafts a previous (interrupted)
-				// run already migrated, which need no further work.
-				try {
-					await decrypt(draft.encrypted_content, draft.iv, newKey);
-					continue;
-				} catch {
-					// Not yet migrated — fall through to the legacy key
-				}
+			// Version snapshots are ciphertext copies under the same key and
+			// must be migrated too, or history becomes unreadable.
+			const { data: versionRows, error: versionsError } = await supabase
+				.from('draft_versions')
+				.select('*')
+				.eq('user_id', userId);
 
-				let content: string;
-				let metadataJson: string;
-				try {
-					content = await decrypt(draft.encrypted_content, draft.iv, legacyKey);
-					metadataJson = await decrypt(draft.encrypted_metadata, draft.iv, legacyKey);
-				} catch {
-					return {
-						success: false,
-						draftsMigrated: migrated,
-						error: `Failed to decrypt draft ${draft.id} during KDF migration`
-					};
-				}
+			if (versionsError) {
+				return {
+					success: false,
+					draftsMigrated: migrated,
+					error: `Failed to fetch draft versions: ${versionsError.message}`
+				};
+			}
 
-				const iv = generateIV();
-				const { ciphertext: encryptedContent, iv: ivBase64 } = await encrypt(content, newKey, iv);
-				const { ciphertext: encryptedMetadata } = await encrypt(metadataJson, newKey, iv);
-
-				const { error: updateError } = await supabase
-					.from('drafts')
-					.update({
-						encrypted_content: encryptedContent,
-						encrypted_metadata: encryptedMetadata,
-						iv: ivBase64
-					})
-					.eq('id', draft.id);
-
-				if (updateError) {
-					// Abort without touching kdf_iterations: next login re-derives
-					// the legacy key and this migration resumes where it stopped.
-					return {
-						success: false,
-						draftsMigrated: migrated,
-						error: `Failed to update draft ${draft.id}: ${updateError.message}`
-					};
-				}
-
-				migrated++;
+			const versionsResult = await migrateRows(
+				'draft_versions',
+				(versionRows || []) as EncryptedDraftVersion[],
+				legacyKey,
+				newKey
+			);
+			migrated += versionsResult.migrated;
+			if (versionsResult.error) {
+				return { success: false, draftsMigrated: migrated, error: versionsResult.error };
 			}
 
 			// Every draft is now under the new key — record the new count.

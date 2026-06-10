@@ -6,7 +6,7 @@
 
 import { untrack } from 'svelte';
 import { draftStore } from '$lib/stores/draft.svelte';
-import { draftService } from '$lib/services';
+import { draftService, versionService } from '$lib/services';
 
 export interface AutosaveOptions {
 	/** Debounce delay in milliseconds (default: 2000) */
@@ -69,6 +69,15 @@ export function useAutosave(options: AutosaveOptions = {}) {
 		onSaveStart?.();
 
 		try {
+			// Preserve the previous encrypted state before overwriting it
+			// (throttled inside the service; failures never block the save)
+			if (draftStore.draft.id) {
+				const { error: snapshotError } = await versionService.snapshotIfDue(draftStore.draft.id);
+				if (snapshotError) {
+					console.error('Version snapshot failed:', snapshotError);
+				}
+			}
+
 			const { draft, error } = await draftService.saveDraft({
 				id: draftStore.draft.id,
 				content: draftStore.draft.content,

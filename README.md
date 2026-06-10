@@ -1,12 +1,11 @@
 # The Unsaid
 
-<<<<<<< HEAD
 **[Try The Unsaid →](https://theunsaid.vercel.app)**
 
 [![License](https://img.shields.io/badge/license-MIT-blue?style=for-the-badge)](LICENSE)
 [![Built with SvelteKit](https://img.shields.io/badge/SvelteKit-FF3E00?style=for-the-badge&logo=svelte&logoColor=white)](https://kit.svelte.dev/)
 
-> *"I've been trying to tell my dad I'm proud of him for two years.  I keep drafting it in my Notes app and deleting it.  Your app finally helped me find the words."*  
+> _"I've been trying to tell my dad I'm proud of him for two years. I keep drafting it in my Notes app and deleting it. Your app finally helped me find the words."_  
 > — Beta tester, December 2025
 
 ---
@@ -17,48 +16,51 @@
 
 Fair question. Here's the truth: **a blank Notes app is terrifying when the stakes are high.**
 
-When you're trying to tell your mom you appreciate her sacrifices, or apologize to someone you hurt, or say goodbye to a friend who's moving away — that blinking cursor in Notes doesn't help you.  It just judges you. 
+When you're trying to tell your mom you appreciate her sacrifices, or apologize to someone you hurt, or say goodbye to a friend who's moving away — that blinking cursor in Notes doesn't help you. It just judges you.
 
-The Unsaid is different because it **meets you where you are**: 
+The Unsaid is different because it **meets you where you are**:
+
 - **Prompts that unlock what you're feeling** — "I've never told you this, but..." is easier than a blank page
-- **AI that refines, not replaces** — You still write it.  AI just helps you say it better
-- **Privacy so you can be honest** — Zero-knowledge encryption means even *I* can't read your drafts
+- **AI that refines, not replaces** — You still write it. AI just helps you say it better
+- **Privacy so you can be honest** — Zero-knowledge encryption means even _I_ can't read your drafts
 - **Patterns that show your growth** — See how your communication evolves over time
 - **Saves your courage** — That thing you almost sent? It's here when you're ready
 
-**A notes app is a box.  The Unsaid is a guide.**
+**A notes app is a box. The Unsaid is a guide.**
 
 ---
 
 ## The Even Harder Question
 
-**"If I'll never send them, why keep them at all?  Isn't that just emotional hoarding?"**
+**"If I'll never send them, why keep them at all? Isn't that just emotional hoarding?"**
 
-Here's what I learned building this:  **unsent letters aren't failures.  They're proof you tried to show up.**
+Here's what I learned building this: **unsent letters aren't failures. They're proof you tried to show up.**
 
 Some things you'll send:
+
 - The apology you've been putting off
 - The gratitude text that felt "too much"
 - The boundaries conversation you've been avoiding
 
 Some things you'll keep:
+
 - Letters to people who are gone
 - Drafts that helped you process before therapy
 - Words you needed to say out loud, even if only to yourself
 
 **Writing it down isn't about sending it. It's about not carrying it alone.**
 
-Your notes app doesn't differentiate between a grocery list and a letter to your deceased grandfather. The Unsaid does.  It treats your hard conversations with the weight they deserve.
+Your notes app doesn't differentiate between a grocery list and a letter to your deceased grandfather. The Unsaid does. It treats your hard conversations with the weight they deserve.
 
-And if you *do* want to delete them?  You can. **Export everything, delete your account, and walk away clean. ** No guilt, no "are you sure?" dark patterns.  Just a tool that was there when you needed it.
+And if you _do_ want to delete them? You can. **Export everything, delete your account, and walk away clean. ** No guilt, no "are you sure?" dark patterns. Just a tool that was there when you needed it.
 
 ---
 
 ## Why This Exists
 
-I built The Unsaid because I watched too many people — myself included — *almost* say the thing that mattered.  Almost apologize.  Almost reconnect. Almost tell someone they mattered.
+I built The Unsaid because I watched too many people — myself included — _almost_ say the thing that mattered. Almost apologize. Almost reconnect. Almost tell someone they mattered.
 
-The gap between *feeling something* and *saying it well* is where relationships die. 
+The gap between _feeling something_ and _saying it well_ is where relationships die.
 
 This tool bridges that gap. Not by writing for you, but by **helping you find the words that were already in you.**
 
@@ -67,25 +69,29 @@ This tool bridges that gap. Not by writing for you, but by **helping you find th
 ## What Makes This Different
 
 ### **Zero-Knowledge Encryption (Actually)**
-- **AES-256-GCM encryption** happens in your browser *before* data leaves your device
-- Your password = your key.  I literally cannot read your drafts even if I wanted to
+
+- **AES-256-GCM encryption** happens in your browser _before_ data leaves your device
+- Your password = your key. I literally cannot read your drafts even if I wanted to
 - No backdoors, no "trust us," no fine print
 - Open source crypto implementation — [verify it yourself](src/lib/crypto/cipher.ts)
 
 ### **AI That Respects Your Voice**
-| Other AI Tools | The Unsaid |
-|---|---|
-| "Here, I wrote it for you" | "Here are 3 ways to say what *you* already meant" |
-| Generates polished corporate speak | Preserves your emotional truth |
-| No consent required | Explicit opt-in, disable anytime |
-| Your data trains their models | Your drafts never leave the encryption layer |
+
+| Other AI Tools                     | The Unsaid                                        |
+| ---------------------------------- | ------------------------------------------------- |
+| "Here, I wrote it for you"         | "Here are 3 ways to say what _you_ already meant" |
+| Generates polished corporate speak | Preserves your emotional truth                    |
+| No consent required                | Explicit opt-in, disable anytime                  |
+| Your data trains their models      | Your drafts never leave the encryption layer      |
 
 ### **Insights Without Surveillance**
+
 - See patterns in who you write to, when you struggle, what emotions you revisit
 - **All analysis happens locally** after decryption — your data never goes to an analytics server
 - No tracking pixels, no ad retargeting, no selling "anonymized" datasets
 
 ### **Built for Real Conversations**
+
 - **30+ curated prompts** organized by relationship type (parents, partners, friends, grief, self)
 - Emotion tagging so you can find "that draft where I was trying to apologize"
 - History timeline that shows your communication journey
@@ -100,8 +106,9 @@ This tool bridges that gap. Not by writing for you, but by **helping you find th
 - **Anyone** carrying something unsaid that's getting heavier
 
 **This is for you if:**
+
 - You've drafted and deleted the same text 47 times
-- You know what you *feel* but not how to *say* it
+- You know what you _feel_ but not how to _say_ it
 - You've used ChatGPT for a difficult message and felt gross about it
 - You want AI help without giving up your privacy
 - You believe words matter and deserve better than a notes app
@@ -111,21 +118,25 @@ This tool bridges that gap. Not by writing for you, but by **helping you find th
 ## Features
 
 ### Core Experience
+
 - **Distraction-free editor** with autosave and sync
 - **Conversation prompts** by relationship and situation
-- **AI articulation modes**:  Clarity, Alternatives, Tone, Expansion, Opening suggestions
+- **AI articulation modes**: Clarity, Alternatives, Tone, Expansion, Opening suggestions
 - **Draft history** with search, filters, and patterns
+- **Encrypted version history** — automatic ciphertext snapshots while you write (throttled, last 20 kept), browsable and restorable without ever exposing plaintext to the server
 - **Export** to JSON, Markdown, or TXT
 - **Full data control** — export everything, delete account, no questions asked
 
 ### Privacy & Security
-- End-to-end encryption (AES-256-GCM + PBKDF2 10K iterations)
+
+- End-to-end encryption (AES-256-GCM + PBKDF2-SHA-256 at 600,000 iterations, versioned per user with lazy migration)
 - Keys stored in memory only, never persisted
 - No ads, no trackers, no analytics that phone home
 - Open source encryption implementation
 - Row-level security (RLS) in database
 
 ### Accessibility
+
 - WCAG 2.1 AA compliant
 - Full keyboard navigation
 - Mobile responsive with touch-optimized UI
@@ -136,14 +147,15 @@ This tool bridges that gap. Not by writing for you, but by **helping you find th
 ## Tech Stack
 
 **Frontend**: SvelteKit (Svelte 5) · TypeScript · Tailwind CSS v4 · DaisyUI v5  
-**Backend**: FastAPI (Python 3.15+) · OpenRouter API  
+**Backend**: FastAPI (Python 3.11+) · OpenRouter API  
 **Database**: Supabase (PostgreSQL + Auth)  
 **Encryption**: Web Crypto API (AES-256-GCM)  
 **Testing**: Vitest · pytest
 
 **Why this stack?**
+
 - Svelte 5 runes = reactive encryption state without framework overhead
-- FastAPI = type-safe AI endpoints with 0. 003s response times
+- FastAPI = type-safe AI endpoints with millisecond response times
 - Supabase = RLS policies mean even a DB breach can't decrypt your drafts
 - Web Crypto API = browser-native encryption, no sketchy third-party libs
 
@@ -152,6 +164,7 @@ This tool bridges that gap. Not by writing for you, but by **helping you find th
 ## Quick Start
 
 ### Try It Live
+
 👉 **[theunsaid.vercel.app](https://theunsaid.vercel.app)** — No credit card, no waitlist, just sign up and write.
 
 ### Run Locally
@@ -165,7 +178,7 @@ cd The-Unsaid
 pnpm install
 
 # Set up environment variables
-cp .env. example .env
+cp .env.example .env
 # Edit .env with your Supabase and OpenRouter keys
 
 # Start the frontend
@@ -173,70 +186,74 @@ pnpm dev  # Runs on http://localhost:5173
 
 # Start the backend (separate terminal)
 cd backend
-uv venv && source . venv/bin/activate
-uv pip install -e ".[dev]"
-uvicorn app.main:app --reload  # Runs on http://localhost:8000
+uv sync
+uv run uvicorn app.main:app --reload  # Runs on http://localhost:8000
 ```
 
-**Get API keys**: 
+**Get API keys**:
+
 - [Supabase](https://supabase.com) — Free tier includes auth + PostgreSQL
 - [OpenRouter](https://openrouter.ai) — Pay per AI request (~ $0.001/request)
 
-**Full setup guide**:  [CLAUDE. md](CLAUDE.md)
+**Full setup guide**: [CLAUDE.md](CLAUDE.md)
 
 ---
 
 ## How It Works (The Encryption Part)
 
-Because "trust us" isn't good enough: 
+Because "trust us" isn't good enough:
 
 1. **You sign up** → Supabase generates a random salt for you
-2. **You log in** → Your password + salt → PBKDF2 (100K iterations) → 256-bit encryption key
+2. **You log in** → Your password + salt → PBKDF2 (600K iterations, versioned per user) → 256-bit encryption key
 3. **You write** → Content encrypted in browser → Sent to server as ciphertext
 4. **You read** → Server sends ciphertext → Decrypted in browser with your key
 5. **You log out** → Key deleted from memory forever
 
-**Your password is the key.  Lose it = lose your drafts. ** No password reset can save you.  This is the tradeoff of zero-knowledge encryption.
+**Your password is the key. Lose it = lose your drafts. ** No password reset can save you. This is the tradeoff of zero-knowledge encryption.
 
-**Code**:  [encryptionService.ts](src/lib/services/encryptionService.ts) · [cipher.ts](src/lib/crypto/cipher.ts)
+**Code**: [encryptionService.ts](src/lib/services/encryptionService.ts) · [cipher.ts](src/lib/crypto/cipher.ts)
 
 ---
 
 ## What This Is NOT
 
-| What We Don't Do | What We Do Instead |
-|---|---|
-| Hidden tracking | Transparent:  [No analytics code](https://github.com/Ishan-Karpe/The-Unsaid/search?q=analytics) |
-| Sell your data | Can't sell what we can't read (literally encrypted) |
-| AI writes for you | AI suggests; you decide |
-| Lock you in | Export → Delete → Walk away clean |
-| Notifications / streaks | No addiction mechanics |
-| "Trust us" security | Open source crypto you can audit |
+| What We Don't Do        | What We Do Instead                                                                             |
+| ----------------------- | ---------------------------------------------------------------------------------------------- |
+| Hidden tracking         | Transparent: [No analytics code](https://github.com/Ishan-Karpe/The-Unsaid/search?q=analytics) |
+| Sell your data          | Can't sell what we can't read (literally encrypted)                                            |
+| AI writes for you       | AI suggests; you decide                                                                        |
+| Lock you in             | Export → Delete → Walk away clean                                                              |
+| Notifications / streaks | No addiction mechanics                                                                         |
+| "Trust us" security     | Open source crypto you can audit                                                               |
 
 ---
 
 ## Roadmap
 
-**Shipped** 
+**Shipped**
+
 - [x] Zero-knowledge encryption
 - [x] 5 AI articulation modes
 - [x] Draft history + patterns
 - [x] Mobile responsive
 - [x] Accessibility (WCAG 2.1 AA)
 
-**Coming Soon** 
+**Coming Soon**
+
 - [ ] End-to-end encrypted sync across devices
 - [ ] Offline mode with local-first storage
 - [ ] Voice-to-text for drafting
 - [ ] Scheduled send (draft now, send later)
 - [ ] Customizable AI personality
 
-**Considering** 
+**Considering**
+
 - [ ] Therapist sharing mode (encrypted, time-limited access)
 - [ ] Integration with journaling apps (Day One, Obsidian)
 - [ ] Community prompts (user-submitted, curated)
 
-**Will Never Build** 
+**Will Never Build**
+
 - Social feed (this isn't Instagram for feelings)
 - Ad-supported tier (privacy and ads are incompatible)
 - AI training on user data (defeats the whole point)
@@ -246,34 +263,36 @@ Because "trust us" isn't good enough:
 ## Contributing
 
 This is a solo project right now, but I'd love help with:
+
 - Bug reports (especially encryption edge cases)
 - Accessibility improvements
 - Internationalization (i18n)
 - Better AI prompts (maintaining user voice is hard)
 
-**Before opening a PR**:  Read [CLAUDE.md](CLAUDE.md) for architecture context.
+**Before opening a PR**: Read [CLAUDE.md](CLAUDE.md) for architecture context.
 
 ---
 
 ## FAQ
 
 **Q: Is this really free?**  
-A: Yes. The live demo is free.  If you self-host, you pay for your own Supabase/OpenRouter usage (pennies per month for personal use).
+A: Yes. The live demo is free. If you self-host, you pay for your own Supabase/OpenRouter usage (pennies per month for personal use).
 
 **Q: How do you make money?**  
 A: I don't yet. This is a passion project. Future revenue might come from:
-- Premium AI models (GPT-4 vs.  free tier)
+
+- Premium AI models (GPT-4 vs. free tier)
 - Optional pro features (offline mode, scheduled send)
 - Never ads, never selling data
 
 **Q: What if I forget my password?**  
-A: Your drafts are gone. Zero-knowledge encryption means I can't help you.  **Back up important drafts.**
+A: Your drafts are gone. Zero-knowledge encryption means I can't help you. **Back up important drafts.**
 
 **Q: Can you read my drafts?**  
-A: No.  Technically impossible. Your drafts are encrypted *before* they reach my server. I see gibberish. 
+A: No. Technically impossible. Your drafts are encrypted _before_ they reach my server. I see gibberish.
 
 **Q: What if the service shuts down?**  
-A:  Export your data (JSON/Markdown). The encryption is client-side, so you can decrypt locally forever.  Self-hosting instructions in [CLAUDE.md](CLAUDE.md).
+A: Export your data (JSON/Markdown). The encryption is client-side, so you can decrypt locally forever. Self-hosting instructions in [CLAUDE.md](CLAUDE.md).
 
 **Q: Is this HIPAA compliant?**  
 A: No. Don't use this for medical records. It's for personal communication, not regulated data.
@@ -282,7 +301,7 @@ A: No. Don't use this for medical records. It's for personal communication, not 
 
 ## License
 
-MIT License — Use this, fork this, learn from this.  Just don't claim you built it.
+MIT License — Use this, fork this, learn from this. Just don't claim you built it.
 
 See [LICENSE](LICENSE) for details.
 
@@ -290,13 +309,15 @@ See [LICENSE](LICENSE) for details.
 
 ## Acknowledgments
 
-Built with: 
+Built with:
+
 - [Svelte](https://svelte.dev) — The framework that just gets out of the way
 - [Supabase](https://supabase.com) — Firebase for people who like PostgreSQL
 - [Tailwind CSS](https://tailwindcss.com) + [DaisyUI](https://daisyui.com) — UI that doesn't look like Bootstrap
 - [OpenRouter](https://openrouter.ai) — AI routing without vendor lock-in
 
 Inspired by:
+
 - Every unsent text I regret not sending
 - Every sent text I regret sending too fast
 - The gap between what we feel and what we say
@@ -317,84 +338,3 @@ This isn't a startup. It's not a resume project. It's a tool I wish existed when
 <p align="center">
   <sub>Made with ❤️ by Ishan Karpe</sub>
 </p>
-=======
-A privacy-focused AI articulation assistant with zero-knowledge encryption — your drafts are encrypted in the browser before they ever leave it, so the server never sees plaintext.
-
-## Features
-
-- **Zero-knowledge encryption** — all draft content is encrypted client-side with AES-256-GCM; the server only stores ciphertext.
-- **Versioned key derivation** — PBKDF2-SHA-256 at 600,000 iterations for new users, with a per-user `kdf_iterations` version and lazy migration that re-encrypts legacy (100k-iteration) users' data on login.
-- **AI writing modes** — Tone Check, Expand Thought, Rewrite, Alternative Phrasings, and Opening Suggestions, powered by OpenRouter via a FastAPI backend (only text you explicitly submit is sent for suggestions).
-- **Soft-delete trash** — drafts move to trash and can be restored or permanently deleted.
-- **Accessibility** — built to WCAG 2.1 AA: skip links, ARIA attributes, focus management, screen-reader announcements, 44px+ touch targets.
-
-## Architecture
-
-### Zero-knowledge flow
-
-1. On login, the user's password plus a per-user random salt (stored in the `user_salts` table) is run through PBKDF2 to derive an AES-256 key.
-2. The key lives **only in memory** (`src/lib/crypto/keyStore.ts`) — never persisted, never transmitted. It is cleared on logout; after a page refresh the user re-enters their password.
-3. Each draft is encrypted with AES-256-GCM using a unique 96-bit IV (`src/lib/crypto/cipher.ts`).
-4. `user_salts.kdf_iterations` records which iteration count each user's key was derived with. When a user logs in with an outdated count, `kdfMigrationService.ts` re-encrypts their drafts under the current 600,000 iterations.
-
-### Tech stack
-
-| Layer    | Technology                                                           |
-| -------- | -------------------------------------------------------------------- |
-| Frontend | SvelteKit (Svelte 5 runes), TypeScript, Tailwind CSS v4 + DaisyUI v5 |
-| Backend  | FastAPI (Python 3.11+), Pydantic, OpenRouter API                     |
-| Database | Supabase (PostgreSQL + Auth via `@supabase/ssr`)                     |
-| Crypto   | Web Crypto API: AES-256-GCM, PBKDF2-SHA-256                          |
-| Testing  | Vitest (browser + node projects), Playwright E2E, pytest             |
-
-Business logic lives in `src/lib/services/` (draft CRUD, encryption, key derivation, salts, KDF migration, AI). All services return `{ data, error }` objects rather than throwing.
-
-## Getting started
-
-### Prerequisites
-
-- Node.js + [pnpm](https://pnpm.io)
-- Python 3.11+ and [uv](https://docs.astral.sh/uv/)
-- A [Supabase](https://supabase.com) project
-
-### Setup
-
-```bash
-# 1. Environment
-cp .env.example .env   # fill in Supabase + OpenRouter keys
-
-# 2. Database — apply migrations in supabase/migrations/
-#    (via the Supabase SQL editor or `supabase db push`)
-
-# 3. Frontend
-pnpm install
-pnpm dev               # http://localhost:5173
-
-# 4. Backend
-cd backend
-uv sync
-uvicorn app.main:app --reload   # http://localhost:8000
-```
-
-## Testing
-
-```bash
-pnpm test        # Vitest unit tests (browser + node projects)
-pnpm test:e2e    # Playwright E2E (auth, encryption, sync flows)
-pnpm check       # svelte-check / TypeScript
-pnpm lint        # Prettier + ESLint
-
-cd backend && uv run pytest   # backend tests
-```
-
-## Deployment
-
-- **Frontend**: Vercel (`@sveltejs/adapter-vercel`)
-- **Backend**: Railway (FastAPI + uvicorn)
-
-Set the environment variables listed in `.env.example` in each platform's dashboard.
-
-## License
-
-Personal project — all rights reserved.
->>>>>>> c2d8d4b ( implement versioned PBKDF2 iteration (600) support with auto-migration, update encryption configuration, and perform site-wide codebase cleanup.)

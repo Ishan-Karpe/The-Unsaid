@@ -19,8 +19,10 @@
 		SyncIndicator,
 		AISuggestions,
 		MobileDrawer,
-		AIConsentModal
+		AIConsentModal,
+		VersionHistoryDrawer
 	} from '$lib/components';
+	import type { Draft } from '$lib/types';
 	import { draftStore } from '$lib/stores/draft.svelte';
 	import { aiStore } from '$lib/stores/ai.svelte';
 	import { authStore } from '$lib/stores/auth.svelte';
@@ -36,6 +38,10 @@
 
 	// Mobile drawer state
 	let mobileDrawerOpen = $state(false);
+
+	// Version history drawer state
+	let versionHistoryOpen = $state(false);
+	let draftId = $derived(draftStore.draft.id);
 
 	// Local UI state (not draft data)
 	let privacyMode = $state(true);
@@ -257,6 +263,12 @@
 	function handleDismissSuggestions() {
 		// Clear AI state (already handled by AISuggestions component)
 		// Optionally show a subtle info message
+	}
+
+	function handleVersionRestored(draft: Draft) {
+		// Load the restored draft so the editor reflects it immediately
+		draftStore.loadDraft(draft);
+		toastStore.success('Version restored. Your previous state was snapshotted.');
 	}
 </script>
 
@@ -649,6 +661,28 @@
 				<div class="flex items-center gap-2">
 					<button
 						type="button"
+						class="btn min-h-[44px] min-w-[44px] gap-2 btn-ghost btn-sm"
+						onclick={() => (versionHistoryOpen = true)}
+						disabled={!draftId}
+						aria-label="Version history"
+					>
+						<!-- Clock icon for version history -->
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							class="h-4 w-4"
+							viewBox="0 0 20 20"
+							fill="currentColor"
+						>
+							<path
+								fill-rule="evenodd"
+								d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
+								clip-rule="evenodd"
+							/>
+						</svg>
+						History
+					</button>
+					<button
+						type="button"
 						class="btn gap-2 btn-sm {previewMode ? 'btn-primary' : 'btn-ghost'}"
 						onclick={() => (previewMode = !previewMode)}
 						disabled={!hasContent}
@@ -714,6 +748,16 @@
 
 	<!-- Mobile Drawer for Context (metadata, feelings) -->
 	<MobileDrawer bind:open={mobileDrawerOpen} />
+
+	<!-- Version History Drawer -->
+	{#if draftId}
+		<VersionHistoryDrawer
+			{draftId}
+			open={versionHistoryOpen}
+			onClose={() => (versionHistoryOpen = false)}
+			onRestored={handleVersionRestored}
+		/>
+	{/if}
 
 	<!-- AI Consent Modal -->
 	{#if showConsentModal && authStore.user}

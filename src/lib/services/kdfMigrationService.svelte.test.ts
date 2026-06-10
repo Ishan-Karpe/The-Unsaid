@@ -9,6 +9,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 // --- Mutable mock state ------------------------------------------
 let draftsData: Array<Record<string, unknown>> = [];
+let versionsData: Array<Record<string, unknown>> = [];
 let updateErrorForIds: Record<string, { message: string }> = {};
 const updateCalls: Array<{
 	id: string;
@@ -22,7 +23,10 @@ vi.mock('./supabase', () => ({
 			fromSpy(table);
 			return {
 				select: () => ({
-					eq: async () => ({ data: draftsData, error: null })
+					eq: async () => ({
+						data: table === 'draft_versions' ? versionsData : draftsData,
+						error: null
+					})
 				}),
 				update: (payload: {
 					encrypted_content: string;
@@ -92,6 +96,7 @@ describe('KDF Migration Service', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		draftsData = [];
+		versionsData = [];
 		updateErrorForIds = {};
 		updateCalls.length = 0;
 		salt = generateSalt();
@@ -187,5 +192,44 @@ describe('KDF Migration Service', () => {
 		expect(result).toEqual({ success: true, draftsMigrated: 0, error: null });
 		expect(fromSpy).not.toHaveBeenCalled();
 		expect(saltService.updateKdfIterations).not.toHaveBeenCalled();
+	});
+
+	it('also migrates draft_versions rows and counts them', async () => {
+		const legacyKey = await deriveKey(PASSWORD, salt, LEGACY_ITERATIONS);
+		draftsData = [await makeEncryptedDraft('d1', 'current text', { recipient: 'Mom' }, legacyKey)];
+		versionsData = [
+			await makeEncryptedDraft('v1', 'older text', { recipient: 'Mom' }, legacyKey),
+			await makeEncryptedDraft('v2', 'oldest text', { recipient: 'Mom' }, legacyKey)
+		];
+
+		const result = await kdfMigrationService.migrateKdf(USER_ID, PASSWORD);
+
+		expect(result.success).toBe(true);
+		expect(result.draftsMigrated).toBe(3);
+		expect(updateCalls.map((c) => c.id).sort()).toEqual(['d1', 'v1', 'v2']);
+		expect(fromSpy).toHaveBeenCalledWith('draft_versions');
+		expect(saltService.updateKdfIterations).toHaveBeenCalledWith(
+			USER_ID,
+			CURRENT_PBKDF2_ITERATIONS
+		);
+
+		// Migrated version ciphertext must decrypt with the new key
+		const newKey = await deriveKey(PASSWORD, salt, CURRENT_PBKDF2_ITERATIONS);
+		const v1 = updateCalls.find((c) => c.id === 'v1')!;
+		expect(await decrypt(v1.payload.encrypted_content, v1.payload.iv, newKey)).toBe('older text');
+	});
+
+	it('does not bump kdf_iterations when a version row fails to update', async () => {
+		const legacyKey = await deriveKey(PASSWORD, salt, LEGACY_ITERATIONS);
+		draftsData = [await makeEncryptedDraft('d1', 'current text', { recipient: 'Mom' }, legacyKey)];
+		versionsData = [await makeEncryptedDraft('v1', 'older text', { recipient: 'Mom' }, legacyKey)];
+		updateErrorForIds = { v1: { message: 'network error' } };
+
+		const result = await kdfMigrationService.migrateKdf(USER_ID, PASSWORD);
+
+		expect(result.success).toBe(false);
+		expect(result.error).toContain('v1');
+		expect(saltService.updateKdfIterations).not.toHaveBeenCalled();
+		expect(setKey).not.toHaveBeenCalled();
 	});
 });

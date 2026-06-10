@@ -90,7 +90,8 @@ All business logic lives in `src/lib/services/`:
 - `encryptionService.ts` — Encrypts/decrypts draft content and metadata
 - `keyDerivationService.ts` — Versioned PBKDF2 key derivation from password
 - `saltService.ts` — Manages per-user salts and `kdf_iterations` in database
-- `kdfMigrationService.ts` — Re-encrypts drafts when a user's KDF iteration count is outdated (lazy migration on login)
+- `kdfMigrationService.ts` — Re-encrypts drafts and draft versions when a user's KDF iteration count is outdated (lazy migration on login)
+- `versionService.ts` — Encrypted version history: throttled ciphertext snapshots before autosave overwrites (max one per 10 min, last 20 kept), list/restore via the history drawer
 - `ai.ts` — AI suggestions with exponential backoff retry, timeout, cancellation
 
 All services follow the `{ data, error }` result pattern - they never throw exceptions.
